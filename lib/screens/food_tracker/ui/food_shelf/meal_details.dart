@@ -8,17 +8,17 @@ import 'package:senzu_app/shared/constants.dart';
 
 
 class MealDetails extends StatefulWidget {
-  final String mealNameValue;
-  final String mealIdValue;
-  final String breakfastMealAdd;
-  final String lunchMealAdd;
-  final String snacksMealAdd;
-  final String dinnerMealAdd;
-  final DateTime selectedDateSecondStep;
+  final String? mealNameValue;
+  final String? mealIdValue;
+  final String? breakfastMealAdd;
+  final String? lunchMealAdd;
+  final String? snacksMealAdd;
+  final String? dinnerMealAdd;
+  final DateTime? selectedDateSecondStep;
 
   
   MealDetails({
-    Key key, 
+    Key? key, 
     this.mealNameValue,
     this.mealIdValue, 
     this.breakfastMealAdd, 
@@ -39,15 +39,8 @@ class _MealDetailsState extends State<MealDetails> {
   bool loading = false;
 
   selectedMealValue(){
-    if (widget.breakfastMealAdd != null) {
-      return widget.breakfastMealAdd;
-    } if (widget.lunchMealAdd != null) {
-      return widget.lunchMealAdd;
-    } if (widget.snacksMealAdd != null) {
-      return widget.snacksMealAdd;
-    } if (widget.dinnerMealAdd != null) {
-      return widget.dinnerMealAdd;
-    }
+    return widget.breakfastMealAdd;
+  
   }
 
 
@@ -135,7 +128,7 @@ class _MealDetailsState extends State<MealDetails> {
                           Text('ADD TO MEAL ',
                             style: textColor.copyWith(fontWeight: FontWeight.bold, fontSize: 22)
                           ),
-                          Icon(FontAwesomeIcons.plus,
+                          FaIcon(FontAwesomeIcons.plus,
                           color: Colors.white,
                           size: 22,)
                         ],
@@ -206,10 +199,10 @@ Widget buildMealFoodItemsList(BuildContext context, AsyncSnapshot<QuerySnapshot>
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: snapshot.data.docs.length,
+        itemCount: snapshot.data!.docs.length,
         itemBuilder: (BuildContext context, int index) {
 
-    DocumentSnapshot user = snapshot.data.docs[index];
+    DocumentSnapshot user = snapshot.data!.docs[index];
 
     var foodName = user.get('foodName');
     var calories = user.get('calories');
@@ -219,7 +212,7 @@ Widget buildMealFoodItemsList(BuildContext context, AsyncSnapshot<QuerySnapshot>
       key: Key(user.id),
       onLongPress: () async {
 
-        var doc = snapshot.data.docs[index];
+        var doc = snapshot.data!.docs[index];
 
         try {
           showDialog<String>(
@@ -369,10 +362,10 @@ Widget buildFoodShelfList(BuildContext context, AsyncSnapshot<QuerySnapshot> sna
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: snapshot.data.docs.length,
+        itemCount: snapshot.data!.docs.length,
         itemBuilder: (BuildContext context, int index) {
 
-    DocumentSnapshot food = snapshot.data.docs[index];
+    DocumentSnapshot food = snapshot.data!.docs[index];
     var foodId = food.get('foodId');
     var foodName = food.get('foodName');
     var brandName = food.get('brandName');
@@ -553,7 +546,7 @@ Widget buildFoodShelfList(BuildContext context, AsyncSnapshot<QuerySnapshot> sna
     eventsQuery.docs.forEach((value) {
       value.reference.update({
         'mealType': selectedMealValue(),
-        'weekNo': getWeekNumber(widget.selectedDateSecondStep),
+        'weekNo': getWeekNumber(widget.selectedDateSecondStep!),
         'month': cleanMonthFormat(widget.selectedDateSecondStep.toString()),
         'year': cleanYearFormat(widget.selectedDateSecondStep.toString()),
         'dateAdded': widget.selectedDateSecondStep,

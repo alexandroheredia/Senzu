@@ -3,7 +3,7 @@ import 'package:senzu_app/shared/constants.dart';
 
 
 class Fiber extends StatelessWidget {
-  const Fiber({Key key}) : super(key: key);
+  const Fiber({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

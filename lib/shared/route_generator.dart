@@ -5,9 +5,6 @@ import 'package:senzu_app/screens/nutrients_display/nutrient_pages/vitamin_c.dar
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
-    // Getting arguments passed in while calling Navigator.pushNamed
-    final args = settings.arguments;
-
     switch (settings.name) {
       case '/':
         return CupertinoPageRoute(builder: (_) => Wrapper());

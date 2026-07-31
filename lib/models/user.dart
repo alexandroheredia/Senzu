@@ -10,12 +10,12 @@ class AppUser {
   
   
   AppUser({
-    this.uid,
-    this.username,
-    this.sex,
-    this.activityLevel,
-    this.dailyCaloriesGoal,
-    });
+    this.uid = '',
+    this.username = '',
+    this.sex = '',
+    this.activityLevel = '',
+    this.dailyCaloriesGoal = 0,
+  });
 
 
   factory AppUser.fromDocument(DocumentSnapshot doc) {

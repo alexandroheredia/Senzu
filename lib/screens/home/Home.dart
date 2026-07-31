@@ -53,7 +53,7 @@ class _HomeState extends State<Home> {
                   );
                 });
             }, 
-            icon: Icon(FontAwesomeIcons.tools)
+            icon: FaIcon(FontAwesomeIcons.screwdriverWrench)
           )
         ],
       ),

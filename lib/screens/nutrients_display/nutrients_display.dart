@@ -26,7 +26,7 @@ class NutrientsDisplay extends StatelessWidget {
 }
 
 class NutrientList extends StatelessWidget {
-  const NutrientList({Key key}) : super(key: key);
+  const NutrientList({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

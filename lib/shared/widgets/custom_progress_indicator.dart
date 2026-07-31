@@ -6,7 +6,7 @@ class CustomProgressIndicatior extends StatefulWidget {
 }
 
 class _CustomProgressIndicatiorState extends State<CustomProgressIndicatior> with SingleTickerProviderStateMixin {
-  AnimationController _animationController;
+  late AnimationController _animationController;
 
   @override
   void initState() {

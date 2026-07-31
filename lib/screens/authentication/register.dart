@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 class Register extends StatefulWidget {
 
-  final Function toggleView;
+  final Function? toggleView;
   Register({ this.toggleView });
 
   @override
@@ -71,7 +71,7 @@ class _RegisterState extends State<Register> {
                         focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Color(0xFF979797)))
                             ),
-                    validator: (val) => val.isEmpty ? 'Your email goes here UwU' : null,
+                    validator: (val) => val!.isEmpty ? 'Your email goes here UwU' : null,
                     onChanged: (val) {
                       setState(() => email = val);
                     },
@@ -83,7 +83,7 @@ class _RegisterState extends State<Register> {
                 decoration: InputDecoration(
                   suffixIcon: GestureDetector(
                     onTap: _showPassword,
-                    child: Icon(
+                    child: FaIcon(
                       _obscureTextPassword
                           ? FontAwesomeIcons.eye
                           : FontAwesomeIcons.eyeSlash,
@@ -107,7 +107,7 @@ class _RegisterState extends State<Register> {
                     focusedBorder: UnderlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF979797)))
                         ),
-                validator: (val) => val.length < 6 ? 'Your password must be longer than 6 characters' : null,
+                validator: (val) => val!.length < 6 ? 'Your password must be longer than 6 characters' : null,
                 onChanged: (val) {
                   setState(() => password = val);
                 },
@@ -115,7 +115,7 @@ class _RegisterState extends State<Register> {
               SizedBox(height: 20.0),
               ElevatedButton(
                 onPressed: () async {
-                  if(_formKey.currentState.validate()){
+                  if(_formKey.currentState!.validate()){
                     setState(() => loading = true);
                     dynamic result = await _auth.registerWithEmailAndPassword(email, password);
                     

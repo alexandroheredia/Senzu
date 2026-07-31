@@ -6,10 +6,10 @@ import 'package:senzu_app/shared/daily_values_constants.dart';
 
 class AddFood extends StatefulWidget {
   
-  final String foodIdValue;
+  final String? foodIdValue;
 
   AddFood({
-    Key key, 
+    Key? key, 
     this.foodIdValue
     }) : super(key: key);
 
@@ -174,7 +174,7 @@ class _AddFoodState extends State<AddFood> {
           onPressed: () async {
             // print(saturatedFatController.text.replaceAll(',', '.'));
             try {
-              if (_addFoodFormKey.currentState.validate()) {
+              if (_addFoodFormKey.currentState!.validate()) {
               setState(() => loading = true);
               saveFoodToShelf();
               saveToFoodDatabase(context);
@@ -187,7 +187,7 @@ class _AddFoodState extends State<AddFood> {
             }
               
             } catch (e) {
-              print(e.message);
+              print(e);
               
             }
 
@@ -912,9 +912,9 @@ Widget addFoodForm() {
                   activeColor: primaryButtonColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   value: vitaminDVisibility,
-                  onChanged: (bool showVitaminDField) {
+                  onChanged: (bool? showVitaminDField) {
                     setState(() {
-                      vitaminDVisibility = showVitaminDField;
+                      vitaminDVisibility = showVitaminDField ?? false;
                     });
                   },
                 ),
@@ -928,9 +928,9 @@ Widget addFoodForm() {
                   activeColor: primaryButtonColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   value: vitaminB6Visibility,
-                  onChanged: (bool showVitaminB6Field) {
+                  onChanged: (bool? showVitaminB6Field) {
                     setState(() {
-                      vitaminB6Visibility = showVitaminB6Field;
+                      vitaminB6Visibility = showVitaminB6Field ?? false;
                     });
                   },
                 ),
@@ -944,9 +944,9 @@ Widget addFoodForm() {
                   activeColor: primaryButtonColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   value: folateVisibility,
-                  onChanged: (bool showFolateField) {
+                  onChanged: (bool? showFolateField) {
                     setState(() {
-                      folateVisibility = showFolateField;
+                      folateVisibility = showFolateField ?? false;
                     });
                   },
                 ),
@@ -960,9 +960,9 @@ Widget addFoodForm() {
                   activeColor: primaryButtonColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   value: thiaminVisibility,
-                  onChanged: (bool showThiaminField) {
+                  onChanged: (bool? showThiaminField) {
                     setState(() {
-                      thiaminVisibility = showThiaminField;
+                      thiaminVisibility = showThiaminField ?? false;
                     });
                   },
                 ),
@@ -976,9 +976,9 @@ Widget addFoodForm() {
                   activeColor: primaryButtonColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   value: magnesiumVisibility,
-                  onChanged: (bool showMagnesiumField) {
+                  onChanged: (bool? showMagnesiumField) {
                     setState(() {
-                      magnesiumVisibility = showMagnesiumField;
+                      magnesiumVisibility = showMagnesiumField ?? false;
                     });
                   },
                 ),
@@ -992,9 +992,9 @@ Widget addFoodForm() {
                   activeColor: primaryButtonColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   value: zincVisibility,
-                  onChanged: (bool showZincField) {
+                  onChanged: (bool? showZincField) {
                     setState(() {
-                      zincVisibility = showZincField;
+                      zincVisibility = showZincField ?? false;
                     });
                   },
                 ),
@@ -1008,9 +1008,9 @@ Widget addFoodForm() {
                   activeColor: primaryButtonColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   value: phosphorusVisibility,
-                  onChanged: (bool showPhosphorusField) {
+                  onChanged: (bool? showPhosphorusField) {
                     setState(() {
-                      phosphorusVisibility = showPhosphorusField;
+                      phosphorusVisibility = showPhosphorusField ?? false;
                     });
                   },
                 ),
@@ -1024,9 +1024,9 @@ Widget addFoodForm() {
                   activeColor: primaryButtonColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   value: riboflavinVisibility,
-                  onChanged: (bool showRiboflavinField) {
+                  onChanged: (bool? showRiboflavinField) {
                     setState(() {
-                      riboflavinVisibility = showRiboflavinField;
+                      riboflavinVisibility = showRiboflavinField ?? false;
                     });
                   },
                 ),
@@ -1040,9 +1040,9 @@ Widget addFoodForm() {
                   activeColor: primaryButtonColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   value: niacinVisibility,
-                  onChanged: (bool showNiacinField) {
+                  onChanged: (bool? showNiacinField) {
                     setState(() {
-                      niacinVisibility = showNiacinField;
+                      niacinVisibility = showNiacinField ?? false;
                     });
                   },
                 ),
@@ -1056,9 +1056,9 @@ Widget addFoodForm() {
                   activeColor: primaryButtonColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   value: pantothenicAcidVisibility,
-                  onChanged: (bool showPantothenicAcidField) {
+                  onChanged: (bool? showPantothenicAcidField) {
                     setState(() {
-                      pantothenicAcidVisibility = showPantothenicAcidField;
+                      pantothenicAcidVisibility = showPantothenicAcidField ?? false;
                     });
                   },
                 ),
@@ -1072,9 +1072,9 @@ Widget addFoodForm() {
                   activeColor: primaryButtonColor,
                   controlAffinity: ListTileControlAffinity.trailing,
                   value: vitaminEVisibility,
-                  onChanged: (bool showVitaminEField) {
+                  onChanged: (bool? showVitaminEField) {
                     setState(() {
-                      vitaminEVisibility = showVitaminEField;
+                      vitaminEVisibility = showVitaminEField ?? false;
                     });
                   },
                 ),

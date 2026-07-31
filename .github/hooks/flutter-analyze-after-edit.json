@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "bash .github/hooks/flutter-analyze-after-edit.sh",
+        "timeout": 600,
+        "env": {
+          "CI": "true",
+          "FLUTTER_SUPPRESS_ANALYTICS": "true"
+        }
+      }
+    ]
+  }
+}

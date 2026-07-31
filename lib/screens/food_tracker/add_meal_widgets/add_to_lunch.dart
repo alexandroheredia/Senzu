@@ -12,8 +12,8 @@ class AddToLunch extends StatefulWidget {
   final DateTime selectedDateValue;
   
   AddToLunch({
-    Key key, 
-    this.selectedDateValue}) : super(key: key);
+    Key? key, 
+    required this.selectedDateValue}) : super(key: key);
 
   @override
   _AddToLunchState createState() => _AddToLunchState();
@@ -126,7 +126,7 @@ class _AddToLunchState extends State<AddToLunch> {
                           Text('Add Food ',
                             style: textColor.copyWith(fontWeight: FontWeight.bold, fontSize: 22)
                           ),
-                          Icon(FontAwesomeIcons.plus,
+                          FaIcon(FontAwesomeIcons.plus,
                           color: Colors.white,
                           size: 22,)
                         ],
@@ -194,10 +194,10 @@ Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: snapshot.data.docs.length,
+        itemCount: snapshot.data?.docs.length,
         itemBuilder: (BuildContext context, int index) {
 
-    DocumentSnapshot food = snapshot.data.docs[index];
+    DocumentSnapshot food = snapshot.data!.docs[index];
     
     var foodName = food.get('foodName');
     var calories = food.get('calories');
@@ -206,7 +206,7 @@ Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
     return GestureDetector(
       key: Key(food.id),
       onLongPress: () async {
-        var doc = snapshot.data.docs[index];
+        var doc = snapshot.data?.docs[index];
         try {
           showDialog<String>(
           context: context, 
@@ -238,7 +238,7 @@ Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
                   dbUsersCollection
                   .doc(myUID(context))
                   .collection('foodEntries')
-                  .doc(doc.id)
+                  .doc(doc?.id)
                   .delete();
                   Navigator.pop(context, 'ok');
                 },

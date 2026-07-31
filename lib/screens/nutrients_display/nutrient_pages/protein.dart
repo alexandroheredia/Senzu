@@ -3,7 +3,7 @@ import 'package:senzu_app/shared/constants.dart';
 
 
 class Protein extends StatelessWidget {
-  const Protein({Key key}) : super(key: key);
+  const Protein({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

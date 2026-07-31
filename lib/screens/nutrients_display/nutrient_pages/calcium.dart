@@ -3,7 +3,7 @@ import 'package:senzu_app/shared/constants.dart';
 
 
 class Calcium extends StatelessWidget {
-  const Calcium({Key key}) : super(key: key);
+  const Calcium({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -3,7 +3,7 @@ import 'package:senzu_app/shared/constants.dart';
 
 
 class VitaminC extends StatelessWidget {
-  const VitaminC({Key key}) : super(key: key);
+  const VitaminC({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

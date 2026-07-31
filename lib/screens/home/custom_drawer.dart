@@ -6,7 +6,7 @@ import 'package:senzu_app/screens/profile_screens/goals.dart';
 import 'package:senzu_app/shared/constants.dart';
 
 class CustomDrawer extends StatefulWidget {
-  CustomDrawer({Key key}) : super(key: key);
+  CustomDrawer({Key? key}) : super(key: key);
 
   @override
   _CustomDrawerState createState() => _CustomDrawerState();
@@ -51,7 +51,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   elevation: 2.0,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(0,0,3.5,0),
-                    child: Icon(FontAwesomeIcons.trophy,
+                    child: FaIcon(FontAwesomeIcons.trophy,
                       color: Color(0XFFfeba8e),
                       size: 30.0,
                     ),

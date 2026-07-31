@@ -72,11 +72,11 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
   
   
   // Profile data
-  String _sex;
+  String? _sex;
   // DateTime _birthday = DateTime(1969,4,20);
   // double _weight;
-  String _activityLevel;
-  int _dailyCaloriesGoal;
+  String? _activityLevel;
+  int? _dailyCaloriesGoal;
   
 
 
@@ -89,7 +89,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
       builder: (context, snapshot) {
         if (snapshot.hasData) {
 
-          AppUser userData = snapshot.data;
+          AppUser userData = snapshot.data!;
           return Form(
             key: _formKey,
             child: Column(
@@ -102,7 +102,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                       child: CustomFormField(
                         label: 'Sex',
                         child: DropdownButtonFormField<String>(
-                          value: _sex ?? userData.sex,
+                          initialValue: _sex ?? userData.sex,
                           items: <DropdownMenuItem<String>>[
                             DropdownMenuItem(
                               child: Text(
@@ -120,7 +120,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                           decoration: InputDecoration(
                             border: InputBorder.none
                             ),
-                          onChanged: (String sex){
+                          onChanged: (String? sex){
                             setState(() {
                               _sex = sex;
                             });
@@ -206,7 +206,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                       child: CustomFormField(
                         label: 'Activity Level',
                         child: DropdownButtonFormField<String>(
-                          value: _activityLevel ?? userData.activityLevel,
+                          initialValue: _activityLevel ?? userData.activityLevel,
                           items: <DropdownMenuItem<String>>[
                             DropdownMenuItem(
                               child: Text(
@@ -236,7 +236,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                           decoration: InputDecoration(
                             border: InputBorder.none
                             ),
-                          onChanged: (String activityLevel){
+                          onChanged: (String? activityLevel){
                             setState(() {
                               _activityLevel = activityLevel;
                             });
@@ -266,12 +266,12 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                         'Update',
                       ),
                         onPressed: () async {
-                          if(_formKey.currentState.validate()){
+                          if(_formKey.currentState!.validate()){
                             await DatabaseService(uid: myUID(context)).updateUserData(
-                              _sex ?? snapshot.data.sex, 
+                              _sex ?? userData.sex, 
                               // _birthday ?? snapshot.data.birthday, 
-                              _activityLevel ?? snapshot.data.activityLevel,
-                              _dailyCaloriesGoal ?? snapshot.data.dailyCaloriesGoal,
+                              _activityLevel ?? userData.activityLevel,
+                              _dailyCaloriesGoal ?? userData.dailyCaloriesGoal,
                             );
                             Navigator.pop(context);
                           }

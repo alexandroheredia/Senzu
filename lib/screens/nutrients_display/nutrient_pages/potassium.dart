@@ -4,7 +4,7 @@ import 'package:senzu_app/shared/constants.dart';
 
 
 class Potassium extends StatelessWidget {
-  const Potassium({Key key}) : super(key: key);
+  const Potassium({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

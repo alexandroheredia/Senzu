@@ -5,7 +5,7 @@ import 'package:senzu_app/shared/constants.dart';
 class DatabaseService {
 
   final String uid;
-  DatabaseService({ this.uid });
+  DatabaseService({ required this.uid });
 
   Future<void> updateUserData(String sex, String activityLevel, int dailyCaloriesGoal) async {
     return await dbUsersCollection.doc(uid).set({
@@ -21,7 +21,7 @@ class DatabaseService {
       return AppUser(
         sex: doc.get('sex') ?? '',
         activityLevel: doc.get('activityLevel') ?? '',
-        dailyCaloriesGoal: doc.get('dailyCaloriesGoal') ?? 0
+        dailyCaloriesGoal: doc.get('dailyCaloriesGoal') ?? 0, uid: '', username: ''
       );
     }).toList();
   }

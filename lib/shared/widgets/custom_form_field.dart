@@ -6,7 +6,7 @@ class CustomFormField extends StatelessWidget {
   final String label;
   final Widget child;
 
-  CustomFormField({this.child,this.label});
+  CustomFormField({required this.child, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class CustomFormField extends StatelessWidget {
             margin: EdgeInsets.only(top: 6),
             padding: EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.black.withOpacity(0.3),width: 1.1),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.3), width: 1.1),
               borderRadius: BorderRadius.circular(4)
             ),
             alignment: Alignment.centerLeft,

@@ -7,8 +7,8 @@ import 'package:senzu_app/shared/daily_values_constants.dart';
 
 
 class FoodDetails extends StatefulWidget {
-  final String foodNameValue;
-  final String brandNameValue;
+  final String? foodNameValue;
+  final String? brandNameValue;
   final dynamic servingSizeValue;
   final dynamic portionSizeValue;
   final dynamic caloriesValue;
@@ -30,18 +30,18 @@ class FoodDetails extends StatefulWidget {
   final dynamic vitaminDValue;
   final dynamic magnesiumValue;
   final dynamic zincValue;
-  final DateTime selectedDateSecondStep;
-  final String foodIdValue;
-  final String breakfastMealAdd;
-  final String lunchMealAdd;
-  final String snacksMealAdd;
-  final String dinnerMealAdd;
+  final DateTime? selectedDateSecondStep;
+  final String? foodIdValue;
+  final String? breakfastMealAdd;
+  final String? lunchMealAdd;
+  final String? snacksMealAdd;
+  final String? dinnerMealAdd;
   final dynamic timesAddedValue;
-  final String getFoodIdValue;
+  final String? getFoodIdValue;
 
 
   FoodDetails({
-    Key key, 
+    Key? key, 
     this.foodNameValue,
     this.brandNameValue,
     this.servingSizeValue,
@@ -82,15 +82,8 @@ class FoodDetails extends StatefulWidget {
 class _FoodDetailsState extends State<FoodDetails> {
 
   selectedMealValue(){
-    if (widget.breakfastMealAdd != null) {
-      return widget.breakfastMealAdd;
-    } if (widget.lunchMealAdd != null) {
-      return widget.lunchMealAdd;
-    } if (widget.snacksMealAdd != null) {
-      return widget.snacksMealAdd;
-    } if (widget.dinnerMealAdd != null) {
-      return widget.dinnerMealAdd;
-    }
+    return widget.breakfastMealAdd;
+  
   }
 
   final portionSizeController = TextEditingController();
@@ -190,40 +183,24 @@ class _FoodDetailsState extends State<FoodDetails> {
   }
 
    breakfastCalories(){
-     if (widget.breakfastMealAdd != null) {
-       var breakfastCalories = _caloriesIntake();
-       return breakfastCalories;
-     } else {
-       return 0;
-     }
-   }
+     var breakfastCalories = _caloriesIntake();
+     return breakfastCalories;
+      }
 
    lunchCalories(){
-     if (widget.lunchMealAdd != null) {
-       var lunchCalories = _caloriesIntake();
-       return lunchCalories;
-     } else {
-       return 0;
-     }
-   }
+     var lunchCalories = _caloriesIntake();
+     return lunchCalories;
+      }
 
    snacksCalories(){
-     if (widget.snacksMealAdd != null) {
-       var snacksCalories = _caloriesIntake();
-       return snacksCalories;
-     } else {
-       return 0;
-     }
-   }
+     var snacksCalories = _caloriesIntake();
+     return snacksCalories;
+      }
 
   dinnerCalories(){
-    if (widget.dinnerMealAdd != null) {
-      var dinnerCalories = _caloriesIntake();
-      return dinnerCalories;
-    } else {
-      return 0;
+    var dinnerCalories = _caloriesIntake();
+    return dinnerCalories;
     }
-  }
 
   totalFatPercentage(){
     if (widget.totalFatValue != null) {
@@ -395,7 +372,7 @@ class _FoodDetailsState extends State<FoodDetails> {
               children: [
                 Container(
                   alignment: Alignment.centerLeft,
-                  child: Text(widget.foodNameValue,
+                  child: Text(widget.foodNameValue ?? '',
                     style: textColor.copyWith(
                       fontWeight: FontWeight.w800,
                       fontSize: 32.0,
@@ -807,7 +784,7 @@ class _FoodDetailsState extends State<FoodDetails> {
       "vitaminD": _vitaminDIntake(),
       "magnesium": _magnesiumIntake(),
       "zinc": _zincIntake(),
-      "weekNo": getWeekNumber(widget.selectedDateSecondStep),
+      "weekNo": getWeekNumber(widget.selectedDateSecondStep!),
       "month": cleanMonthFormat(widget.selectedDateSecondStep.toString()),
       "year": cleanYearFormat(widget.selectedDateSecondStep.toString()),
       "dateAdded": widget.selectedDateSecondStep,

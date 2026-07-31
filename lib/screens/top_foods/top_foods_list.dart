@@ -4,7 +4,7 @@ import 'package:senzu_app/shared/constants.dart';
 
 
 class TopFoodsList extends StatefulWidget {
-  TopFoodsList({Key key}) : super(key: key);
+  TopFoodsList({Key? key}) : super(key: key);
 
   @override
   _TopFoodsListState createState() => _TopFoodsListState();
@@ -50,10 +50,10 @@ Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: snapshot.data.docs.length,
+        itemCount: snapshot.data!.docs.length,
         itemBuilder: (BuildContext context, int index) {
 
-    DocumentSnapshot user = snapshot.data.docs[index];
+    DocumentSnapshot user = snapshot.data!.docs[index];
     var foodName = user.get('foodName');
     var brandName = user.get('brandName');
 

@@ -3,7 +3,7 @@ import 'package:senzu_app/shared/constants.dart';
 
 
 class Iron extends StatelessWidget {
-  const Iron({Key key}) : super(key: key);
+  const Iron({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

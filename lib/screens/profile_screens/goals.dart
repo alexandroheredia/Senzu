@@ -4,7 +4,7 @@ import 'package:senzu_app/screens/authentication/utils/snackbar.dart';
 import 'package:senzu_app/shared/constants.dart';
 
 class NutritionGoals extends StatefulWidget {
-  NutritionGoals({Key key}) : super(key: key);
+  NutritionGoals({Key? key}) : super(key: key);
 
   @override
   _NutritionGoalsState createState() => _NutritionGoalsState();
@@ -38,7 +38,7 @@ Widget nutritionGoalsBody(){
         return Text("Loading");
       }
 
-      final documents = snapshot.data;
+      final documents = snapshot.data!;
       final dailyCaloriesGoal = documents.get('dailyCaloriesGoal');
       final usernameController = TextEditingController(text: dailyCaloriesGoal.toString());
       // return Text(username.toString());

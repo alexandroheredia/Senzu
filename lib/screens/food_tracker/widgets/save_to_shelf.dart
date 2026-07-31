@@ -3,8 +3,8 @@ import 'package:senzu_app/shared/constants.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 
 class SaveToShelf extends StatefulWidget {
-    final String foodNameValue;
-    final String brandNameValue;
+    final String? foodNameValue;
+    final String? brandNameValue;
     final dynamic servingSizeValue;
     final dynamic portionSizeValue;
     final dynamic caloriesValue;
@@ -23,8 +23,8 @@ class SaveToShelf extends StatefulWidget {
     final dynamic potassiumValue;
     final dynamic vitaminAValue;
     final dynamic vitaminCValue;
-    final DateTime selectedDateSecondStep;
-    final String foodIdValue;
+    final DateTime? selectedDateSecondStep;
+    final String? foodIdValue;
     final dynamic vitaminDValue;
     final dynamic vitaminB6Value;
     final dynamic folateValue;
@@ -40,7 +40,7 @@ class SaveToShelf extends StatefulWidget {
     
 
   SaveToShelf({
-    Key key, 
+    Key? key, 
     this.foodNameValue,
     this.brandNameValue,
     this.servingSizeValue,
@@ -223,7 +223,7 @@ class _SaveToShelfState extends State<SaveToShelf> {
               children: [
                 Container(
                   alignment: Alignment.centerLeft,
-                  child: Text(widget.foodNameValue,
+                  child: Text(widget.foodNameValue ?? '',
                     style: textColor.copyWith(
                       fontWeight: FontWeight.w800,
                       fontSize: 32.0,

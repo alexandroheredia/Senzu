@@ -5,14 +5,14 @@ import 'package:senzu_app/shared/constants.dart';
 
 
 class MealsList extends StatefulWidget {
-  final DateTime selectedDateValue2;
-  final String breakfastMealValue;
-  final String lunchMealValue;
-  final String snacksMealValue;
-  final String dinnerMealValue;
+  final DateTime? selectedDateValue2;
+  final String? breakfastMealValue;
+  final String? lunchMealValue;
+  final String? snacksMealValue;
+  final String? dinnerMealValue;
 
   MealsList({
-    Key key, 
+    Key? key, 
     this.selectedDateValue2, 
     this.breakfastMealValue, 
     this.lunchMealValue, 
@@ -66,10 +66,10 @@ Widget buildMealList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: snapshot.data.docs.length,
+        itemCount: snapshot.data!.docs.length,
         itemBuilder: (BuildContext context, int index) {
 
-    DocumentSnapshot user = snapshot.data.docs[index];
+    DocumentSnapshot user = snapshot.data!.docs[index];
     var mealName = user.get('mealName');
     var mealId = user.get('mealId');
 

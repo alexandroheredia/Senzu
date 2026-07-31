@@ -7,15 +7,15 @@ import 'package:senzu_app/screens/food_tracker/ui/food_shelf/meal_details.dart';
 import 'package:senzu_app/shared/constants.dart';
 
 class FoodShelf extends StatefulWidget {
-  final DateTime selectedDateValue2;
-  final String breakfastMealValue;
-  final String lunchMealValue;
-  final String snacksMealValue;
-  final String dinnerMealValue;
-  final String mealIdValue;
+  final DateTime? selectedDateValue2;
+  final String? breakfastMealValue;
+  final String? lunchMealValue;
+  final String? snacksMealValue;
+  final String? dinnerMealValue;
+  final String? mealIdValue;
 
   FoodShelf({
-    Key key, 
+    Key? key, 
     this.selectedDateValue2, 
     this.breakfastMealValue, 
     this.lunchMealValue, 
@@ -157,10 +157,10 @@ Widget buildFoodList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: snapshot.data.docs.length,
+        itemCount: snapshot.data!.docs.length,
         itemBuilder: (BuildContext context, int index) {
 
-    DocumentSnapshot food = snapshot.data.docs[index];
+    DocumentSnapshot food = snapshot.data!.docs[index];
     var foodName = food.get('foodName');
     var brandName = food.get('brandName');
     var servingSize = food.get('servingSize');
@@ -445,10 +445,10 @@ Widget buildMealList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: snapshot.data.docs.length,
+        itemCount: snapshot.data!.docs.length,
         itemBuilder: (BuildContext context, int index) {
 
-    DocumentSnapshot user = snapshot.data.docs[index];
+    DocumentSnapshot user = snapshot.data!.docs[index];
     var mealName = user.get('mealName');
     var mealId = user.get('mealId');
 

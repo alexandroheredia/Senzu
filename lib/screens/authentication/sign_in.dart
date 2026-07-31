@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 class LoginForm extends StatefulWidget {
 
-  final Function toggleView;
+  final Function? toggleView;
   LoginForm({ this.toggleView });
 
   @override
@@ -14,14 +14,14 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
-    PageController _pageController;
+    late PageController _pageController;
 
   Color left = Colors.black;
   Color right = Colors.white;
 
   @override
   void dispose() {
-    _pageController?.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -72,7 +72,7 @@ class _LoginFormState extends State<LoginForm> {
                     focusedBorder: UnderlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF979797)))
                         ),
-                validator: (val) => val.isEmpty ? 'Your email goes here UwU' : null,
+                validator: (val) => val!.isEmpty ? 'Your email goes here UwU' : null,
                 onChanged: (val) {
                   setState(() => email = val);
                 },
@@ -85,7 +85,7 @@ class _LoginFormState extends State<LoginForm> {
                 decoration: InputDecoration(
                   suffixIcon: GestureDetector(
                     onTap: _showPassword,
-                    child: Icon(
+                    child: FaIcon(
                       _obscureTextPassword
                           ? FontAwesomeIcons.eye
                           : FontAwesomeIcons.eyeSlash,
@@ -109,7 +109,7 @@ class _LoginFormState extends State<LoginForm> {
                     focusedBorder: UnderlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF979797)))
                         ),
-                validator: (val) => val.length < 6 ? 'Your password must be longer than 6 characters' : null,
+                validator: (val) => val!.length < 6 ? 'Your password must be longer than 6 characters' : null,
                 onChanged: (val) {
                   setState(() => password = val);
                 },
@@ -119,7 +119,7 @@ class _LoginFormState extends State<LoginForm> {
                 padding: const EdgeInsets.fromLTRB(17,0,17,0),
                 child: ElevatedButton(
                   onPressed: () async {
-                    if(_formKey.currentState.validate()){
+                    if(_formKey.currentState!.validate()){
                       setState(() => loading = true);
                       dynamic result = await _auth.signInWithEmailAndPassword(email, password);
                       if(result == null) {

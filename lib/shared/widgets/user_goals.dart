@@ -13,7 +13,7 @@ dailyCalories(BuildContext context){
         return Text("Loading");
       }
 
-      final documents = snapshot.data;
+      final documents = snapshot.data!;
       final dailyCaloriesGoal = documents.get('dailyCaloriesGoal');
       return Text('$dailyCaloriesGoal Cal', style: textColor.copyWith(fontSize: 30));
       }
@@ -31,7 +31,7 @@ getUsername(BuildContext context){
         return Text("Loading");
       }
 
-      final documents = snapshot.data;
+      final documents = snapshot.data!;
       final username = documents.get('username');
       return Text('Hey, $username!', style: textColor.copyWith(fontSize: 30, fontWeight: FontWeight.bold,));
       }

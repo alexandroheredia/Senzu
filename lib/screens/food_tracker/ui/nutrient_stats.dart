@@ -5,7 +5,7 @@ import 'package:senzu_app/shared/constants.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 
 class NutrientStats extends StatefulWidget {
-  NutrientStats({Key key}) : super(key: key);
+  NutrientStats({Key? key}) : super(key: key);
 
   @override
   _NutrientStatsState createState() => _NutrientStatsState();
@@ -46,17 +46,17 @@ class _NutrientStatsState extends State<NutrientStats> {
     if(snapshot.data == null) 
       return loadingWidget;
 
-      final documents = snapshot.data.docs;
-      final proteinSum = documents.fold(0, (s, n) => s + n['protein'] / 7);
-      final dietaryFiberSum = documents.fold(0, (s, n) => s + n['dietaryFiber'] / 7);
-      final potassiumSum = documents.fold(0, (s, n) => s + n['potassium'] / 7);
-      final vitaminASum = documents.fold(0, (s, n) => s + n['vitaminA'] / 7);
-      final vitaminCSum = documents.fold(0, (s, n) => s + n['vitaminC'] / 7);
-      final calciumSum = documents.fold(0, (s, n) => s + n['calcium'] / 7);
-      final ironSum = documents.fold(0, (s, n) => s + n['iron'] / 7);
-      final saturatedFatSum = documents.fold(0, (s, n) => s + n['saturatedFat'] / 7);
-      final sodiumSum = documents.fold(0, (s, n) => s + n['sodium'] / 7);
-      final vitaminDSum = documents.fold(0, (s, n) => s + n['vitaminD'] / 7);
+      final documents = snapshot.data!.docs;
+      final proteinSum = documents.fold<double>(0, (s, n) => s + (n['protein'] as num) / 7);
+      final dietaryFiberSum = documents.fold<double>(0, (s, n) => s + (n['dietaryFiber'] as num) / 7);
+      final potassiumSum = documents.fold<double>(0, (s, n) => s + (n['potassium'] as num) / 7);
+      final vitaminASum = documents.fold<double>(0, (s, n) => s + (n['vitaminA'] as num) / 7);
+      final vitaminCSum = documents.fold<double>(0, (s, n) => s + (n['vitaminC'] as num) / 7);
+      final calciumSum = documents.fold<double>(0, (s, n) => s + (n['calcium'] as num) / 7);
+      final ironSum = documents.fold<double>(0, (s, n) => s + (n['iron'] as num) / 7);
+      final saturatedFatSum = documents.fold<double>(0, (s, n) => s + (n['saturatedFat'] as num) / 7);
+      final sodiumSum = documents.fold<double>(0, (s, n) => s + (n['sodium'] as num) / 7);
+      final vitaminDSum = documents.fold<double>(0, (s, n) => s + (n['vitaminD'] as num) / 7);
       // final zincSum = documents.fold(0, (s, n) => s + n['zinc'] / 7);
       // final magnesiumSum = documents.fold(0, (s, n) => s + n['magnesium'] / 7);
 
@@ -339,17 +339,17 @@ class _NutrientStatsState extends State<NutrientStats> {
     if(snapshot.data == null) 
       return loadingWidget;
 
-      final documents = snapshot.data.docs;
-      final proteinSum = documents.fold(0, (s, n) => s + n['protein'] / 30);
-      final dietaryFiberSum = documents.fold(0, (s, n) => s + n['dietaryFiber'] / 30);
-      final potassiumSum = documents.fold(0, (s, n) => s + n['potassium'] / 30);
-      final vitaminASum = documents.fold(0, (s, n) => s + n['vitaminA'] / 30);
-      final vitaminCSum = documents.fold(0, (s, n) => s + n['vitaminC'] / 30);
-      final calciumSum = documents.fold(0, (s, n) => s + n['calcium'] / 30);
-      final ironSum = documents.fold(0, (s, n) => s + n['iron'] / 30);
-      final saturatedFatSum = documents.fold(0, (s, n) => s + n['saturatedFat'] / 30);
-      final sodiumSum = documents.fold(0, (s, n) => s + n['sodium'] / 30);
-      final vitaminDSum = documents.fold(0, (s, n) => s + n['vitaminD'] / 30);
+      final documents = snapshot.data!.docs;
+      final proteinSum = documents.fold<double>(0, (s, n) => s + (n['protein'] as num) / 30);
+      final dietaryFiberSum = documents.fold<double>(0, (s, n) => s + (n['dietaryFiber'] as num) / 30);
+      final potassiumSum = documents.fold<double>(0, (s, n) => s + (n['potassium'] as num) / 30);
+      final vitaminASum = documents.fold<double>(0, (s, n) => s + (n['vitaminA'] as num) / 30);
+      final vitaminCSum = documents.fold<double>(0, (s, n) => s + (n['vitaminC'] as num) / 30);
+      final calciumSum = documents.fold<double>(0, (s, n) => s + (n['calcium'] as num) / 30);
+      final ironSum = documents.fold<double>(0, (s, n) => s + (n['iron'] as num) / 30);
+      final saturatedFatSum = documents.fold<double>(0, (s, n) => s + (n['saturatedFat'] as num) / 30);
+      final sodiumSum = documents.fold<double>(0, (s, n) => s + (n['sodium'] as num) / 30);
+      final vitaminDSum = documents.fold<double>(0, (s, n) => s + (n['vitaminD'] as num) / 30);
       // final zincSum = documents.fold(0, (s, n) => s + n['sodium'] / 30);
       // final magnesiumSum = documents.fold(0, (s, n) => s + n['sodium'] / 30);
 
