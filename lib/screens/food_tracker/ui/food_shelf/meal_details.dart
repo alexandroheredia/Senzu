@@ -328,7 +328,7 @@ Widget buildMealFoodItemsList(
   }
 
   // Opens a screen from the bottom up with the list of foods from the user's food shelf
-  Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> _openFoodShelf(){
+  Future<void> _openFoodShelf(){
     return showModalBottomSheet<void>(
       context: context,
       builder: (context) {

@@ -282,7 +282,7 @@ Widget buildFoodList(
     }
   }
 
-  Column Column dynamic dynamic dynamic dynamic dynamic dynamic mealsListBody(){
+  Column mealsListBody(){
     return Column(
       children: <Widget>[
       _createMealButton(),
@@ -320,7 +320,7 @@ Widget buildFoodList(
   );
 }
 
-  Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> _openCreateMealForm(){
+   Future<void> _openCreateMealForm(){
     return showModalBottomSheet<void>(
       isScrollControlled: true,
       context: context,

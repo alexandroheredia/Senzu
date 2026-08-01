@@ -1,7 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:senzu_app/screens/authentication/utils/snackbar.dart';
-import 'package:senzu_app/shared/constants.dart';
+import 'package:senzu_app/shared/auth_scope.dart';
+import 'package:senzu_app/shared/firestore_db.dart';
+import 'package:senzu_app/shared/theme.dart';
 
 class NutritionGoals extends StatefulWidget {
   const NutritionGoals({super.key});

@@ -82,184 +82,184 @@ class _FoodDetailsState extends State<FoodDetails> {
     }
   }
 
-  int int _caloriesIntake() {
+  int _caloriesIntake() {
     final caloriesIntake =
         (_portionSize / widget.food.servingSize) * widget.food.calories;
     return caloriesIntake.toInt();
   }
 
-  int int _totalFatIntake() {
+  int _totalFatIntake() {
     final totalFatIntake =
         (_portionSize / widget.food.servingSize) * widget.food.totalFat;
     return totalFatIntake.toInt();
   }
 
-  int int _saturatedFatIntake() {
+  int _saturatedFatIntake() {
     final saturatedFatIntake =
         (_portionSize / widget.food.servingSize) * widget.food.saturatedFat;
     return saturatedFatIntake.toInt();
   }
 
-  int int _transFatIntake() {
+  int _transFatIntake() {
     final transFatIntake =
         (_portionSize / widget.food.servingSize) * widget.food.transFat;
     return transFatIntake.toInt();
   }
 
-  int int _cholesterolIntake() {
+  int _cholesterolIntake() {
     final cholesterolIntake =
         (_portionSize / widget.food.servingSize) * widget.food.cholesterol;
     return cholesterolIntake.toInt();
   }
 
-  int int _sodiumIntake() {
+  int _sodiumIntake() {
     final sodiumIntake =
         (_portionSize / widget.food.servingSize) * widget.food.sodium;
     return sodiumIntake.toInt();
   }
 
-  int int _totalCarbohydrateIntake() {
+  int _totalCarbohydrateIntake() {
     final totalCarbohydrateIntake =
         (_portionSize / widget.food.servingSize) *
         widget.food.totalCarbohydrate;
     return totalCarbohydrateIntake.toInt();
   }
 
-  int int _dietaryFiberIntake() {
+  int _dietaryFiberIntake() {
     final dietaryFiberIntake =
         (_portionSize / widget.food.servingSize) * widget.food.dietaryFiber;
     return dietaryFiberIntake.toInt();
   }
 
-  int int _sugarsIntake() {
+  int _sugarsIntake() {
     final sugarsIntake =
         (_portionSize / widget.food.servingSize) * widget.food.sugars;
     return sugarsIntake.toInt();
   }
 
-  int int _proteinIntake() {
+  int _proteinIntake() {
     final proteinIntake =
         (_portionSize / widget.food.servingSize) * widget.food.protein;
     return proteinIntake.toInt();
   }
 
-  int int _calciumIntake() {
+  int _calciumIntake() {
     final calciumIntake =
         (_portionSize / widget.food.servingSize) * widget.food.calcium;
     return calciumIntake.toInt();
   }
 
-  int int _ironIntake() {
+  int _ironIntake() {
     final ironIntake =
         (_portionSize / widget.food.servingSize) * widget.food.iron;
     return ironIntake.toInt();
   }
 
-  int int _potassiumIntake() {
+  int _potassiumIntake() {
     final potassiumIntake =
         (_portionSize / widget.food.servingSize) * widget.food.potassium;
     return potassiumIntake.toInt();
   }
 
-  int int _vitaminAIntake() {
+  int _vitaminAIntake() {
     final vitaminAIntake =
         (_portionSize / widget.food.servingSize) * widget.food.vitaminA;
     return vitaminAIntake.toInt();
   }
 
-  int int _vitaminCIntake() {
+  int _vitaminCIntake() {
     final vitaminCIntake =
         (_portionSize / widget.food.servingSize) * widget.food.vitaminC;
     return vitaminCIntake.toInt();
   }
 
-  int int _vitaminDIntake() {
+  int _vitaminDIntake() {
     final vitaminDIntake =
         (_portionSize / widget.food.servingSize) * widget.food.vitaminD;
     return vitaminDIntake.toInt();
   }
 
-  int int _magnesiumIntake() {
+  int _magnesiumIntake() {
     final magnesiumIntake =
         (_portionSize / widget.food.servingSize) * widget.food.magnesium;
     return magnesiumIntake.toInt();
   }
 
-  int int _zincIntake() {
+  int _zincIntake() {
     final zincIntake =
         (_portionSize / widget.food.servingSize) * widget.food.zinc;
     return zincIntake.toInt();
   }
 
-  dynamic dynamic dynamic dynamic dynamic dynamic dynamic dynamic breakfastCalories() {
+  dynamic breakfastCalories() {
     final breakfastCalories = _caloriesIntake();
     return breakfastCalories;
   }
 
-  dynamic dynamic dynamic dynamic dynamic dynamic dynamic dynamic lunchCalories() {
+  dynamic lunchCalories() {
     final lunchCalories = _caloriesIntake();
     return lunchCalories;
   }
 
-  dynamic dynamic dynamic dynamic dynamic dynamic dynamic dynamic snacksCalories() {
+  dynamic snacksCalories() {
     final snacksCalories = _caloriesIntake();
     return snacksCalories;
   }
 
-  dynamic dynamic dynamic dynamic dynamic dynamic dynamic dynamic dinnerCalories() {
+  dynamic dinnerCalories() {
     final dinnerCalories = _caloriesIntake();
     return dinnerCalories;
   }
 
-  double double double double double double double double totalFatPercentage() {
+  double totalFatPercentage() {
     return (widget.food.totalFat / totalFatDailyValue) * 100;
   }
 
-  double double double double double double double double saturatedFatPercentage() {
+  double saturatedFatPercentage() {
     return (widget.food.saturatedFat / saturatedFatDailyValue) * 100;
   }
 
-  double double double double double double double double cholesterolPercentage() {
+  double cholesterolPercentage() {
     return (widget.food.cholesterol / cholesterolDailyValue) * 100;
   }
 
-  double double double double double double double double sodiumPercentage() {
+  double sodiumPercentage() {
     return (widget.food.sodium / sodiumDailyValue) * 100;
   }
 
-  double double double double double double double double totalCarbohydratePercentage() {
+  double totalCarbohydratePercentage() {
     return (widget.food.totalCarbohydrate / totalCarbohydrateDailyValue) * 100;
   }
 
-  double double double double double double double double dietaryFiberPercentage() {
+  double dietaryFiberPercentage() {
     return (widget.food.dietaryFiber / dietaryFiberDailyValue) * 100;
   }
 
-  double double double double double double double double addedSugarsPercentage() {
+  double addedSugarsPercentage() {
     return (widget.food.addedSugars / addedSugarsDailyValue) * 100;
   }
 
-  double double double double double double double double vitaminDPercentage() {
+  double vitaminDPercentage() {
     return (widget.food.vitaminD / vitaminDDailyValue) * 100;
   }
 
-  double double double double double double double double calciumPercentage() {
+  double calciumPercentage() {
     return (widget.food.calcium / calciumDailyValue) * 100;
   }
 
-  double double double double double double double double ironPercentage() {
+  double ironPercentage() {
     return (widget.food.iron / ironDailyValue) * 100;
   }
 
-  double double double double double double double double potassiumPercentage() {
+  double potassiumPercentage() {
     return (widget.food.potassium / potassiumDailyValue) * 100;
   }
 
-  double double double double double double double double vitaminCPercentage() {
+  double vitaminCPercentage() {
     return (widget.food.vitaminC / vitaminCDailyValue) * 100;
   }
 
-  double double double double double double double double vitaminAPercentage() {
+  double vitaminAPercentage() {
     return (widget.food.vitaminA / vitaminADailyValue) * 100;
   }
 
