@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:provider/provider.dart';
 import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/screens/food_tracker/add_meal_widgets/add_to_meal.dart';
 import 'package:senzu_app/screens/food_tracker/ui/nutrient_stats.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
+import 'package:senzu_app/screens/food_tracker/widgets/meal_card.dart';
 import 'package:senzu_app/screens/top_foods/top_foods_list.dart';
 import 'package:senzu_app/services/food_log_repository.dart';
-import 'package:senzu_app/shared/constants.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/widgets/user_goals.dart';
+import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/auth_scope.dart';
 
 class FoodTracker extends StatefulWidget {
-  FoodTracker({Key? key}) : super(key: key);
+  const FoodTracker({super.key});
 
   @override
   _FoodTrackerState createState() => _FoodTrackerState();
@@ -28,7 +31,7 @@ class _FoodTrackerState extends State<FoodTracker> {
 
   // static const TextStyle optionStyle =
   //   TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
-  static List<Widget> _widgetOptions = <Widget>[
+  static final List<Widget> _widgetOptions = <Widget>[
     FoodOverview(),
     NutrientStats(),
     TopFoodsList(),
@@ -84,6 +87,8 @@ class _FoodTrackerState extends State<FoodTracker> {
 }
 
 class FoodOverview extends StatefulWidget {
+  const FoodOverview({super.key});
+
   @override
   _FoodOverviewState createState() => _FoodOverviewState();
 }
@@ -92,12 +97,31 @@ class _FoodOverviewState extends State<FoodOverview> {
   DateTime _value = DateTime.now();
   DateTime today = DateTime.now();
 
-  final FoodLogRepository _foodLog = FoodLogRepository();
+  late final FoodLogRepository _foodLog;
+
+  @override
+  void initState() {
+    super.initState();
+    _foodLog = context.read<FoodLogRepository>();
+  }
 
   Color _rightArrowColour = Color(0xffC1C1C1);
 
   /// The selected day normalized to midnight; used for queries and saving.
   DateTime get _selectedDate => startOfDay(_value);
+
+  void _openMeal(MealType mealType) {
+    Future.delayed(const Duration(milliseconds: 200), () {
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              AddToMeal(mealType: mealType, selectedDateValue: _selectedDate),
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -214,8 +238,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                                           .compareTo(Duration(days: 1)) ==
                                       -1) {
                                     setState(() {
-                                      _rightArrowColour =
-                                          Colors.grey.shade900;
+                                      _rightArrowColour = Colors.grey.shade900;
                                     });
                                   }
                                 }
@@ -238,11 +261,9 @@ class _FoodOverviewState extends State<FoodOverview> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Container(
-                              child: Text(
-                                '/',
-                                style: textColor.copyWith(fontSize: 30),
-                              ),
+                            Text(
+                              '/',
+                              style: textColor.copyWith(fontSize: 30),
                             ),
 
                             // Calorie target from Firestore
@@ -254,559 +275,42 @@ class _FoodOverviewState extends State<FoodOverview> {
                   ),
 
                   // 'Add meals' overview panel
-                  Container(
-                    // padding: EdgeInsets.fromLTRB(15, 15.0, 15.0, 15.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Column(
-                          children: <Widget>[
-                            Row(
-                              children: <Widget>[
-                                SizedBox(
-                                  height: 190,
-                                  width: 180,
-                                  child: Card(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20.0),
-                                    ),
-                                    color: Color(0xFF1e1f38),
-                                    child: InkWell(
-                                      splashColor: Color(0xFF2b2c4a),
-                                      borderRadius: BorderRadius.circular(20.0),
-                                      onTap: () {
-                                        Future.delayed(
-                                          Duration(milliseconds: 200),
-                                          () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddToMeal(
-                                                      mealType: MealType.breakfast,
-                                                      selectedDateValue:
-                                                          _selectedDate,
-                                                    ),
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                      child: Column(
-                                        children: <Widget>[
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: <Widget>[
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.fromLTRB(
-                                                      0,
-                                                      5,
-                                                      5,
-                                                      0,
-                                                    ),
-                                                child: InkWell(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        20.0,
-                                                      ),
-                                                  splashColor: Colors.grey,
-                                                  onTap: () {
-                                                    Future.delayed(
-                                                      Duration(
-                                                        milliseconds: 200,
-                                                      ),
-                                                      () {
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                AddToMeal(
-                                                                  mealType: MealType.breakfast,
-                                                                  selectedDateValue:
-                                                                      _selectedDate,
-                                                                ),
-                                                          ),
-                                                        );
-                                                      },
-                                                    );
-                                                  },
-                                                  child: Icon(
-                                                    Icons
-                                                        .add_circle_outline_rounded,
-                                                    size: 35,
-                                                    color: Color(0xFFc5c5c5),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Image(
-                                                height: 80,
-                                                fit: BoxFit.fitHeight,
-                                                image: const AssetImage(
-                                                  'assets/meal_icons/breakfast_medium.png',
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Text(
-                                                'Breakfast',
-                                                style: TextStyle(
-                                                  color: Color(0xFFc5c5c5),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 20,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Text(
-                                                '🔥 $breakfastCaloriesSum kcal',
-                                                style: TextStyle(
-                                                  color: Color(0xFFc5c5c5),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.fromLTRB(
-                                              0,
-                                              0,
-                                              0,
-                                              5,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 190,
-                                  width: 180,
-                                  child: Card(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20.0),
-                                    ),
-                                    color: Color(0xFF1e1f38),
-                                    child: InkWell(
-                                      splashColor: Color(0xFF2b2c4a),
-                                      borderRadius: BorderRadius.circular(20.0),
-                                      onTap: () {
-                                        Future.delayed(
-                                          Duration(milliseconds: 200),
-                                          () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddToMeal(
-                                                      mealType: MealType.lunch,
-                                                      selectedDateValue:
-                                                          _selectedDate,
-                                                    ),
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                      child: Column(
-                                        children: <Widget>[
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: <Widget>[
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.fromLTRB(
-                                                      0,
-                                                      5,
-                                                      5,
-                                                      0,
-                                                    ),
-                                                child: InkWell(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        20.0,
-                                                      ),
-                                                  splashColor: Colors.grey,
-                                                  onTap: () {
-                                                    Future.delayed(
-                                                      Duration(
-                                                        milliseconds: 200,
-                                                      ),
-                                                      () {
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder:
-                                                                (
-                                                                  context,
-                                                                ) => AddToMeal(
-                                                                  mealType: MealType.lunch,
-                                                                  selectedDateValue:
-                                                                      _selectedDate,
-                                                                ),
-                                                          ),
-                                                        );
-                                                      },
-                                                    );
-                                                  },
-                                                  child: Icon(
-                                                    Icons
-                                                        .add_circle_outline_rounded,
-                                                    size: 35,
-                                                    color: Color(0xFFc5c5c5),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Image(
-                                                height: 80,
-                                                fit: BoxFit.fitHeight,
-                                                image: const AssetImage(
-                                                  'assets/meal_icons/lunch_medium.png',
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Text(
-                                                'Lunch',
-                                                style: TextStyle(
-                                                  color: Color(0xFFc5c5c5),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 20,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Text(
-                                                '🔥 $lunchCaloriesSum kcal',
-                                                style: TextStyle(
-                                                  color: Color(0xFFc5c5c5),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.fromLTRB(
-                                              0,
-                                              0,
-                                              0,
-                                              5,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              children: <Widget>[
-                                SizedBox(
-                                  height: 190,
-                                  width: 180,
-                                  child: Card(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20.0),
-                                    ),
-                                    color: Color(0xFF1e1f38),
-                                    child: InkWell(
-                                      splashColor: Color(0xFF2b2c4a),
-                                      borderRadius: BorderRadius.circular(20.0),
-                                      onTap: () {
-                                        Future.delayed(
-                                          Duration(milliseconds: 200),
-                                          () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddToMeal(
-                                                      mealType: MealType.snacks,
-                                                      selectedDateValue:
-                                                          _selectedDate,
-                                                    ),
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                      child: Column(
-                                        children: <Widget>[
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: <Widget>[
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.fromLTRB(
-                                                      0,
-                                                      5,
-                                                      5,
-                                                      0,
-                                                    ),
-                                                child: InkWell(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        20.0,
-                                                      ),
-                                                  splashColor: Colors.grey,
-                                                  onTap: () {
-                                                    Future.delayed(
-                                                      Duration(
-                                                        milliseconds: 200,
-                                                      ),
-                                                      () {
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                AddToMeal(
-                                                                  mealType: MealType.snacks,
-                                                                  selectedDateValue:
-                                                                      _selectedDate,
-                                                                ),
-                                                          ),
-                                                        );
-                                                      },
-                                                    );
-                                                  },
-                                                  child: Icon(
-                                                    Icons
-                                                        .add_circle_outline_rounded,
-                                                    size: 35,
-                                                    color: Color(0xFFc5c5c5),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Image(
-                                                height: 80,
-                                                fit: BoxFit.fitHeight,
-                                                image: const AssetImage(
-                                                  'assets/meal_icons/snacks_medium.png',
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Text(
-                                                'Snacks',
-                                                style: TextStyle(
-                                                  color: Color(0xFFc5c5c5),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 20,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Text(
-                                                '🔥 $snacksCaloriesSum kcal',
-                                                style: TextStyle(
-                                                  color: Color(0xFFc5c5c5),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.fromLTRB(
-                                              0,
-                                              0,
-                                              0,
-                                              5,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 190,
-                                  width: 180,
-                                  child: Card(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20.0),
-                                    ),
-                                    color: Color(0xFF1e1f38),
-                                    child: InkWell(
-                                      splashColor: Color(0xFF2b2c4a),
-                                      borderRadius: BorderRadius.circular(20.0),
-                                      onTap: () {
-                                        Future.delayed(
-                                          Duration(milliseconds: 200),
-                                          () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddToMeal(
-                                                      mealType: MealType.dinner,
-                                                      selectedDateValue:
-                                                          _selectedDate,
-                                                    ),
-                                              ),
-                                            );
-                                          },
-                                        );
-                                      },
-                                      child: Column(
-                                        children: <Widget>[
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.end,
-                                            children: <Widget>[
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.fromLTRB(
-                                                      0,
-                                                      5,
-                                                      5,
-                                                      0,
-                                                    ),
-                                                child: InkWell(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        20.0,
-                                                      ),
-                                                  splashColor: Colors.grey,
-                                                  onTap: () {
-                                                    Future.delayed(
-                                                      Duration(
-                                                        milliseconds: 200,
-                                                      ),
-                                                      () {
-                                                        Navigator.push(
-                                                          context,
-                                                          MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                AddToMeal(
-                                                                  mealType: MealType.dinner,
-                                                                  selectedDateValue:
-                                                                      _selectedDate,
-                                                                ),
-                                                          ),
-                                                        );
-                                                      },
-                                                    );
-                                                  },
-                                                  child: Icon(
-                                                    Icons
-                                                        .add_circle_outline_rounded,
-                                                    size: 35,
-                                                    color: Color(0xFFc5c5c5),
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Image(
-                                                height: 80,
-                                                fit: BoxFit.fitHeight,
-                                                image: const AssetImage(
-                                                  'assets/meal_icons/dinner_medium.png',
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Text(
-                                                'Dinner',
-                                                style: TextStyle(
-                                                  color: Color(0xFFc5c5c5),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 20,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: <Widget>[
-                                              Text(
-                                                '🔥 $dinnerCaloriesSum kcal',
-                                                style: TextStyle(
-                                                  color: Color(0xFFc5c5c5),
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 18,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.fromLTRB(
-                                              0,
-                                              0,
-                                              0,
-                                              5,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Column(
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              MealCard(
+                                mealType: MealType.breakfast,
+                                calories: breakfastCaloriesSum,
+                                onTap: () => _openMeal(MealType.breakfast),
+                              ),
+                              MealCard(
+                                mealType: MealType.lunch,
+                                calories: lunchCaloriesSum,
+                                onTap: () => _openMeal(MealType.lunch),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: <Widget>[
+                              MealCard(
+                                mealType: MealType.snacks,
+                                calories: snacksCaloriesSum,
+                                onTap: () => _openMeal(MealType.snacks),
+                              ),
+                              MealCard(
+                                mealType: MealType.dinner,
+                                calories: dinnerCaloriesSum,
+                                onTap: () => _openMeal(MealType.dinner),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
 
                   // Nutrient intake summary panel
@@ -833,8 +337,8 @@ class _FoodOverviewState extends State<FoodOverview> {
                     builder: (BuildContext context, BoxConstraints constraints) {
                       // 3 circular indicators (2 * radius each) + 2 x 10px
                       // spacers must fit within the available width.
-                      final double radius =
-                          ((constraints.maxWidth - 20) / 6).clamp(30.0, 80.0);
+                      final double radius = ((constraints.maxWidth - 20) / 6)
+                          .clamp(30.0, 80.0);
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
@@ -846,7 +350,8 @@ class _FoodOverviewState extends State<FoodOverview> {
                                   return Column(
                                     children: [
                                       CircularPercentIndicator(
-                                        circularStrokeCap: CircularStrokeCap.round,
+                                        circularStrokeCap:
+                                            CircularStrokeCap.round,
                                         radius: radius,
                                         lineWidth: 13.0,
                                         percent: 1.0,
@@ -870,7 +375,8 @@ class _FoodOverviewState extends State<FoodOverview> {
                                   return Column(
                                     children: [
                                       CircularPercentIndicator(
-                                        circularStrokeCap: CircularStrokeCap.round,
+                                        circularStrokeCap:
+                                            CircularStrokeCap.round,
                                         radius: radius,
                                         lineWidth: 13.0,
                                         percent: carbsPercentage(),
@@ -901,7 +407,8 @@ class _FoodOverviewState extends State<FoodOverview> {
                                   return Column(
                                     children: [
                                       CircularPercentIndicator(
-                                        circularStrokeCap: CircularStrokeCap.round,
+                                        circularStrokeCap:
+                                            CircularStrokeCap.round,
                                         radius: radius,
                                         lineWidth: 13.0,
                                         percent: 1.0,
@@ -925,7 +432,8 @@ class _FoodOverviewState extends State<FoodOverview> {
                                   return Column(
                                     children: [
                                       CircularPercentIndicator(
-                                        circularStrokeCap: CircularStrokeCap.round,
+                                        circularStrokeCap:
+                                            CircularStrokeCap.round,
                                         radius: radius,
                                         lineWidth: 13.0,
                                         percent: proteinPercentage(),
@@ -956,7 +464,8 @@ class _FoodOverviewState extends State<FoodOverview> {
                                   return Column(
                                     children: [
                                       CircularPercentIndicator(
-                                        circularStrokeCap: CircularStrokeCap.round,
+                                        circularStrokeCap:
+                                            CircularStrokeCap.round,
                                         radius: radius,
                                         lineWidth: 13.0,
                                         percent: 1.0,
@@ -980,7 +489,8 @@ class _FoodOverviewState extends State<FoodOverview> {
                                   return Column(
                                     children: [
                                       CircularPercentIndicator(
-                                        circularStrokeCap: CircularStrokeCap.round,
+                                        circularStrokeCap:
+                                            CircularStrokeCap.round,
                                         radius: radius,
                                         lineWidth: 13.0,
                                         percent: fatPercentage(),
@@ -1026,8 +536,8 @@ class _FoodOverviewState extends State<FoodOverview> {
     DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _value,
-      firstDate: new DateTime(2015),
-      lastDate: new DateTime.now(),
+      firstDate: DateTime(2015),
+      lastDate: DateTime.now(),
       builder: (BuildContext context, Widget? child) {
         return Theme(
           data: ThemeData().copyWith(
@@ -1049,14 +559,15 @@ class _FoodOverviewState extends State<FoodOverview> {
   void _stateSetter() {
     if (today.difference(_value).compareTo(Duration(days: 1)) == -1) {
       setState(() => _rightArrowColour = Colors.grey);
-    } else
+    } else {
       setState(() => _rightArrowColour = Colors.grey);
+    }
   }
 
   String _dateFormatter(DateTime tm) {
-    DateTime today = new DateTime.now();
-    Duration oneDay = new Duration(days: 1);
-    Duration twoDay = new Duration(days: 2);
+    DateTime today = DateTime.now();
+    Duration oneDay = Duration(days: 1);
+    Duration twoDay = Duration(days: 2);
     String month = '';
     switch (tm.month) {
       case 1:
@@ -1135,8 +646,6 @@ class _FoodOverviewState extends State<FoodOverview> {
     final magnesiumSum = summary.magnesium;
     final zincSum = summary.zinc;
 
-    // TODO: Adjust the icon indicators according to actual nutritional advice from official sources
-    // TODO: Adjust the icon indicators to weekly stats (for example, if no zinc has been taken today but the weekly stat is good, then display the green icon)
 
     return Container(
       padding: EdgeInsets.fromLTRB(30.0, 0, 30.0, 30.0),
@@ -1159,7 +668,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Protein', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${proteinSum.toStringAsFixed(0)}',
+                proteinSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(
@@ -1185,7 +694,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Dietary Fiber', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${dietaryFiberSum.toStringAsFixed(0)}',
+                dietaryFiberSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(
@@ -1211,7 +720,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Potassium', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${potassiumSum.toStringAsFixed(0)}',
+                potassiumSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(
@@ -1237,7 +746,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Vitamin A', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${vitaminASum.toStringAsFixed(0)}',
+                vitaminASum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(
@@ -1263,7 +772,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Vitamin C', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${vitaminCSum.toStringAsFixed(0)}',
+                vitaminCSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(
@@ -1289,7 +798,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Vitamin D', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${vitaminDSum.toStringAsFixed(0)}',
+                vitaminDSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(
@@ -1315,7 +824,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Calcium', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${calciumSum.toStringAsFixed(0)}',
+                calciumSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(
@@ -1341,7 +850,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Iron', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${ironSum.toStringAsFixed(0)}',
+                ironSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(
@@ -1368,7 +877,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Saturated Fat', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${saturatedFatSum.toStringAsFixed(0)}',
+                saturatedFatSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(
@@ -1397,7 +906,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Sodium', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${sodiumSum.toStringAsFixed(0)}',
+                sodiumSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(
@@ -1423,7 +932,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Magnesium', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${magnesiumSum.toStringAsFixed(0)}',
+                magnesiumSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(
@@ -1449,7 +958,7 @@ class _FoodOverviewState extends State<FoodOverview> {
               Text('Zinc', style: textColor.copyWith(fontSize: 15)),
               Expanded(child: nutrientsDivider),
               Text(
-                '${zincSum.toStringAsFixed(0)}',
+                zincSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
               ),
               Text(

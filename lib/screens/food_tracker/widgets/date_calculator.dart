@@ -18,7 +18,7 @@ String cleanYearFormat(String date) {
 }
 
 DateTime cleanDateFormat(){
-  String convertedDate = new DateFormat("yyyy-MM-dd").format(DateTime.now());
+  String convertedDate = DateFormat("yyyy-MM-dd").format(DateTime.now());
   var parsedDate = DateTime.parse(convertedDate);
   return parsedDate;
 }

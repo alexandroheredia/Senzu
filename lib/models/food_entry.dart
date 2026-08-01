@@ -3,6 +3,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// The meal a food entry belongs to.
 enum MealType { breakfast, lunch, snacks, dinner }
 
+/// Per-meal presentation details.
+extension MealTypePresentation on MealType {
+  /// 'Breakfast' / 'Lunch' / 'Snacks' / 'Dinner'
+  String get label => name[0].toUpperCase() + name.substring(1);
+
+  /// 'Log Your Breakfast' / 'Log Your Lunch' / ...
+  String get title => 'Log Your $label';
+
+  /// Asset key of the meal icon.
+  String get assetPath => 'assets/meal_icons/${name}_medium.png';
+}
+
 MealType? mealTypeFromString(Object? value) {
   switch (value) {
     case 'breakfast':
@@ -38,6 +50,10 @@ class FoodEntry {
   final String id;
   final DateTime dateAdded;
   final MealType? mealType;
+  final String foodName;
+  final String brandName;
+  final double portionSize;
+  final double servingSize;
   final int calories;
   final int breakfastCalories;
   final int lunchCalories;
@@ -62,6 +78,10 @@ class FoodEntry {
     required this.id,
     required this.dateAdded,
     this.mealType,
+    this.foodName = '',
+    this.brandName = '',
+    this.portionSize = 0,
+    this.servingSize = 0,
     this.calories = 0,
     this.breakfastCalories = 0,
     this.lunchCalories = 0,
@@ -88,6 +108,10 @@ class FoodEntry {
       id: id,
       dateAdded: _date(map['dateAdded']),
       mealType: mealTypeFromString(map['mealType']),
+      foodName: _string(map['foodName']),
+      brandName: _string(map['brandName']),
+      portionSize: _double(map['portionSize']),
+      servingSize: _double(map['servingSize']),
       calories: _int(map['calories']),
       breakfastCalories: _int(map['breakfastCalories']),
       lunchCalories: _int(map['lunchCalories']),
@@ -182,6 +206,13 @@ class FoodLogSummary {
     }
     return summary;
   }
+}
+
+String _string(Object? value) => value is String ? value : '';
+
+double _double(Object? value) {
+  if (value is num) return value.toDouble();
+  return 0;
 }
 
 int _int(Object? value) {

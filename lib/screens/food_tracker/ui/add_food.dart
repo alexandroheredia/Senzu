@@ -1,25 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:senzu_app/screens/authentication/utils/snackbar.dart';
-import 'package:senzu_app/shared/constants.dart';
+import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
+import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/auth_scope.dart';
+
+/// One label + numeric-input row of the add-food form.
+class _NutrientField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final String hint;
+  final String? Function(String?)? validator;
+
+  const _NutrientField({
+    required this.label,
+    required this.controller,
+    required this.hint,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text(label, style: textColor.copyWith(fontSize: 18)),
+          SizedBox(
+            width: 70,
+            child: TextFormField(
+              style: textColor,
+              validator: validator,
+              decoration: textInputDecoration.copyWith(hintText: hint),
+              controller: controller,
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp('[,.0-9]')),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// An optional nutrient that can be revealed via its checkbox.
+class _OptionalNutrient {
+  final String key;
+  final String label;
+  final TextEditingController controller;
+
+  const _OptionalNutrient(this.key, this.label, this.controller);
+}
 
 class AddFood extends StatefulWidget {
-  
   final String? foodIdValue;
 
-  AddFood({
-    Key? key, 
-    this.foodIdValue
-    }) : super(key: key);
+  const AddFood({super.key, this.foodIdValue});
 
   @override
   _AddFoodState createState() => _AddFoodState();
 }
 
 class _AddFoodState extends State<AddFood> {
-
-
   final foodNameController = TextEditingController();
   final brandNameController = TextEditingController();
   final servingSizeController = TextEditingController();
@@ -50,93 +97,102 @@ class _AddFoodState extends State<AddFood> {
   final niacinController = TextEditingController();
   final pantothenicAcidController = TextEditingController();
   final vitaminEController = TextEditingController();
-  
+
+  /// Optional nutrients revealed by the "Additional fields" checkboxes.
+  late final List<_OptionalNutrient> _optionalNutrients = [
+    _OptionalNutrient(
+      'vitaminD',
+      'Vitamin D (100% = 10mcg)*',
+      vitaminDController,
+    ),
+    _OptionalNutrient(
+      'vitaminB6',
+      'Vitamin B6 (100% = 1.7mg)*',
+      vitaminB6Controller,
+    ),
+    _OptionalNutrient(
+      'folate',
+      'Folate (100% = 400mcg DFE)*',
+      folateController,
+    ),
+    _OptionalNutrient('thiamin', 'Thiamin (100% = 1.2mg)*', thiaminController),
+    _OptionalNutrient(
+      'magnesium',
+      'Magnesium (100% = 350mg)*',
+      magnesiumController,
+    ),
+    _OptionalNutrient('zinc', 'Zinc (100% = 9mg)*', zincController),
+    _OptionalNutrient(
+      'phosphorus',
+      'Phosphorus (100% = 1250mg)*',
+      phosphorusController,
+    ),
+    _OptionalNutrient(
+      'riboflavin',
+      'Riboflavin (100% = 1.3mg)*',
+      riboflavinController,
+    ),
+    _OptionalNutrient('niacin', 'Niacin (100% = 16mg)*', niacinController),
+    _OptionalNutrient(
+      'pantothenicAcid',
+      'Pantothenic Acid (100% = 5mg)*',
+      pantothenicAcidController,
+    ),
+    _OptionalNutrient(
+      'vitaminE',
+      'Vitamin E (100% = 15mg)*',
+      vitaminEController,
+    ),
+  ];
 
   @override
   void dispose() {
-    // Clean up the controller when the widget is disposed.
-    foodNameController.dispose();
-    brandNameController.dispose();
-    servingSizeController.dispose();
-    caloriesController.dispose();
-    totalFatController.dispose();
-    saturatedFatController.dispose();
-    transFatController.dispose();
-    cholesterolController.dispose();
-    sodiumController.dispose();
-    totalCarbohydrateController.dispose();
-    dietaryFiberController.dispose();
-    sugarsController.dispose();
-    addedSugarsController.dispose();
-    proteinController.dispose();
-    vitaminDController.dispose();
-    calciumController.dispose();
-    ironController.dispose();
-    potassiumController.dispose();
-    vitaminAController.dispose();
-    vitaminCController.dispose();
-    vitaminB6Controller.dispose();
-    folateController.dispose();
-    thiaminController.dispose();
-    magnesiumController.dispose();
-    zincController.dispose();
-    phosphorusController.dispose();
-    riboflavinController.dispose();
-    niacinController.dispose();
-    pantothenicAcidController.dispose();
-    vitaminEController.dispose();
+    for (final c in [
+      foodNameController,
+      brandNameController,
+      servingSizeController,
+      caloriesController,
+      totalFatController,
+      saturatedFatController,
+      transFatController,
+      cholesterolController,
+      sodiumController,
+      totalCarbohydrateController,
+      dietaryFiberController,
+      sugarsController,
+      addedSugarsController,
+      proteinController,
+      vitaminDController,
+      calciumController,
+      ironController,
+      potassiumController,
+      vitaminAController,
+      vitaminCController,
+      vitaminB6Controller,
+      folateController,
+      thiaminController,
+      magnesiumController,
+      zincController,
+      phosphorusController,
+      riboflavinController,
+      niacinController,
+      pantothenicAcidController,
+      vitaminEController,
+    ]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
-
-  String error = '';
   bool loading = false;
 
+  /// Keys of the optional nutrient fields currently revealed.
+  final Set<String> _visible = {};
 
-  bool caloriesVisibility = false;
-  bool totalFatVisibility = false;
-  bool saturatedFatVisibility = false;
-  bool transFatVisibility = false;
-  bool cholesterolVisibility = false;
-  bool sodiumVisibility = false;
-  bool totalCarbohydrateVisibility = false;
-  bool dietaryFiberVisibility = false;
-  bool sugarsVisibility = false;
-  bool addedSugarsVisibility = false;
-  bool proteinVisibility = false;
-  bool vitaminDVisibility = false;
-  bool calciumVisibility = false;
-  bool ironVisibility = false;
-  bool potassiumVisibility = false;
-  bool vitaminAVisibility = false;
-  bool vitaminCVisibility = false;
-  bool vitaminB6Visibility = false;
-  bool folateVisibility = false;
-  bool thiaminVisibility = false;
-  bool magnesiumVisibility = false;
-  bool zincVisibility = false;
-  bool phosphorusVisibility = false;
-  bool riboflavinVisibility = false;
-  bool niacinVisibility = false;
-  bool pantothenicAcidVisibility = false;
-  bool vitaminEVisibility = false;
-
-
-  // Widget _bottomAction(IconData icon, Function callback) {
-  //   return InkWell(
-  //     child: Padding(
-  //       padding: const EdgeInsets.all(8.0),
-  //       child: Icon(icon, color: Color(0xFF1e1f38),)
-  //       ),
-  //     onTap: callback,
-  //   );
-  // }
-  
   final _addFoodFormKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
-    
     return GestureDetector(
       onVerticalDragDown: (details) {
         FocusScope.of(context).requestFocus(FocusNode());
@@ -155,16 +211,7 @@ class _AddFoodState extends State<AddFood> {
           child: Row(
             mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-    
-            children: <Widget>[
-              // _bottomAction(FontAwesomeIcons.smileWink, () {}),
-              // _bottomAction(FontAwesomeIcons.chartPie, () {}),
-              SizedBox(
-                height: 40,
-                width: 150.0),
-              // _bottomAction(FontAwesomeIcons.wallet, () {}),
-    
-            ],
+            children: <Widget>[SizedBox(height: 40, width: 150.0)],
           ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -172,7 +219,6 @@ class _AddFoodState extends State<AddFood> {
           heroTag: "add_food_button",
           backgroundColor: primaryButtonColor,
           onPressed: () async {
-            // print(saturatedFatController.text.replaceAll(',', '.'));
             try {
               if (_addFoodFormKey.currentState!.validate()) {
                 setState(() => loading = true);
@@ -181,27 +227,33 @@ class _AddFoodState extends State<AddFood> {
                 if (!mounted) return;
                 Navigator.of(context).pop();
                 CustomSnackBar(
-                    context, const Text('Food item added successfully'));
+                  context,
+                  const Text('Food item added successfully'),
+                );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Please fill the required boxes')));
+                  SnackBar(content: Text('Please fill the required boxes')),
+                );
               }
             } catch (e) {
               if (mounted) {
                 setState(() => loading = false);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text('Could not save the food item. '
-                        'Please check your connection and try again.')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Could not save the food item. '
+                      'Please check your connection and try again.',
+                    ),
+                  ),
+                );
               }
             }
           },
-          child: Container(
-            child: Center(
-              child: Builder(
-                builder: (context) {
-                  return loading ? loadingWidget : Icon(Icons.add);
-                },
-              ),
+          child: Center(
+            child: Builder(
+              builder: (context) {
+                return loading ? loadingWidget : Icon(Icons.add);
+              },
             ),
           ),
         ),
@@ -210,1058 +262,247 @@ class _AddFoodState extends State<AddFood> {
     );
   }
 
-Widget addFoodForm() {
-  return SingleChildScrollView(
+  String? _required(String? value) =>
+      (value == null || value.isEmpty) ? 'Required' : null;
+
+  Widget addFoodForm() {
+    return SingleChildScrollView(
       child: Form(
         key: _addFoodFormKey,
-              child: Container(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              _NutrientField(
+                label: 'Food Name',
+                  controller: foodNameController,
+                  hint: 'Food Name',
+                  validator: _required,
+                ),
+                _NutrientField(
+                  label: 'Brand / Category',
+                  controller: brandNameController,
+                  hint: 'Brand / Category',
+                ),
+                _NutrientField(
+                  label: 'Amount per serving (g/mL)',
+                  controller: servingSizeController,
+                  hint: 'g/mL',
+                  validator: _required,
+                ),
+                _NutrientField(
+                  label: 'Calories (kcal)',
+                  controller: caloriesController,
+                  hint: 'kcal',
+                ),
+                _NutrientField(
+                  label: 'Total Fat',
+                  controller: totalFatController,
+                  hint: 'g',
+                ),
+                _NutrientField(
+                  label: 'Saturated Fat',
+                  controller: saturatedFatController,
+                  hint: 'g',
+                ),
+                _NutrientField(
+                  label: 'Trans Fat',
+                  controller: transFatController,
+                  hint: 'g',
+                ),
+                _NutrientField(
+                  label: 'Cholesterol',
+                  controller: cholesterolController,
+                  hint: 'mg',
+                ),
+                _NutrientField(
+                  label: 'Sodium/Salt',
+                  controller: sodiumController,
+                  hint: 'mg',
+                ),
+                _NutrientField(
+                  label: 'Total Carbohydrate',
+                  controller: totalCarbohydrateController,
+                  hint: 'g',
+                ),
+                _NutrientField(
+                  label: 'Dietary Fiber',
+                  controller: dietaryFiberController,
+                  hint: 'g',
+                ),
+                _NutrientField(
+                  label: 'Sugars',
+                  controller: sugarsController,
+                  hint: 'g',
+                ),
+                _NutrientField(
+                  label: 'Added sugars',
+                  controller: addedSugarsController,
+                  hint: 'g',
+                ),
+                _NutrientField(
+                  label: 'Protein',
+                  controller: proteinController,
+                  hint: 'g',
+                ),
+                _NutrientField(
+                  label: 'Calcium (100% = 800mg)*',
+                  controller: calciumController,
+                  hint: '%',
+                ),
+                _NutrientField(
+                  label: 'Iron (100% = 9mg)*',
+                  controller: ironController,
+                  hint: '%',
+                ),
+                _NutrientField(
+                  label: 'Potassium (100% = 3500mg)',
+                  controller: potassiumController,
+                  hint: '%',
+                ),
+                _NutrientField(
+                  label: 'Vitamin A (100% = 900mcg)*',
+                  controller: vitaminAController,
+                  hint: '%',
+                ),
+                _NutrientField(
+                  label: 'Vitamin C (100% = 75mg)*',
+                  controller: vitaminCController,
+                  hint: '%',
+                ),
+                for (final nutrient in _optionalNutrients)
+                  if (_visible.contains(nutrient.key))
+                    _NutrientField(
+                      label: nutrient.label,
+                      controller: nutrient.controller,
+                      hint: '%',
+                    ),
+                SizedBox(height: 10),
+                const Divider(
+                  thickness: 1,
+                  indent: 5,
+                  endIndent: 5,
+                  color: Colors.white,
+                ),
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    Expanded(
-                      child: TextFormField(
-                        style: textColor,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Required';
+                    Text(
+                      'Additional fields',
+                      style: textColor.copyWith(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                for (final nutrient in _optionalNutrients)
+                  Theme(
+                    data: ThemeData(unselectedWidgetColor: Colors.white),
+                    child: CheckboxListTile(
+                      title: Text(
+                        nutrient.label.split(' (')[0],
+                        style: textColor.copyWith(fontSize: 20),
+                      ),
+                      activeColor: primaryButtonColor,
+                      controlAffinity: ListTileControlAffinity.trailing,
+                      value: _visible.contains(nutrient.key),
+                      onChanged: (bool? show) {
+                        setState(() {
+                          if (show ?? false) {
+                            _visible.add(nutrient.key);
+                          } else {
+                            _visible.remove(nutrient.key);
                           }
-                          return null;
-                        },
-                        decoration: textInputDecoration.copyWith(
-                          hintText: 'Food Name'),
-                        controller: foodNameController,
-                        keyboardType: TextInputType.text,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Expanded(
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'Brand / Category'),
-                        controller: brandNameController,
-                        keyboardType: TextInputType.text,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Amount per serving (g/mL)',
-                      style: textColor.copyWith(fontSize: 18, ),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Required';
-                          }
-                          return null;
-                        },
-                        decoration: textInputDecoration.copyWith(hintText: 'g/mL'),
-                        controller: servingSizeController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Calories (kcal)',
-                      style: textColor.copyWith(fontSize: 18),
-                    ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'kcal'),
-                        controller: caloriesController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Total Fat',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'g'),
-                        controller: totalFatController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Saturated Fat',
-                      style: textColor.copyWith(fontSize: 18),
-                    ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'g'),
-                        controller: saturatedFatController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Trans Fat',
-                      style: textColor.copyWith(fontSize: 18),
-                    ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'g'),
-                        controller: transFatController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Cholesterol',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'mg'),
-                        controller: cholesterolController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Sodium/Salt',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'mg'),
-                        controller: sodiumController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Total Carbohydrate',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'g'),
-                        controller: totalCarbohydrateController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Dietary Fiber',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'g'),
-                        controller: dietaryFiberController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Sugars',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'g'),
-                        controller: sugarsController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Added sugars',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'g'),
-                        controller: addedSugarsController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Protein',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: 'g'),
-                        controller: proteinController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Calcium (100% = 800mg)*',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: '%'),
-                        controller: calciumController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Iron (100% = 9mg)*',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: '%'),
-                        controller: ironController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Potassium (100% = 3500mg)',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: '%'),
-                        controller: potassiumController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Vitamin A (100% = 900mcg)*',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: '%'),
-                        controller: vitaminAController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(4.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text('Vitamin C (100% = 75mg)*',
-                      style: textColor.copyWith(fontSize: 18),
-                      ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: textColor,
-                        decoration: textInputDecoration.copyWith(hintText: '%'),
-                        controller: vitaminCController,
-                        keyboardType: TextInputType.numberWithOptions(decimal: true),
-                        inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Visibility(
-                visible: vitaminDVisibility,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text('Vitamin D (100% = 10mcg)*',
-                        style: textColor.copyWith(fontSize: 18),
-                        ),
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          style: textColor,
-                          decoration: textInputDecoration.copyWith(hintText: '%'),
-                          controller: vitaminDController,
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: vitaminB6Visibility,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text('Vitamin B6 (100% = 	1.7mg)*',
-                        style: textColor.copyWith(fontSize: 18),
-                        ),
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          style: textColor,
-                          decoration: textInputDecoration.copyWith(hintText: '%'),
-                          controller: vitaminB6Controller,
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: folateVisibility,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text('Folate (100% = 400mcg DFE)*',
-                        style: textColor.copyWith(fontSize: 18),
-                        ),
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          style: textColor,
-                          decoration: textInputDecoration.copyWith(hintText: '%'),
-                          controller: folateController,
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: thiaminVisibility,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text('Thiamin (100% = 1.2mg)*',
-                        style: textColor.copyWith(fontSize: 18),
-                        ),
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          style: textColor,
-                          decoration: textInputDecoration.copyWith(hintText: '%'),
-                          controller: thiaminController,
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: magnesiumVisibility,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text('Magnesium (100% = 350mg)*',
-                        style: textColor.copyWith(fontSize: 18),
-                        ),
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          style: textColor,
-                          decoration: textInputDecoration.copyWith(hintText: '%'),
-                          controller: magnesiumController,
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: zincVisibility,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text('Zinc (100% = 9mg)*',
-                        style: textColor.copyWith(fontSize: 18),
-                        ),
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          style: textColor,
-                          decoration: textInputDecoration.copyWith(hintText: '%'),
-                          controller: zincController,
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: phosphorusVisibility,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text('Phosphorus (100% = 1250mg)*',
-                        style: textColor.copyWith(fontSize: 18),
-                        ),
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          style: textColor,
-                          decoration: textInputDecoration.copyWith(hintText: '%'),
-                          controller: phosphorusController,
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: riboflavinVisibility,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text('Riboflavin (100% = 1.3mg)*',
-                        style: textColor.copyWith(fontSize: 18),
-                      ),
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          style: textColor,
-                          decoration: textInputDecoration.copyWith(hintText: '%'),
-                          controller: riboflavinController,
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: niacinVisibility,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text('Niacin (100% = 16mg)*',
-                        style: textColor.copyWith(fontSize: 18),
-                      ),
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          style: textColor,
-                          decoration: textInputDecoration.copyWith(hintText: '%'),
-                          controller: niacinController,
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: pantothenicAcidVisibility,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text('Pantothenic Acid (100% = 5mg)*',
-                        style: textColor.copyWith(fontSize: 18),
-                      ),
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          style: textColor,
-                          decoration: textInputDecoration.copyWith(hintText: '%'),
-                          controller: pantothenicAcidController,
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Visibility(
-                visible: vitaminEVisibility,
-                child: Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text('Vitamin E (100% = 15mg)*',
-                        style: textColor.copyWith(fontSize: 18),
-                      ),
-                      SizedBox(
-                        width: 70,
-                        child: TextFormField(
-                          style: textColor,
-                          decoration: textInputDecoration.copyWith(hintText: '%'),
-                          controller: vitaminEController,
-                          keyboardType: TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [ FilteringTextInputFormatter.allow((RegExp("[,.0-9]"))) ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(height: 10,),
-              Divider(
-                thickness: 1,
-                indent: 5,
-                endIndent: 5,
-                color: Colors.white,
-              ),
-              SizedBox(height: 10,),
-              
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text('Additional fields',
-                    style: textColor.copyWith(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                ],
-              ),
-            
-              Theme(
-                data: ThemeData(unselectedWidgetColor: Colors.white),
-                child: CheckboxListTile(
-                  title: Text("Vitamin D",
-                    style: textColor.copyWith(fontSize: 20),
-                  ),
-                  activeColor: primaryButtonColor,
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  value: vitaminDVisibility,
-                  onChanged: (bool? showVitaminDField) {
-                    setState(() {
-                      vitaminDVisibility = showVitaminDField ?? false;
-                    });
-                  },
-                ),
-              ),
-              Theme(
-                data: ThemeData(unselectedWidgetColor: Colors.white),
-                child: CheckboxListTile(
-                  title: Text("Vitamin B6",
-                    style: textColor.copyWith(fontSize: 20),
-                  ),
-                  activeColor: primaryButtonColor,
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  value: vitaminB6Visibility,
-                  onChanged: (bool? showVitaminB6Field) {
-                    setState(() {
-                      vitaminB6Visibility = showVitaminB6Field ?? false;
-                    });
-                  },
-                ),
-              ),
-              Theme(
-                data: ThemeData(unselectedWidgetColor: Colors.white),
-                child: CheckboxListTile(
-                  title: Text("Folate",
-                    style: textColor.copyWith(fontSize: 20),
-                  ),
-                  activeColor: primaryButtonColor,
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  value: folateVisibility,
-                  onChanged: (bool? showFolateField) {
-                    setState(() {
-                      folateVisibility = showFolateField ?? false;
-                    });
-                  },
-                ),
-              ),
-              Theme(
-                data: ThemeData(unselectedWidgetColor: Colors.white),
-                child: CheckboxListTile(
-                  title: Text("Thiamin",
-                    style: textColor.copyWith(fontSize: 20),
-                  ),
-                  activeColor: primaryButtonColor,
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  value: thiaminVisibility,
-                  onChanged: (bool? showThiaminField) {
-                    setState(() {
-                      thiaminVisibility = showThiaminField ?? false;
-                    });
-                  },
-                ),
-              ),
-              Theme(
-                data: ThemeData(unselectedWidgetColor: Colors.white),
-                child: CheckboxListTile(
-                  title: Text("Magnesium",
-                    style: textColor.copyWith(fontSize: 20),
-                  ),
-                  activeColor: primaryButtonColor,
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  value: magnesiumVisibility,
-                  onChanged: (bool? showMagnesiumField) {
-                    setState(() {
-                      magnesiumVisibility = showMagnesiumField ?? false;
-                    });
-                  },
-                ),
-              ),
-              Theme(
-                data: ThemeData(unselectedWidgetColor: Colors.white),
-                child: CheckboxListTile(
-                  title: Text("Zinc",
-                    style: textColor.copyWith(fontSize: 20),
-                  ),
-                  activeColor: primaryButtonColor,
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  value: zincVisibility,
-                  onChanged: (bool? showZincField) {
-                    setState(() {
-                      zincVisibility = showZincField ?? false;
-                    });
-                  },
-                ),
-              ),
-              Theme(
-                data: ThemeData(unselectedWidgetColor: Colors.white),
-                child: CheckboxListTile(
-                  title: Text("Phosphorus",
-                    style: textColor.copyWith(fontSize: 20),
-                  ),
-                  activeColor: primaryButtonColor,
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  value: phosphorusVisibility,
-                  onChanged: (bool? showPhosphorusField) {
-                    setState(() {
-                      phosphorusVisibility = showPhosphorusField ?? false;
-                    });
-                  },
-                ),
-              ),
-              Theme(
-                data: ThemeData(unselectedWidgetColor: Colors.white),
-                child: CheckboxListTile(
-                  title: Text("Riboflavin",
-                    style: textColor.copyWith(fontSize: 20),
-                  ),
-                  activeColor: primaryButtonColor,
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  value: riboflavinVisibility,
-                  onChanged: (bool? showRiboflavinField) {
-                    setState(() {
-                      riboflavinVisibility = showRiboflavinField ?? false;
-                    });
-                  },
-                ),
-              ),
-              Theme(
-                data: ThemeData(unselectedWidgetColor: Colors.white),
-                child: CheckboxListTile(
-                  title: Text("Niacin",
-                    style: textColor.copyWith(fontSize: 20),
-                  ),
-                  activeColor: primaryButtonColor,
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  value: niacinVisibility,
-                  onChanged: (bool? showNiacinField) {
-                    setState(() {
-                      niacinVisibility = showNiacinField ?? false;
-                    });
-                  },
-                ),
-              ),
-              Theme(
-                data: ThemeData(unselectedWidgetColor: Colors.white),
-                child: CheckboxListTile(
-                  title: Text("Pantothenic Acid",
-                    style: textColor.copyWith(fontSize: 20),
-                  ),
-                  activeColor: primaryButtonColor,
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  value: pantothenicAcidVisibility,
-                  onChanged: (bool? showPantothenicAcidField) {
-                    setState(() {
-                      pantothenicAcidVisibility = showPantothenicAcidField ?? false;
-                    });
-                  },
-                ),
-              ),
-              Theme(
-                data: ThemeData(unselectedWidgetColor: Colors.white),
-                child: CheckboxListTile(
-                  title: Text("Vitamin E",
-                    style: textColor.copyWith(fontSize: 20),
-                  ),
-                  activeColor: primaryButtonColor,
-                  controlAffinity: ListTileControlAffinity.trailing,
-                  value: vitaminEVisibility,
-                  onChanged: (bool? showVitaminEField) {
-                    setState(() {
-                      vitaminEVisibility = showVitaminEField ?? false;
-                    });
-                  },
-                ),
-              ),
-              SizedBox(height: 25,),
-              SizedBox(
-                height: 60,
-                width: 320,
-                child: Text('* The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.',
-                  style: textColor.copyWith(fontSize: 13,),
-                      textAlign: TextAlign.justify,
+                        });
+                      },
                     ),
                   ),
-              SizedBox(height: 25,),
-            ],
+                SizedBox(height: 25),
+                SizedBox(
+                  height: 60,
+                  width: 320,
+                  child: Text(
+                    '* The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.',
+                    style: textColor.copyWith(fontSize: 13),
+                    textAlign: TextAlign.justify,
+                  ),
+                ),
+                SizedBox(height: 25),
+              ],
+            ),
           ),
         ),
-    ),
-      ),
-  );
-
-}
-
-
-   _ironPercentage(){
-     var ironPercentage = (double.parse(ironController.text.replaceAll(',', '.')) / 100) * ironDailyValue;
-     return ironPercentage.toStringAsFixed(2);
-   }
-
-   _calciumPercentage(){
-     var calciumPercentage = (double.parse(calciumController.text.replaceAll(',', '.')) / 100) * calciumDailyValue;
-     return calciumPercentage.toStringAsFixed(2);
-   }
-
-   _potassiumPercentage(){
-     var potassiumPercentage = (double.parse(potassiumController.text.replaceAll(',', '.')) / 100) * potassiumDailyValue;
-     return potassiumPercentage.toStringAsFixed(2);
-   }
-
-   _vitaminAPercentage(){
-     var vitaminAPercentage = (double.parse(vitaminAController.text.replaceAll(',', '.')) / 100) * vitaminADailyValue;
-     return vitaminAPercentage.toStringAsFixed(2);
-   }
-
-   _vitaminCPercentage(){
-     var vitaminCPercentage = (double.parse(vitaminCController.text.replaceAll(',', '.')) / 100) * vitaminCDailyValue;
-     return vitaminCPercentage.toStringAsFixed(2);
-   }
-
-   _vitaminDPercentage(){
-     var vitaminDPercentage = (double.parse(vitaminDController.text.replaceAll(',', '.')) / 100) * vitaminDDailyValue;
-     return vitaminDPercentage.toStringAsFixed(2);
-   }
-
-   _vitaminB6Percentage(){
-     var vitaminB6Percentage = (double.parse(vitaminB6Controller.text.replaceAll(',', '.')) / 100) * vitaminB6DailyValue;
-     return vitaminB6Percentage.toStringAsFixed(2);
-   }
-   
-   _folatePercentage(){
-     var folatePercentage = (double.parse(folateController.text.replaceAll(',', '.')) / 100) * folateDailyValue;
-     return folatePercentage.toStringAsFixed(2);
-   }
-
-    _thiaminPercentage(){
-    var thiaminPercentage = (double.parse(thiaminController.text.replaceAll(',', '.')) / 100) * thiaminDailyValue;
-    return thiaminPercentage.toStringAsFixed(2);
+      );
+    }
   }
 
-   _magnesiumPercentage(){
-     var magnesiumPercentage = (double.parse(magnesiumController.text.replaceAll(',', '.')) / 100) * magnesiumDailyValue;
-     return magnesiumPercentage.toStringAsFixed(2);
-   }
+  /// Parses a controller value to a double; 0 when empty/invalid.
+  double _parse(TextEditingController c) {
+    final text = c.text.replaceAll(',', '.').trim();
+    return text.isEmpty ? 0 : double.parse(text);
+  }
 
-   _zincPercentage(){
-     var zincPercentage = (double.parse(zincController.text.replaceAll(',', '.')) / 100) * zincDailyValue;
-     return zincPercentage.toStringAsFixed(2);
-   }
+  /// Converts a %-DV input to the absolute nutrient amount.
+  double _percent(TextEditingController c, num dailyValue) {
+    return _parse(c) / 100 * dailyValue;
+  }
 
-   _phosphorusPercentage(){
-     var phosphorusPercentage = (double.parse(phosphorusController.text.replaceAll(',', '.')) / 100) * phosphorusDailyValue;
-     return phosphorusPercentage.toStringAsFixed(2);
-   }
-
-   _riboflavinPercentage(){
-     var riboflavinPercentage = (double.parse(riboflavinController.text.replaceAll(',', '.')) / 100) * riboflavinDailyValue;
-     return riboflavinPercentage.toStringAsFixed(2);
-   }
-
-   _niacinPercentage(){
-     var niacinPercentage = (double.parse(niacinController.text.replaceAll(',', '.')) / 100) * niacinDailyValue;
-     return niacinPercentage.toStringAsFixed(2);
-   }
-
-   _pantothenicAcidPercentage(){
-     var pantothenicAcidPercentage = (double.parse(pantothenicAcidController.text.replaceAll(',', '.')) / 100) * pantothenicAcidDailyValue;
-     return pantothenicAcidPercentage.toStringAsFixed(2);
-   }
-
-   _vitaminEPercentage(){
-     var vitaminEPercentage = (double.parse(vitaminEController.text.replaceAll(',', '.')) / 100) * vitaminEDailyValue;
-     return vitaminEPercentage.toStringAsFixed(2);
-   }
-
-
-  // Saves manual food entry to the user's shelf collection "database/users/userID/foodShelf/"
-  Future<void> saveFoodToShelf() async {
-
-    await dbUsersCollection
-      .doc(myUID(context))
-      .collection('foodShelf')
-      .doc(widget.foodIdValue)
-      .set({
+  /// The food document shared by the shelf and global-food collections.
+  Map<String, dynamic> _foodData() {
+    double raw(TextEditingController c) => _parse(c);
+    double pct(TextEditingController c, num daily) => _percent(c, daily);
+    return {
       "foodId": widget.foodIdValue,
       "foodName": foodNameController.text,
       "brandName": brandNameController.text,
-      "servingSize": servingSizeController.text.isNotEmpty ? double.parse(servingSizeController.text) : 0,
-      "calories": caloriesController.text.isNotEmpty ? double.parse(caloriesController.text.replaceAll(',', '.')) : 0,
-      "totalFat": totalFatController.text.isNotEmpty ? double.parse(totalFatController.text.replaceAll(',', '.')) : 0,
-      "saturatedFat": saturatedFatController.text.isNotEmpty ? double.parse(saturatedFatController.text.replaceAll(',', '.')) : 0,
-      "transFat": transFatController.text.isNotEmpty ? double.parse(transFatController.text.replaceAll(',', '.')) : 0,
-      "cholesterol": cholesterolController.text.isNotEmpty ? double.parse(cholesterolController.text.replaceAll(',', '.')) : 0,
-      "sodium": sodiumController.text.isNotEmpty ? double.parse(sodiumController.text.replaceAll(',', '.')) : 0,
-      "totalCarbohydrate": totalCarbohydrateController.text.isNotEmpty ? double.parse(totalCarbohydrateController.text.replaceAll(',', '.')) : 0,
-      "dietaryFiber": dietaryFiberController.text.isNotEmpty ? double.parse(dietaryFiberController.text.replaceAll(',', '.')) : 0,
-      "sugars": sugarsController.text.isNotEmpty ? double.parse(sugarsController.text.replaceAll(',', '.')) : 0,
-      "addedSugars": addedSugarsController.text.isNotEmpty ? double.parse(addedSugarsController.text.replaceAll(',', '.')) : 0,
-      "protein": proteinController.text.isNotEmpty ? double.parse(proteinController.text.replaceAll(',', '.')) : 0,
-      "vitaminD": vitaminDController.text.isNotEmpty ? double.parse(_vitaminDPercentage()) : 0,
-      "calcium": calciumController.text.isNotEmpty ? double.parse(_calciumPercentage()) : 0,
-      "iron": ironController.text.isNotEmpty ? double.parse(_ironPercentage()) : 0,
-      "potassium": potassiumController.text.isNotEmpty ? double.parse(_potassiumPercentage()) : 0,
-      "vitaminA": vitaminAController.text.isNotEmpty ? double.parse(_vitaminAPercentage()) : 0,
-      "vitaminC": vitaminCController.text.isNotEmpty ? double.parse(_vitaminCPercentage()) : 0,
-      "vitaminB6": vitaminB6Controller.text.isNotEmpty ? double.parse(_vitaminB6Percentage()) : 0,
-      "folate": folateController.text.isNotEmpty ? double.parse(_folatePercentage()) : 0,
-      "thiamin": thiaminController.text.isNotEmpty ? double.parse(_thiaminPercentage()) : 0,
-      "magnesium": magnesiumController.text.isNotEmpty ? double.parse(_magnesiumPercentage()) : 0,
-      "zinc": zincController.text.isNotEmpty ? double.parse(_zincPercentage()) : 0,
-      "phosphorus": phosphorusController.text.isNotEmpty ? double.parse(_phosphorusPercentage()) : 0,
-      "riboflavin": riboflavinController.text.isNotEmpty ? double.parse(_riboflavinPercentage()) : 0,
-      "niacin": niacinController.text.isNotEmpty ? double.parse(_niacinPercentage()) : 0,
-      "pantothenicAcid": pantothenicAcidController.text.isNotEmpty ? double.parse(_pantothenicAcidPercentage()) : 0,
-      "vitaminE": vitaminEController.text.isNotEmpty ? double.parse(_vitaminEPercentage()) : 0,
-      "timesAdded": 0,
-    });
+      "servingSize": raw(servingSizeController),
+      "calories": raw(caloriesController),
+      "totalFat": raw(totalFatController),
+      "saturatedFat": raw(saturatedFatController),
+      "transFat": raw(transFatController),
+      "cholesterol": raw(cholesterolController),
+      "sodium": raw(sodiumController),
+      "totalCarbohydrate": raw(totalCarbohydrateController),
+      "dietaryFiber": raw(dietaryFiberController),
+      "sugars": raw(sugarsController),
+      "addedSugars": raw(addedSugarsController),
+      "protein": raw(proteinController),
+      "vitaminD": pct(vitaminDController, vitaminDDailyValue),
+      "calcium": pct(calciumController, calciumDailyValue),
+      "iron": pct(ironController, ironDailyValue),
+      "potassium": pct(potassiumController, potassiumDailyValue),
+      "vitaminA": pct(vitaminAController, vitaminADailyValue),
+      "vitaminC": pct(vitaminCController, vitaminCDailyValue),
+      "vitaminB6": pct(vitaminB6Controller, vitaminB6DailyValue),
+      "folate": pct(folateController, folateDailyValue),
+      "thiamin": pct(thiaminController, thiaminDailyValue),
+      "magnesium": pct(magnesiumController, magnesiumDailyValue),
+      "zinc": pct(zincController, zincDailyValue),
+      "phosphorus": pct(phosphorusController, phosphorusDailyValue),
+      "riboflavin": pct(riboflavinController, riboflavinDailyValue),
+      "niacin": pct(niacinController, niacinDailyValue),
+      "pantothenicAcid": pct(
+        pantothenicAcidController,
+        pantothenicAcidDailyValue,
+      ),
+      "vitaminE": pct(vitaminEController, vitaminEDailyValue),
+    };
+  }
+
+  // Saves manual food entry to the user's shelf collection
+  // "database/users/userID/foodShelf/"
+  Future<void> saveFoodToShelf() async {
+    await context.read<ShelfRepository>().addFood(
+      myUID(context),
+      widget.foodIdValue!,
+      {..._foodData(), "timesAdded": 0},
+    );
   }
 
   // Saves manual food entry to the root database/foods collection
   Future<void> saveToFoodDatabase(BuildContext context) async {
-    await dbFoodsCollection
-      .doc(widget.foodIdValue)
-      .set({
-      "foodId": widget.foodIdValue,
-      "foodName": foodNameController.text,
-      "brandName": brandNameController.text,
-      "servingSize": servingSizeController.text.isNotEmpty ? double.parse(servingSizeController.text) : 0,
-      "calories": caloriesController.text.isNotEmpty ? double.parse(caloriesController.text.replaceAll(',', '.')) : 0,
-      "totalFat": totalFatController.text.isNotEmpty ? double.parse(totalFatController.text.replaceAll(',', '.')) : 0,
-      "saturatedFat": saturatedFatController.text.isNotEmpty ? double.parse(saturatedFatController.text.replaceAll(',', '.')) : 0,
-      "transFat": transFatController.text.isNotEmpty ? double.parse(transFatController.text.replaceAll(',', '.')) : 0,
-      "cholesterol": cholesterolController.text.isNotEmpty ? double.parse(cholesterolController.text.replaceAll(',', '.')) : 0,
-      "sodium": sodiumController.text.isNotEmpty ? double.parse(sodiumController.text.replaceAll(',', '.')) : 0,
-      "totalCarbohydrate": totalCarbohydrateController.text.isNotEmpty ? double.parse(totalCarbohydrateController.text.replaceAll(',', '.')) : 0,
-      "dietaryFiber": dietaryFiberController.text.isNotEmpty ? double.parse(dietaryFiberController.text.replaceAll(',', '.')) : 0,
-      "sugars": sugarsController.text.isNotEmpty ? double.parse(sugarsController.text.replaceAll(',', '.')) : 0,
-      "addedSugars": addedSugarsController.text.isNotEmpty ? double.parse(addedSugarsController.text.replaceAll(',', '.')) : 0,
-      "protein": proteinController.text.isNotEmpty ? double.parse(proteinController.text.replaceAll(',', '.')) : 0,
-      "vitaminD": vitaminDController.text.isNotEmpty ? double.parse(vitaminDController.text.replaceAll(',', '.')) : 0,
-      "calcium": calciumController.text.isNotEmpty ? double.parse(_calciumPercentage()) : 0,
-      "iron": ironController.text.isNotEmpty ? double.parse(_ironPercentage()) : 0,
-      "potassium": potassiumController.text.isNotEmpty ? double.parse(_potassiumPercentage()) : 0,
-      "vitaminA": vitaminAController.text.isNotEmpty ? double.parse(_vitaminAPercentage()) : 0,
-      "vitaminC": vitaminCController.text.isNotEmpty ? double.parse(_vitaminCPercentage()) : 0,
-      "vitaminB6": vitaminB6Controller.text.isNotEmpty ? double.parse(_vitaminB6Percentage()) : 0,
-      "folate": folateController.text.isNotEmpty ? double.parse(_folatePercentage()) : 0,
-      "thiamin": thiaminController.text.isNotEmpty ? double.parse(_thiaminPercentage()) : 0,
-      "magnesium": magnesiumController.text.isNotEmpty ? double.parse(_magnesiumPercentage()) : 0,
-      "zinc": zincController.text.isNotEmpty ? double.parse(_zincPercentage()) : 0,
-      "phosphorus": phosphorusController.text.isNotEmpty ? double.parse(_phosphorusPercentage()) : 0,
-      "riboflavin": riboflavinController.text.isNotEmpty ? double.parse(_riboflavinPercentage()) : 0,
-      "niacin": niacinController.text.isNotEmpty ? double.parse(_niacinPercentage()) : 0,
-      "pantothenicAcid": pantothenicAcidController.text.isNotEmpty ? double.parse(_pantothenicAcidPercentage()) : 0,
-      "vitaminE": vitaminEController.text.isNotEmpty ? double.parse(_vitaminEPercentage()) : 0,
-    });
+    await context.read<ShelfRepository>().addToCatalog(widget.foodIdValue!, _foodData());
   }
 }
-

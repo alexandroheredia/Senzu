@@ -6,7 +6,7 @@ import 'package:senzu_app/shared/theme.dart';
 class NutrientTablePage extends StatelessWidget {
   final NutrientPage page;
 
-  const NutrientTablePage({Key? key, required this.page}) : super(key: key);
+  const NutrientTablePage({super.key, required this.page});
 
   @override
   Widget build(BuildContext context) {
@@ -43,20 +43,18 @@ class NutrientTablePage extends StatelessWidget {
                   ),
                 ),
                 DataColumn(
-                  label: Container(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        const Text(
-                          'Amount per 100g',
-                          style: TextStyle(fontSize: 20.0),
-                        ),
-                        Text(
-                          page.unitLabel,
-                          style: const TextStyle(fontSize: 20.0),
-                        ),
-                      ],
-                    ),
+                  label: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      const Text(
+                        'Amount per 100g',
+                        style: TextStyle(fontSize: 20.0),
+                      ),
+                      Text(
+                        page.unitLabel,
+                        style: const TextStyle(fontSize: 20.0),
+                      ),
+                    ],
                   ),
                 ),
                 DataColumn(

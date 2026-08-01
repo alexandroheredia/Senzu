@@ -1,13 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:senzu_app/services/auth_service.dart';
-import 'package:senzu_app/shared/constants.dart';
+import 'package:senzu_app/shared/theme.dart';
 import 'package:flutter/material.dart';
 
 class Register extends StatefulWidget {
 
   final Function? toggleView;
-  Register({ this.toggleView });
+  const Register({super.key,  this.toggleView });
 
   @override
   _RegisterState createState() => _RegisterState();
@@ -122,7 +122,7 @@ class _RegisterState extends State<Register> {
                         backgroundColor: primaryButtonColor, // background
                         foregroundColor: Colors.white, // foreground
                         ),
-                      child: Container(
+                      child: SizedBox(
                         width: MediaQuery.of(context).size.width - 75,
                           height: 48,
                         child: Center(

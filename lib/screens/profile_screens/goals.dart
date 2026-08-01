@@ -1,9 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:senzu_app/models/user.dart';
 import 'package:senzu_app/screens/authentication/utils/snackbar.dart';
-import 'package:senzu_app/services/user_repository.dart';
-import 'package:senzu_app/shared/theme.dart';
-import 'package:senzu_app/shared/auth_scope.dart';
+import 'package:senzu_app/shared/constants.dart';
 
 class NutritionGoals extends StatefulWidget {
   const NutritionGoals({super.key});
@@ -31,14 +29,17 @@ class _NutritionGoalsState extends State<NutritionGoals> {
 
 Widget nutritionGoalsBody(){
 
-    return StreamBuilder<AppUser>(
-    stream: UserRepository(uid: myUID(context)).userData,
-    builder: (context, AsyncSnapshot<AppUser> snapshot){
+    return StreamBuilder(
+    stream: dbUsersCollection
+      .doc(myUID(context))
+      .snapshots(),
+    builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot){
       if (!snapshot.hasData) {
         return Text("Loading");
       }
 
-      final dailyCaloriesGoal = snapshot.data!.dailyCaloriesGoal;
+      final documents = snapshot.data!;
+      final dailyCaloriesGoal = documents.get('dailyCaloriesGoal');
       final usernameController = TextEditingController(text: dailyCaloriesGoal.toString());
       // return Text(username.toString());
       return Column(
@@ -71,9 +72,10 @@ Widget nutritionGoalsBody(){
             child: MaterialButton(
               onPressed: () async {
                 try {
-                  await UserRepository(uid: myUID(context))
-                      .updateDailyCaloriesGoal(usernameController.text);
-                  CustomSnackBar(context, const Text('Daily calories intake goal updated successfully!'));
+                  dbUsersCollection
+                    .doc(myUID(context))
+                    .update({'dailyCaloriesGoal': usernameController.text});
+                    CustomSnackBar(context, const Text('Daily calories intake goal updated successfully!'));
                 } catch (e) {
                 }
               },

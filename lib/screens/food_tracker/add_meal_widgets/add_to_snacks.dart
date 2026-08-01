@@ -1,28 +1,25 @@
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_shelf.dart';
-import 'package:senzu_app/services/food_log_repository.dart';
-import 'package:senzu_app/shared/theme.dart';
-import 'package:senzu_app/shared/auth_scope.dart';
-import 'package:provider/provider.dart';
+import 'package:senzu_app/screens/food_tracker/ui/food_shelf/meals.dart';
+import 'package:senzu_app/shared/constants.dart';
 
-class AddToMeal extends StatefulWidget {
+
+class AddToSnacks extends StatefulWidget {
+
   final DateTime selectedDateValue;
-  final MealType mealType;
-
-  const AddToMeal({
-    super.key,
-    required this.selectedDateValue,
-    required this.mealType,
-  });
+  
+  AddToSnacks({
+    Key? key, 
+    required this.selectedDateValue}) : super(key: key);
 
   @override
-  _AddToMealState createState() => _AddToMealState();
+  _AddToSnacksState createState() => _AddToSnacksState();
 }
 
-class _AddToMealState extends State<AddToMeal> {
+class _AddToSnacksState extends State<AddToSnacks> {
 
   final _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
   final Random _rnd = Random();
@@ -37,6 +34,7 @@ class _AddToMealState extends State<AddToMeal> {
     return foodId;
   }
 
+
   bool loading = false;
 
   @override
@@ -45,27 +43,27 @@ class _AddToMealState extends State<AddToMeal> {
       backgroundColor: primaryBackgroundColor,
       appBar: AppBar(
         backgroundColor: primaryBackgroundColor,
-        title: Text(widget.mealType.title,
+        title: Text('Log Your Snacks',
         style: titleTextStyle,),
         centerTitle: true,
       ),
-      body: _body(),
+      body: _addToSnacksBody(),
     );
   }
 
-  Widget _body(){
+  Widget _addToSnacksBody(){
     return Column(
       children: <Widget>[
-        _header(),
+        snacksHeader(),
         addFoodButton(),
-        _mealList(),
+        _snacksList(),
         _doneButton(),
         SizedBox(height: 20,),
       ],
     );
   }
 
-  Widget _header(){
+  Widget snacksHeader(){
     return Column(
       children: <Widget>[
         Padding(
@@ -76,7 +74,7 @@ class _AddToMealState extends State<AddToMeal> {
               Image(
                 height: 180,
                 fit: BoxFit.fitHeight,
-                image: AssetImage(widget.mealType.assetPath)),
+                image: const AssetImage('assets/meal_icons/snacks_medium.png')),
               ],
             ),
           ),
@@ -101,16 +99,19 @@ class _AddToMealState extends State<AddToMeal> {
               onTap: () {
                 Future.delayed(Duration(milliseconds: 200), () {
                   setState(() => loading = true);
-                  final meal = mealTypeToString(widget.mealType)!;
+                  String snacksMeal = 'snacks';
+                  MaterialPageRoute(
+                    builder: (context) => MealsList(
+                      selectedDateValue2: widget.selectedDateValue,
+                      snacksMealValue: snacksMeal,
+                    )
+                  );
                   Navigator.push(context, MaterialPageRoute(
                     builder: (context) => FoodShelf(
                       selectedDateValue2: widget.selectedDateValue,
+                      snacksMealValue: snacksMeal,
                       mealIdValue: generateMealId(),
-                      breakfastMealValue: meal == 'breakfast' ? meal : null,
-                      lunchMealValue: meal == 'lunch' ? meal : null,
-                      snacksMealValue: meal == 'snacks' ? meal : null,
-                      dinnerMealValue: meal == 'dinner' ? meal : null,
-                      )
+                    )
                   ));
                   setState(() => loading = false);
                 });
@@ -172,42 +173,41 @@ class _AddToMealState extends State<AddToMeal> {
 
 
 
-  Widget _mealList(){
-    return Expanded(
-      child: StreamBuilder<List<FoodEntry>>(
-        stream: context.read<FoodLogRepository>().mealEntries(
-          myUID(context),
-          widget.mealType,
-          widget.selectedDateValue,
-        ),
+  Widget _snacksList(){
+  return Expanded(
+      child: StreamBuilder(
+        stream: dbUsersCollection
+        .doc(myUID(context))
+        .collection('foodEntries')
+        .where("mealType", isEqualTo: 'snacks')
+        .where("dateAdded", isEqualTo: widget.selectedDateValue)
+        .snapshots(),
         builder: buildUserList,
       ),
-    );
-  }
+  );
+}
 
 
-Widget buildUserList(
-  BuildContext context,
-  AsyncSnapshot<List<FoodEntry>> snapshot,
-) {
+Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
   if (snapshot.hasData) {
-    final entries = snapshot.data!;
     return ListView.builder(
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: entries.length,
+        itemCount: snapshot.data?.docs.length,
         itemBuilder: (BuildContext context, int index) {
 
-    final food = entries[index];
-    
-    final foodName = food.foodName;
-    final calories = food.calories;
-    final portionSize = food.portionSize;
+    DocumentSnapshot food = snapshot.data!.docs[index];
+    var foodName = food.get('foodName');
+    var calories = food.get('calories');
+    var portionSize = food.get('portionSize');
 
     return GestureDetector(
       key: Key(food.id),
       onLongPress: () async {
+
+        var doc = snapshot.data?.docs[index];
+
         try {
           showDialog<String>(
           context: context, 
@@ -216,12 +216,12 @@ Widget buildUserList(
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(0,0,0,10),
-                  child: Text('Removing from your ${widget.mealType.name}:',
+                  child: Text('Removing from your snacks:',
                   style: TextStyle(fontSize: 16),
                   textAlign: TextAlign.start,
                   ),
                 ),
-                Text(foodName,
+                Text('$foodName',
                 style: TextStyle(fontSize: 18,
                 fontStyle: FontStyle.italic),
                 textAlign: TextAlign.start,),
@@ -236,7 +236,11 @@ Widget buildUserList(
                 child: Text('Remove'),
                 onPressed: () {
                   // Deletes entry from Firestore database
-                  context.read<FoodLogRepository>().deleteEntry(myUID(context), food.id);
+                  dbUsersCollection
+                    .doc(myUID(context))
+                    .collection('foodEntries')
+                    .doc(doc?.id)
+                    .delete();
                   Navigator.pop(context, 'ok');
                 },
               ),
@@ -257,11 +261,7 @@ Widget buildUserList(
           )
         );
         } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Could not remove the food item. '
-                    'Please try again.')));
-          }
+          debugPrint(e.toString());
         }
       },
       child: Padding(
@@ -308,4 +308,10 @@ Widget buildUserList(
       return loadingWidget;
     }
   }
+
+
+
+
+
+
 }

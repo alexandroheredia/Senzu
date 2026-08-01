@@ -1,13 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:senzu_app/services/auth_service.dart';
-import 'package:senzu_app/shared/constants.dart';
+import 'package:senzu_app/shared/theme.dart';
 import 'package:flutter/material.dart';
 
 class LoginForm extends StatefulWidget {
 
   final Function? toggleView;
-  LoginForm({ this.toggleView });
+  const LoginForm({super.key,  this.toggleView });
 
   @override
   _LoginFormState createState() => _LoginFormState();
@@ -141,7 +141,7 @@ class _LoginFormState extends State<LoginForm> {
                     backgroundColor: primaryButtonColor, // background
                     foregroundColor: Colors.white, // foreground
                   ),
-                  child: Container(
+                  child: SizedBox(
                     width: MediaQuery.of(context).size.width - 75,
                       height: 48,
                     child: Center(

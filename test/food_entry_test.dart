@@ -2,6 +2,39 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:senzu_app/models/food_entry.dart';
 
 void main() {
+  group('MealTypePresentation', () {
+    test('label capitalizes the meal name', () {
+      expect(MealType.breakfast.label, 'Breakfast');
+      expect(MealType.lunch.label, 'Lunch');
+      expect(MealType.snacks.label, 'Snacks');
+      expect(MealType.dinner.label, 'Dinner');
+    });
+
+    test('title prepends "Log Your"', () {
+      expect(MealType.breakfast.title, 'Log Your Breakfast');
+      expect(MealType.dinner.title, 'Log Your Dinner');
+    });
+
+    test('assetPath points at the meal icon', () {
+      expect(
+        MealType.breakfast.assetPath,
+        'assets/meal_icons/breakfast_medium.png',
+      );
+      expect(MealType.snacks.assetPath, 'assets/meal_icons/snacks_medium.png');
+    });
+
+    test('mealTypeFromString round-trips', () {
+      for (final meal in MealType.values) {
+        expect(mealTypeFromString(mealTypeToString(meal)), meal);
+      }
+    });
+
+    test('mealTypeFromString handles unknown values safely', () {
+      expect(mealTypeFromString('brunch'), isNull);
+      expect(mealTypeFromString(null), isNull);
+    });
+  });
+
   group('FoodEntry.fromMap', () {
     test('parses typed fields from a raw map', () {
       final entry = FoodEntry.fromMap('abc', <String, dynamic>{

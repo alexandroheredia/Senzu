@@ -2,11 +2,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:senzu_app/screens/authentication/authenticate.dart';
 import 'package:senzu_app/services/auth_service.dart';
 import 'package:senzu_app/screens/home/home_page.dart';
+import 'package:senzu_app/shared/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:senzu_app/shared/theme.dart';
 
 class Wrapper extends StatelessWidget {
+  const Wrapper({super.key});
+
   @override
   Widget build(BuildContext context) {
     // Show a splash while the auth session is restoring, so the login screen

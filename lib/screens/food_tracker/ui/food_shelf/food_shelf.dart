@@ -1,10 +1,15 @@
 import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:senzu_app/models/meal.dart';
+import 'package:senzu_app/models/shelf_food.dart';
 import 'package:senzu_app/screens/food_tracker/ui/add_food.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_details.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/meal_details.dart';
-import 'package:senzu_app/shared/constants.dart';
+import 'package:senzu_app/services/meal_repository.dart';
+import 'package:senzu_app/services/shelf_repository.dart';
+import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/auth_scope.dart';
 
 class FoodShelf extends StatefulWidget {
   final DateTime? selectedDateValue2;
@@ -14,15 +19,15 @@ class FoodShelf extends StatefulWidget {
   final String? dinnerMealValue;
   final String? mealIdValue;
 
-  FoodShelf({
-    Key? key, 
+  const FoodShelf({
+    super.key, 
     this.selectedDateValue2, 
     this.breakfastMealValue, 
     this.lunchMealValue, 
     this.snacksMealValue,
     this.dinnerMealValue, 
     this.mealIdValue, 
-    }) : super(key: key);
+    });
 
   @override
   _FoodShelfState createState() => _FoodShelfState();
@@ -30,7 +35,16 @@ class FoodShelf extends StatefulWidget {
 
 class _FoodShelfState extends State<FoodShelf> {
 
-    final mealNameController = TextEditingController();
+  final mealNameController = TextEditingController();
+  late final ShelfRepository _shelf;
+  late final MealRepository _meals;
+
+  @override
+  void initState() {
+    super.initState();
+    _shelf = context.read<ShelfRepository>();
+    _meals = context.read<MealRepository>();
+  }
 
   // ElasticSearch search page
 
@@ -42,8 +56,8 @@ class _FoodShelfState extends State<FoodShelf> {
   //   );
   // }
 
-  var _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
-  Random _rnd = Random();
+  final _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
+  final Random _rnd = Random();
 
   String getRandomString(int length) => String.fromCharCodes(
     Iterable.generate(length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))
@@ -53,12 +67,6 @@ class _FoodShelfState extends State<FoodShelf> {
   String generateFoodId() {
     String foodId = getRandomString(20);
     return foodId;
-  }
-
-
-  @override
-  void initState() {
-    super.initState();
   }
 
   bool loading = false;
@@ -108,13 +116,11 @@ class _FoodShelfState extends State<FoodShelf> {
             setState(() => loading = false);
           }
         },
-        child: Container(
-          child: Center(
-            child: Builder(
-              builder: (context) {
-                return loading ? loadingWidget : Icon(Icons.add, size: 35,);
-              },
-            ),
+        child: Center(
+          child: Builder(
+            builder: (context) {
+              return loading ? loadingWidget : Icon(Icons.add, size: 35,);
+            },
           ),
         ),
       ),
@@ -141,73 +147,30 @@ class _FoodShelfState extends State<FoodShelf> {
 
   Widget _foodList(){
     return Expanded(
-      child: StreamBuilder(
-        stream: dbUsersCollection
-        .doc(myUID(context))
-        .collection('foodShelf')
-        .orderBy('foodName')
-        .snapshots(),
+      child: StreamBuilder<List<ShelfFood>>(
+        stream: _shelf.shelfStream(myUID(context)),
         builder: buildFoodList,
       ),
     );
   }
 
 
-Widget buildFoodList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+Widget buildFoodList(
+  BuildContext context,
+  AsyncSnapshot<List<ShelfFood>> snapshot,
+) {
   if (snapshot.hasData) {
+    final foods = snapshot.data!;
     return ListView.builder(
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: snapshot.data!.docs.length,
+        itemCount: foods.length,
         itemBuilder: (BuildContext context, int index) {
 
-    DocumentSnapshot food = snapshot.data!.docs[index];
-    var foodName = food.get('foodName');
-    var brandName = food.get('brandName');
-    var servingSize = food.get('servingSize');
-    // var calories = food.get('calories');
-    var calories = food.data().toString().contains('calories') ? food.get('calories') : 0;
-    // var totalFat = food.get('totalFat');
-    var totalFat = food.data().toString().contains('totalFat') ? food.get('totalFat') : 0;
-    // var saturatedFat = food.get('saturatedFat');
-    var saturatedFat = food.data().toString().contains('saturatedFat') ? food.get('saturatedFat') : 0;
-    // var transFat = food.get('transFat');
-    var transFat = food.data().toString().contains('transFat') ? food.get('transFat') : 0;
-    // var cholesterol = food.get('cholesterol');
-    var cholesterol = food.data().toString().contains('cholesterol') ? food.get('cholesterol') : 0;
-    // var sodium = food.get('sodium');
-    var sodium = food.data().toString().contains('sodium') ? food.get('sodium') : 0;
-    // var totalCarbohydrate = food.get('totalCarbohydrate');
-    var totalCarbohydrate = food.data().toString().contains('totalCarbohydrate') ? food.get('totalCarbohydrate') : 0;
-    // var dietaryFiber = food.get('dietaryFiber');
-    var dietaryFiber = food.data().toString().contains('dietaryFiber') ? food.get('dietaryFiber') : 0;
-    // var sugars = food.get('sugars');
-    var sugars = food.data().toString().contains('sugars') ? food.get('sugars') : 0;
-    // var protein = food.get('protein');
-    var protein = food.data().toString().contains('protein') ? food.get('protein') : 0;
-    // var calcium = food.get('calcium');
-    var calcium = food.data().toString().contains('calcium') ? food.get('calcium') : 0;
-    // var iron = food.get('iron');
-    var iron = food.data().toString().contains('iron') ? food.get('iron') : 0;
-    // var potassium = food.get('potassium');
-    var potassium = food.data().toString().contains('potassium') ? food.get('potassium') : 0;
-    // var vitaminA = food.get('vitaminA');
-    var vitaminA = food.data().toString().contains('vitaminA') ? food.get('vitaminA') : 0;
-    // var vitaminC = food.get('vitaminC');
-    var vitaminC = food.data().toString().contains('vitaminC') ? food.get('vitaminC') : 0;
-    // var vitaminD = food.get('vitaminD');
-    var vitaminD = food.data().toString().contains('vitaminD') ? food.get('vitaminD') : 0;
-    // var magnesium = food.get('magnesium');
-    var magnesium = food.data().toString().contains('magnesium') ? food.get('magnesium') : 0;
-    // var zinc = food.get('zinc');
-    var zinc = food.data().toString().contains('zinc') ? food.get('zinc') : 0;
-    // var addedSugars = food.get('addedSugars');
-    var addedSugars = food.data().toString().contains('addedSugars') ? food.get('addedSugars') : 0;
-    // var timesAdded = food.get('timesAdded');
-    var timesAdded = food.data().toString().contains('timesAdded') ? food.get('timesAdded') : 0;
-    var getFoodId = food.get('foodId');
-
+    final food = foods[index];
+    final foodName = food.foodName;
+    final brandName = food.brandName;
 
     return GestureDetector(
       key: Key(food.id),
@@ -225,7 +188,7 @@ Widget buildFoodList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
                   textAlign: TextAlign.start,
                   ),
                 ),
-                Text('$foodName',
+                Text(foodName,
                   style: TextStyle(fontSize: 18,
                   fontStyle: FontStyle.italic),
                   textAlign: TextAlign.start,),
@@ -240,11 +203,7 @@ Widget buildFoodList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
                 child: Text('Remove'),
                 onPressed: () {
                   // Deletes entry from Firestore database
-                  dbUsersCollection
-                    .doc(myUID(context))
-                    .collection('foodShelf')
-                    .doc(getFoodId)
-                    .delete();
+                  _shelf.deleteFood(myUID(context), food.foodId);
                   Navigator.pop(context, 'ok');
                 },
               ),
@@ -265,41 +224,22 @@ Widget buildFoodList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
           )
         );
         } catch (e) {
-          print(e);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Could not remove the food item. '
+                    'Please try again.')));
+          }
         }
       },
       onTap: () async {
         Navigator.push(context, MaterialPageRoute(
           builder: (context) => FoodDetails(
-            foodNameValue: foodName,
-            brandNameValue: brandName,
-            servingSizeValue: servingSize,
-            caloriesValue: calories,
-            totalFatValue: totalFat,
-            saturatedFatValue: saturatedFat,
-            transFatValue: transFat,
-            cholesterolValue: cholesterol,
-            sodiumValue: sodium,
-            totalCarbohydrateValue: totalCarbohydrate,
-            dietaryFiberValue: dietaryFiber,
-            sugarsValue: sugars,
-            proteinValue: protein,
-            calciumValue: calcium,
-            ironValue: iron,
-            addedSugarsValue: addedSugars,
-            potassiumValue: potassium,
-            vitaminAValue: vitaminA,
-            vitaminCValue: vitaminC,
-            vitaminDValue: vitaminD,
-            magnesiumValue: magnesium,
-            zincValue: zinc,
+            food: food,
             selectedDateSecondStep: widget.selectedDateValue2,
             breakfastMealAdd: widget.breakfastMealValue,
             lunchMealAdd: widget.lunchMealValue,
             snacksMealAdd: widget.snacksMealValue,
             dinnerMealAdd: widget.dinnerMealValue,
-            timesAddedValue: timesAdded,
-            getFoodIdValue: getFoodId,
           )
         ));
       },
@@ -311,7 +251,7 @@ Widget buildFoodList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
               color: Colors.white70
             ),
             borderRadius: const BorderRadius.all(
-              const Radius.circular(8.0),
+              Radius.circular(8.0),
             )
           ),
           child: Column(
@@ -429,35 +369,35 @@ Widget buildFoodList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
   // Displays the list of meals recorded on Firestore
   Widget _mealsList(){
   return Expanded(
-      child: StreamBuilder(
-        stream: dbUsersCollection
-        .doc(myUID(context))
-        .collection('meals')
-        .orderBy('mealName')
-        .snapshots(),
+      child: StreamBuilder<List<Meal>>(
+        stream: _meals.mealsStream(myUID(context)),
         builder: buildMealList,
       ),
   );
 }
 
 
-Widget buildMealList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+Widget buildMealList(
+  BuildContext context,
+  AsyncSnapshot<List<Meal>> snapshot,
+) {
   if (snapshot.hasData) {
+    final meals = snapshot.data!;
     return ListView.builder(
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: snapshot.data!.docs.length,
+        itemCount: meals.length,
         itemBuilder: (BuildContext context, int index) {
 
-    DocumentSnapshot user = snapshot.data!.docs[index];
-    var mealName = user.get('mealName');
-    var mealId = user.get('mealId');
+    final meal = meals[index];
+    var mealName = meal.mealName;
+    var mealId = meal.mealId;
 
 
 
     return GestureDetector(
-      key: Key(user.id),
+      key: Key(meal.id),
       onTap: () async {
         Navigator.push(context, MaterialPageRoute(
           builder: (context) => MealDetails(
@@ -480,7 +420,7 @@ Widget buildMealList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
               color: Colors.white70
             ),
             borderRadius: const BorderRadius.all(
-              const Radius.circular(8.0),
+              Radius.circular(8.0),
             )
           ),
           child: Column(
@@ -560,15 +500,7 @@ Widget buildMealList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
 
 
   void saveMeal() {
-    dbUsersCollection
-      .doc(myUID(context))
-      .collection('meals')
-      .doc(widget.mealIdValue)
-      .set({
-      "mealName": mealNameController.text,
-      "mealId": widget.mealIdValue,
-
-    });
+    _meals.createMeal(myUID(context), widget.mealIdValue!, mealNameController.text);
   }
 
 }

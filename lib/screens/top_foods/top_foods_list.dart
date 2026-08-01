@@ -1,10 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:senzu_app/shared/constants.dart';
+import 'package:provider/provider.dart';
+import 'package:senzu_app/models/shelf_food.dart';
+import 'package:senzu_app/services/shelf_repository.dart';
+import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/auth_scope.dart';
 
 
 class TopFoodsList extends StatefulWidget {
-  TopFoodsList({Key? key}) : super(key: key);
+  const TopFoodsList({super.key});
 
   @override
   _TopFoodsListState createState() => _TopFoodsListState();
@@ -32,30 +35,31 @@ class _TopFoodsListState extends State<TopFoodsList> {
 
   Widget _foodList(){
     return Expanded(
-        child: StreamBuilder(
-          stream: dbUsersCollection
-          .doc(myUID(context))
-          .collection('foodShelf')
-          .orderBy('timesAdded', descending: true)
-          .snapshots(),
+        child: StreamBuilder<List<ShelfFood>>(
+          stream: context.read<ShelfRepository>()
+              .topFoodsStream(myUID(context)),
           builder: buildUserList,
         ),
     );
   }
 
 
-Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+Widget buildUserList(
+  BuildContext context,
+  AsyncSnapshot<List<ShelfFood>> snapshot,
+) {
   if (snapshot.hasData) {
+    final foods = snapshot.data!;
     return ListView.builder(
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: snapshot.data!.docs.length,
+        itemCount: foods.length,
         itemBuilder: (BuildContext context, int index) {
 
-    DocumentSnapshot user = snapshot.data!.docs[index];
-    var foodName = user.get('foodName');
-    var brandName = user.get('brandName');
+    final food = foods[index];
+    var foodName = food.foodName;
+    var brandName = food.brandName;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12,6,12,0),
@@ -65,7 +69,7 @@ Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
             color: Colors.white70
           ),
           borderRadius: const BorderRadius.all(
-            const Radius.circular(8.0),
+            Radius.circular(8.0),
           )
         ),
         child: Column(

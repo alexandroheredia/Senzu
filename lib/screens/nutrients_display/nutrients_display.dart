@@ -6,10 +6,13 @@ import 'package:senzu_app/screens/nutrients_display/nutrient_pages/potassium.dar
 import 'package:senzu_app/screens/nutrients_display/nutrient_pages/protein.dart';
 import 'package:senzu_app/screens/nutrients_display/nutrient_pages/vitamin_a.dart';
 import 'package:senzu_app/screens/nutrients_display/nutrient_pages/vitamin_c.dart';
-import 'package:senzu_app/shared/constants.dart';
+import 'package:senzu_app/shared/theme.dart';
 
 class NutrientsDisplay extends StatelessWidget {
+  const NutrientsDisplay({super.key});
 
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -26,7 +29,7 @@ class NutrientsDisplay extends StatelessWidget {
 }
 
 class NutrientList extends StatelessWidget {
-  const NutrientList({Key? key}) : super(key: key);
+  const NutrientList({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +51,8 @@ class NutrientList extends StatelessWidget {
 
 // TODO: REMOVE ALL OF THESE... It's insane to have all these stateless widgets for this.
 class FiberCard extends StatelessWidget {
+  const FiberCard({super.key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +84,8 @@ class FiberCard extends StatelessWidget {
 
 // Card widget that takes you to the top foods for Protein datatable
 class ProteinCard extends StatelessWidget {
+  const ProteinCard({super.key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -110,6 +117,8 @@ class ProteinCard extends StatelessWidget {
 
 // Card widget that takes you to the top foods for Potassium datatable
 class PotassiumCard extends StatelessWidget {
+  const PotassiumCard({super.key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +150,8 @@ class PotassiumCard extends StatelessWidget {
 
 // Card widget that takes you to the top foods for Vitamin A datatable
 class VitaminACard extends StatelessWidget {
+  const VitaminACard({super.key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -172,6 +183,8 @@ class VitaminACard extends StatelessWidget {
 
 // Card widget that takes you to the top foods for Vitamin C datatable
 class VitaminCCard extends StatelessWidget {
+  const VitaminCCard({super.key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -203,6 +216,8 @@ class VitaminCCard extends StatelessWidget {
 
 // Card widget that takes you to the top foods for Iron datatable
 class IronCard extends StatelessWidget {
+  const IronCard({super.key});
+
 
   @override
   Widget build(BuildContext context) {
@@ -234,6 +249,8 @@ class IronCard extends StatelessWidget {
 
 // Card widget that takes you to the top foods for Calcium datatable
 class CalciumCard extends StatelessWidget {
+  const CalciumCard({super.key});
+
 
   @override
   Widget build(BuildContext context) {

@@ -6,11 +6,11 @@ class CustomFormField extends StatelessWidget {
   final String label;
   final Widget child;
 
-  CustomFormField({required this.child, required this.label});
+  const CustomFormField({super.key, required this.child, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 60,
       child: Stack(
         children: [

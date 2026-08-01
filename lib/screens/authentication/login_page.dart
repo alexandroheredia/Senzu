@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:senzu_app/screens/authentication/register.dart';
 import 'package:senzu_app/screens/authentication/sign_in.dart';
 import 'package:senzu_app/screens/authentication/utils/bubble_indicator_painter.dart';
-import 'package:senzu_app/shared/constants.dart';
+import 'package:senzu_app/shared/theme.dart';
 
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+  const LoginPage({super.key});
 
   @override
   _LoginPageState createState() => _LoginPageState();
@@ -42,7 +42,7 @@ class _LoginPageState extends State<LoginPage>
         onTap: () {
           FocusScope.of(context).requestFocus(FocusNode());
         },
-        child: Container(
+        child: SizedBox(
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
           

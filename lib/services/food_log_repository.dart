@@ -37,9 +37,27 @@ class FoodLogRepository {
         .map(_toEntries);
   }
 
+  /// Live list of entries for one meal on [date] for [uid].
+  Stream<List<FoodEntry>> mealEntries(
+    String uid,
+    MealType meal,
+    DateTime date,
+  ) {
+    return _entries(uid)
+        .where('mealType', isEqualTo: mealTypeToString(meal))
+        .where('dateAdded', isEqualTo: date)
+        .snapshots()
+        .map(_toEntries);
+  }
+
   /// Persists a new food entry for [uid].
   Future<void> addEntry(String uid, Map<String, dynamic> data) {
     return _entries(uid).add(data);
+  }
+
+  /// Deletes a food entry by id.
+  Future<void> deleteEntry(String uid, String entryId) {
+    return _entries(uid).doc(entryId).delete();
   }
 
   List<FoodEntry> _toEntries(QuerySnapshot<Map<String, dynamic>> snapshot) {

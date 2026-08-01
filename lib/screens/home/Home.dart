@@ -3,7 +3,7 @@ import 'package:senzu_app/screens/food_tracker/food_tracker.dart';
 import 'package:senzu_app/screens/home/custom_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:senzu_app/screens/nutrients_display/nutrients_display.dart';
-import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/constants.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -159,17 +159,19 @@ class _FoodTrackerCardState extends State<FoodTrackerCard> {
           child: SizedBox(
               width: 450,
               height: 100,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text('🥗 Food Tracker',
-                    style: TextStyle(
-                      color: Color(0xFFE0E0E0),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30.0,
-                    )
-                    ),
-                ],
+              child: Container(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Text('🥗 Food Tracker',
+                      style: TextStyle(
+                        color: Color(0xFFE0E0E0),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 30.0,
+                      )
+                      ),
+                  ],
+                ),
               )
             ),
           ),

@@ -1,6 +1,6 @@
 import 'package:senzu_app/models/user.dart';
+import 'package:senzu_app/shared/firestore_db.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:senzu_app/shared/constants.dart';
 
 class UserRepository {
 
@@ -13,6 +13,13 @@ class UserRepository {
       'activityLevel': activityLevel,
       'dailyCaloriesGoal': dailyCaloriesGoal,
     });
+  }
+
+  /// Updates only the daily calories goal of the user document.
+  Future<void> updateDailyCaloriesGoal(dynamic dailyCaloriesGoal) async {
+    return await dbUsersCollection
+        .doc(uid)
+        .update({'dailyCaloriesGoal': dailyCaloriesGoal});
   }
 
   // users list from snapshot

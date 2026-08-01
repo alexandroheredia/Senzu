@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:senzu_app/models/user.dart';
 import 'package:senzu_app/services/user_repository.dart';
+import 'package:senzu_app/shared/constants.dart';
 import 'package:senzu_app/shared/widgets/custom_form_field.dart';
 import 'package:senzu_app/shared/widgets/custom_progress_indicator.dart';
-import 'package:senzu_app/shared/theme.dart';
-import 'package:senzu_app/shared/auth_scope.dart';
 
 
 class InitialProfileSetup extends StatefulWidget {

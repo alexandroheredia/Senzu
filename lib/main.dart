@@ -1,10 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:senzu_app/screens/authentication/wrapper.dart';
 import 'package:senzu_app/services/auth_service.dart';
+import 'package:senzu_app/services/food_log_repository.dart';
+import 'package:senzu_app/services/meal_repository.dart';
+import 'package:senzu_app/services/shelf_repository.dart';
+import 'package:senzu_app/shared/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:senzu_app/shared/route_generator.dart';
-import 'package:senzu_app/shared/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +16,8 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -20,6 +25,9 @@ class MyApp extends StatelessWidget {
         Provider<AuthenticationService>(
           create: (_) => AuthenticationService(FirebaseAuth.instance),
         ),
+        Provider<ShelfRepository>(create: (_) => ShelfRepository()),
+        Provider<MealRepository>(create: (_) => MealRepository()),
+        Provider<FoodLogRepository>(create: (_) => FoodLogRepository()),
         StreamProvider(
           create: (context) =>
               context.read<AuthenticationService>().authStateChanges, 
@@ -27,8 +35,7 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        initialRoute: '/',
-        onGenerateRoute: RouteGenerator.generateRoute,
+        home: Wrapper(),
         theme: ThemeData(
           brightness: Brightness.dark,
           primaryColor: primaryButtonColor,
