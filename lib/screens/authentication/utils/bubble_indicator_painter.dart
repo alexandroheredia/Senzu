@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:senzu_app/screens/authentication/utils/theme.dart';
 
 class BubbleIndicatorPainter extends CustomPainter {
-  BubbleIndicatorPainter(
-      {this.dxTarget = 125.0,
-      this.dxEntry = 25.0,
-      this.radius = 21.0,
-      this.dy = 25.0,
-      required this.pageController})
-      : super(repaint: pageController) {
+  BubbleIndicatorPainter({
+    this.dxTarget = 125.0,
+    this.dxEntry = 25.0,
+    this.radius = 21.0,
+    this.dy = 25.0,
+    required this.pageController,
+  }) : super(repaint: pageController) {
     painter = Paint()
       ..color = CustomTheme.white
       ..style = PaintingStyle.fill;
@@ -36,11 +36,13 @@ class BubbleIndicatorPainter extends CustomPainter {
     final target = Offset(left2right ? dxTarget : dxEntry, dy);
 
     final path = Path()
-      ..addArc(
-        Rect.fromCircle(center: entry, radius: radius), 0.5 * pi, 1 * pi)
+      ..addArc(Rect.fromCircle(center: entry, radius: radius), 0.5 * pi, 1 * pi)
       ..addRect(Rect.fromLTRB(entry.dx, dy - radius, target.dx, dy + radius))
       ..addArc(
-        Rect.fromCircle(center: target, radius: radius), 1.5 * pi, 1 * pi);
+        Rect.fromCircle(center: target, radius: radius),
+        1.5 * pi,
+        1 * pi,
+      );
 
     canvas
       ..translate(size.width * pageOffset, 0.0)

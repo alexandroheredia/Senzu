@@ -125,8 +125,11 @@ class _FoodOverviewState extends State<FoodOverview> {
 
   @override
   Widget build(BuildContext context) {
+    final uid = myUID(context);
+    if (uid.isEmpty) return const Center(child: loadingWidget);
+
     return StreamBuilder<FoodLogSummary>(
-      stream: _foodLog.daySummary(myUID(context), _selectedDate),
+      stream: _foodLog.daySummary(uid, _selectedDate),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: loadingWidget);
         final summary = snapshot.data!;
@@ -172,11 +175,16 @@ class _FoodOverviewState extends State<FoodOverview> {
 
                             // Back 1 day arrow
                             IconButton(
-                              icon: const Icon(Icons.arrow_back_ios, size: 25.0),
+                              icon: const Icon(
+                                Icons.arrow_back_ios,
+                                size: 25.0,
+                              ),
                               color: Colors.grey,
                               onPressed: () {
                                 setState(() {
-                                  _value = _value.subtract(const Duration(days: 1));
+                                  _value = _value.subtract(
+                                    const Duration(days: 1),
+                                  );
                                   _rightArrowColour = Colors.grey;
                                 });
                               },
@@ -219,7 +227,10 @@ class _FoodOverviewState extends State<FoodOverview> {
 
                             // forward 1 day arrow (disabled if date picker is on current date)
                             IconButton(
-                              icon: const Icon(Icons.arrow_forward_ios, size: 25.0),
+                              icon: const Icon(
+                                Icons.arrow_forward_ios,
+                                size: 25.0,
+                              ),
                               color: _rightArrowColour,
                               onPressed: () {
                                 if (today
@@ -231,7 +242,9 @@ class _FoodOverviewState extends State<FoodOverview> {
                                   });
                                 } else {
                                   setState(() {
-                                    _value = _value.add(const Duration(days: 1));
+                                    _value = _value.add(
+                                      const Duration(days: 1),
+                                    );
                                   });
                                   if (today
                                           .difference(_value)
@@ -337,8 +350,10 @@ class _FoodOverviewState extends State<FoodOverview> {
                     builder: (context, constraints) {
                       // 3 circular indicators (2 * radius each) + 2 x 10px
                       // spacers must fit within the available width.
-                      final radius = ((constraints.maxWidth - 20) / 6)
-                          .clamp(30.0, 80.0);
+                      final radius = ((constraints.maxWidth - 20) / 6).clamp(
+                        30.0,
+                        80.0,
+                      );
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
@@ -543,7 +558,9 @@ class _FoodOverviewState extends State<FoodOverview> {
           data: ThemeData().copyWith(
             primaryColor: Colors.black,
             shadowColor: Colors.black,
-            buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
+            buttonTheme: const ButtonThemeData(
+              textTheme: ButtonTextTheme.primary,
+            ),
             colorScheme: ColorScheme.light(
               primary: Colors.grey.shade900,
             ).copyWith(surface: Colors.yellow),
@@ -633,7 +650,6 @@ class _FoodOverviewState extends State<FoodOverview> {
     final sodiumSum = summary.sodium;
     final magnesiumSum = summary.magnesium;
     final zincSum = summary.zinc;
-
 
     return Container(
       padding: const EdgeInsets.fromLTRB(30.0, 0, 30.0, 30.0),

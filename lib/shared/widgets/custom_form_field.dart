@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-
 class CustomFormField extends StatelessWidget {
-
   final String label;
   final Widget child;
 
@@ -20,11 +18,14 @@ class CustomFormField extends StatelessWidget {
             margin: const EdgeInsets.only(top: 6),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.black.withValues(alpha: 0.3), width: 1.1),
-              borderRadius: BorderRadius.circular(4)
+              border: Border.all(
+                color: Colors.black.withValues(alpha: 0.3),
+                width: 1.1,
+              ),
+              borderRadius: BorderRadius.circular(4),
             ),
             alignment: Alignment.centerLeft,
-            child: child
+            child: child,
           ),
           Positioned(
             left: 14,
@@ -33,13 +34,13 @@ class CustomFormField extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 3),
               child: Text(
                 label,
-                style:  const TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w500
+                  fontWeight: FontWeight.w500,
                 ),
-              )
+              ),
             ),
-          )
+          ),
         ],
       ),
     );

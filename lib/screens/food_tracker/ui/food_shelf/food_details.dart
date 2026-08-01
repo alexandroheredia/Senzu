@@ -316,13 +316,13 @@ class _FoodDetailsState extends State<FoodDetails> {
                   } on Object {
                     if (!mounted) return;
                     scaffoldMessenger.showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Could not save the food entry. '
-                            'Please check your connection and try again.',
-                          ),
+                      const SnackBar(
+                        content: Text(
+                          'Could not save the food entry. '
+                          'Please check your connection and try again.',
                         ),
-                      );
+                      ),
+                    );
                   }
                 },
               ),
@@ -500,7 +500,10 @@ class _FoodDetailsState extends State<FoodDetails> {
                       margin: const EdgeInsets.only(left: 16.0),
                       child: Row(
                         children: [
-                          const Text('Saturated Fat ', style: notBoldTextOnLabel),
+                          const Text(
+                            'Saturated Fat ',
+                            style: notBoldTextOnLabel,
+                          ),
                           Text(
                             '${widget.food.saturatedFat.toStringAsFixed(0)}g',
                             style: notBoldTextOnLabel,
@@ -578,7 +581,10 @@ class _FoodDetailsState extends State<FoodDetails> {
                   children: <Widget>[
                     Row(
                       children: [
-                        const Text('Total Carbohydrate ', style: boldTextOnLabel),
+                        const Text(
+                          'Total Carbohydrate ',
+                          style: boldTextOnLabel,
+                        ),
                         Text(
                           '${widget.food.totalCarbohydrate.toStringAsFixed(0)}g',
                           style: notBoldTextOnLabel,
@@ -599,7 +605,10 @@ class _FoodDetailsState extends State<FoodDetails> {
                       margin: const EdgeInsets.only(left: 16.0),
                       child: Row(
                         children: [
-                          const Text('Dietary Fiber ', style: notBoldTextOnLabel),
+                          const Text(
+                            'Dietary Fiber ',
+                            style: notBoldTextOnLabel,
+                          ),
                           Text(
                             '${widget.food.dietaryFiber.toStringAsFixed(0)}g',
                             style: notBoldTextOnLabel,
@@ -744,13 +753,13 @@ class _FoodDetailsState extends State<FoodDetails> {
                 } on Object {
                   if (!mounted) return;
                   scaffoldMessenger.showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Could not add the food to your meal. '
-                          'Please check your connection and try again.',
-                        ),
+                    const SnackBar(
+                      content: Text(
+                        'Could not add the food to your meal. '
+                        'Please check your connection and try again.',
                       ),
-                    );
+                    ),
+                  );
                 }
               },
               child: const Text(
@@ -765,31 +774,33 @@ class _FoodDetailsState extends State<FoodDetails> {
   }
 
   Future<void> _saveFoodItemToMeal() async {
-    await context
-        .read<MealRepository>()
-        .addFoodItem(myUID(context), widget.mealIdValue!, {
-          'foodId': widget.food.foodId,
-          'foodName': widget.food.foodName,
-          'brandName': widget.food.brandName,
-          'mealId': widget.mealIdValue,
-          'portionSize': _portionSize,
-          'servingSize': widget.food.servingSize,
-          'calories': _caloriesIntake(),
-          'totalFat': _totalFatIntake(),
-          'saturatedFat': _saturatedFatIntake(),
-          'transFat': _transFatIntake(),
-          'cholesterol': _cholesterolIntake(),
-          'sodium': _sodiumIntake(),
-          'totalCarbohydrate': _totalCarbohydrateIntake(),
-          'dietaryFiber': _dietaryFiberIntake(),
-          'sugars': _sugarsIntake(),
-          'protein': _proteinIntake(),
-          'calcium': _calciumIntake(),
-          'iron': _ironIntake(),
-          'potassium': _potassiumIntake(),
-          'vitaminA': _vitaminAIntake(),
-          'vitaminC': _vitaminCIntake(),
-        });
+    await context.read<MealRepository>().addFoodItem(
+      myUID(context),
+      widget.mealIdValue!,
+      {
+        'foodId': widget.food.foodId,
+        'foodName': widget.food.foodName,
+        'brandName': widget.food.brandName,
+        'mealId': widget.mealIdValue,
+        'portionSize': _portionSize,
+        'servingSize': widget.food.servingSize,
+        'calories': _caloriesIntake(),
+        'totalFat': _totalFatIntake(),
+        'saturatedFat': _saturatedFatIntake(),
+        'transFat': _transFatIntake(),
+        'cholesterol': _cholesterolIntake(),
+        'sodium': _sodiumIntake(),
+        'totalCarbohydrate': _totalCarbohydrateIntake(),
+        'dietaryFiber': _dietaryFiberIntake(),
+        'sugars': _sugarsIntake(),
+        'protein': _proteinIntake(),
+        'calcium': _calciumIntake(),
+        'iron': _ironIntake(),
+        'potassium': _potassiumIntake(),
+        'vitaminA': _vitaminAIntake(),
+        'vitaminC': _vitaminCIntake(),
+      },
+    );
   }
 
   Future<void> saveFoodToMeal() async {
@@ -830,9 +841,11 @@ class _FoodDetailsState extends State<FoodDetails> {
   }
 
   void updateTimesAddedCount() {
-    unawaited(context.read<ShelfRepository>().incrementTimesAdded(
-      myUID(context),
-      widget.food.foodId,
-    ));
+    unawaited(
+      context.read<ShelfRepository>().incrementTimesAdded(
+        myUID(context),
+        widget.food.foodId,
+      ),
+    );
   }
 }

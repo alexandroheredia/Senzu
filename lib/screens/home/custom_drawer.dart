@@ -36,7 +36,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
               children: <Widget>[
                 const SizedBox(height: 150),
                 ListTile(
-                  trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
+                  trailing: const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white,
+                  ),
                   leading: MaterialButton(
                     color: const Color(0xFF503859),
                     minWidth: 40.0,
@@ -63,7 +66,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   onTap: () async {
                     await Navigator.push<Object>(
                       context,
-                      MaterialPageRoute<Object>(builder: (context) => const NutritionGoals()),
+                      MaterialPageRoute<Object>(
+                        builder: (context) => const NutritionGoals(),
+                      ),
                     );
                   },
                 ),
@@ -90,7 +95,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     context: context,
                     builder: (context) => AlertDialog(
                       backgroundColor: primaryBackgroundColor,
-                      title: const Text('Do you want to sign out?', style: textColor),
+                      title: const Text(
+                        'Do you want to sign out?',
+                        style: textColor,
+                      ),
                       actions: <Widget>[
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(

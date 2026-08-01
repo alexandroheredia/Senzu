@@ -13,16 +13,16 @@ const textInputDecoration = InputDecoration(
     borderSide: BorderSide(width: 0),
   ),
   focusedBorder: OutlineInputBorder(
-    borderSide: BorderSide(color: primaryButtonColor, width: 2.0,),
+    borderSide: BorderSide(
+      color: primaryButtonColor,
+      width: 2.0,
+    ),
   ),
 );
 
 const textColor = TextStyle(color: Color(0xFFE0E0E0));
 
-const titleTextStyle = TextStyle(
-  color: Color(0xFFE0E0E0),
-  fontSize: 24
-);
+const titleTextStyle = TextStyle(color: Color(0xFFE0E0E0), fontSize: 24);
 
 const nutrientsDivider = Divider(
   color: Color(0xFF757575),
@@ -61,14 +61,22 @@ const borderColor = Color(0xFFE0E0E0);
 
 const foodDetailsBorderColor = Color(0xFFE0E0E0);
 
-const thinDivider = Divider(height: 10, thickness: 1, color: Color(0xFFE0E0E0),);
+const thinDivider = Divider(
+  height: 10,
+  thickness: 1,
+  color: Color(0xFFE0E0E0),
+);
 
-const semiThickDivider = Divider(height: 0, thickness: 5, color: Color(0xFFE0E0E0),);
+const semiThickDivider = Divider(
+  height: 0,
+  thickness: 5,
+  color: Color(0xFFE0E0E0),
+);
 
 const notBoldTextOnLabel = TextStyle(
   color: Color(0xFFE0E0E0),
   fontSize: 18,
-  fontWeight: FontWeight.w500
+  fontWeight: FontWeight.w500,
 );
 
 const boldTextOnLabel = TextStyle(
@@ -84,10 +92,12 @@ final breakfastTitleCard = Card(
   color: const Color(0xFF1e1f38),
   child: Padding(
     padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
-    child: Text('Breakfast',
-      style: textColor.copyWith(fontSize: 25, fontWeight: FontWeight.bold),),
+    child: Text(
+      'Breakfast',
+      style: textColor.copyWith(fontSize: 25, fontWeight: FontWeight.bold),
     ),
-  );
+  ),
+);
 
 final lunchTitleCard = Card(
   shape: RoundedRectangleBorder(
@@ -96,10 +106,12 @@ final lunchTitleCard = Card(
   color: const Color(0xFF1e1f38),
   child: Padding(
     padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
-    child: Text('Lunch',
-      style: textColor.copyWith(fontSize: 25, fontWeight: FontWeight.bold),),
+    child: Text(
+      'Lunch',
+      style: textColor.copyWith(fontSize: 25, fontWeight: FontWeight.bold),
     ),
-  );
+  ),
+);
 
 final snacksTitleCard = Card(
   shape: RoundedRectangleBorder(
@@ -108,10 +120,12 @@ final snacksTitleCard = Card(
   color: const Color(0xFF1e1f38),
   child: Padding(
     padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
-    child: Text('Snacks',
-      style: textColor.copyWith(fontSize: 25, fontWeight: FontWeight.bold),),
+    child: Text(
+      'Snacks',
+      style: textColor.copyWith(fontSize: 25, fontWeight: FontWeight.bold),
     ),
-  );
+  ),
+);
 
 final dinnerTitleCard = Card(
   shape: RoundedRectangleBorder(
@@ -120,7 +134,9 @@ final dinnerTitleCard = Card(
   color: const Color(0xFF1e1f38),
   child: Padding(
     padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
-    child: Text('Dinner',
-      style: textColor.copyWith(fontSize: 25, fontWeight: FontWeight.bold),),
+    child: Text(
+      'Dinner',
+      style: textColor.copyWith(fontSize: 25, fontWeight: FontWeight.bold),
     ),
-  );
+  ),
+);

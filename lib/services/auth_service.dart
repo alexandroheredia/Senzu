@@ -20,6 +20,7 @@ class AuthenticationService {
   AppUser _userFromFirebaseUser(User user) {
     return AppUser(uid: user.uid);
   }
+
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
   // sign in anon
@@ -36,8 +37,10 @@ class AuthenticationService {
     String password,
   ) async {
     try {
-      final result = await _firebaseAuth
-          .signInWithEmailAndPassword(email: email, password: password);
+      final result = await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
       final user = result.user;
       if (user == null) return null;
       return _userFromFirebaseUser(user);
@@ -54,18 +57,23 @@ class AuthenticationService {
     String password,
   ) async {
     try {
-      final result = await _firebaseAuth
-          .createUserWithEmailAndPassword(email: email, password: password);
+      final result = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
       final user = result.user;
       if (user == null) return null;
       // create a new document for the user with the uid
-      await UserRepository(uid: user.uid)
-          .updateUserData('male', 'sedentary', 2400);
+      await UserRepository(
+        uid: user.uid,
+      ).updateUserData('male', 'sedentary', 2400);
       return _userFromFirebaseUser(user);
     } on FirebaseAuthException catch (e) {
       throw AuthException(_friendlyMessage(e.code));
     } on Object {
-      throw const AuthException('Could not create your account. Please try again.');
+      throw const AuthException(
+        'Could not create your account. Please try again.',
+      );
     }
   }
 

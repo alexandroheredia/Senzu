@@ -8,33 +8,31 @@ import 'package:senzu_app/models/food_entry.dart';
 class FoodLogRepository {
   final FirebaseFirestore _db;
 
-  FoodLogRepository({FirebaseFirestore? db}) : _db = db ?? FirebaseFirestore.instance;
+  FoodLogRepository({FirebaseFirestore? db})
+    : _db = db ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _entries(String uid) =>
       _db.collection('users').doc(uid).collection('foodEntries');
 
   /// Live summary of all entries logged on [date] for [uid].
   Stream<FoodLogSummary> daySummary(String uid, DateTime date) {
-    return _entries(uid)
-        .where('dateAdded', isEqualTo: date)
-        .snapshots()
-        .map(_toSummary);
+    return _entries(
+      uid,
+    ).where('dateAdded', isEqualTo: date).snapshots().map(_toSummary);
   }
 
   /// Live list of entries logged on [date] for [uid].
   Stream<List<FoodEntry>> dayEntries(String uid, DateTime date) {
-    return _entries(uid)
-        .where('dateAdded', isEqualTo: date)
-        .snapshots()
-        .map(_toEntries);
+    return _entries(
+      uid,
+    ).where('dateAdded', isEqualTo: date).snapshots().map(_toEntries);
   }
 
   /// Live list of entries added after [since] for [uid].
   Stream<List<FoodEntry>> entriesSince(String uid, DateTime since) {
-    return _entries(uid)
-        .where('dateAdded', isGreaterThan: since)
-        .snapshots()
-        .map(_toEntries);
+    return _entries(
+      uid,
+    ).where('dateAdded', isGreaterThan: since).snapshots().map(_toEntries);
   }
 
   /// Live list of entries for one meal on [date] for [uid].

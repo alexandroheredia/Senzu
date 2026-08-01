@@ -1,4 +1,3 @@
-
 /// Typed representation of the `users/{uid}` Firestore document.
 class AppUser {
   final String uid;
@@ -26,12 +25,12 @@ class AppUser {
   }
 
   Map<String, dynamic> toMap() => {
-        'uid': uid,
-        'username': username,
-        'sex': sex,
-        'activityLevel': activityLevel,
-        'dailyCaloriesGoal': dailyCaloriesGoal,
-      };
+    'uid': uid,
+    'username': username,
+    'sex': sex,
+    'activityLevel': activityLevel,
+    'dailyCaloriesGoal': dailyCaloriesGoal,
+  };
 
   AppUser copyWith({
     String? uid,

@@ -6,7 +6,6 @@ import 'package:senzu_app/screens/authentication/sign_in.dart';
 import 'package:senzu_app/screens/authentication/utils/bubble_indicator_painter.dart';
 import 'package:senzu_app/shared/theme.dart';
 
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -16,7 +15,6 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage>
     with SingleTickerProviderStateMixin {
-
   late PageController _pageController;
 
   Color left = Colors.black;
@@ -38,70 +36,74 @@ class _LoginPageState extends State<LoginPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: primaryBackgroundColor,
-        body: SingleChildScrollView(
-      physics: const ClampingScrollPhysics(),
-      child: GestureDetector(
-        onTap: () {
-          FocusScope.of(context).requestFocus(FocusNode());
-        },
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
-          
+      body: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: GestureDetector(
+          onTap: () {
+            FocusScope.of(context).requestFocus(FocusNode());
+          },
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
 
-          child: Column(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(top: 75.0),
-                child: Image(
-                    height:
-                        MediaQuery.of(context).size.height > 800 ? 191.0 : 150,
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(top: 75.0),
+                  child: Image(
+                    height: MediaQuery.of(context).size.height > 800
+                        ? 191.0
+                        : 150,
                     fit: BoxFit.fill,
-                    image: const AssetImage('assets/login_screen/login_cover_image.png')),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 20.0),
-                child: _buildMenuBar(context),
-              ),
-              Expanded(
-                flex: 2,
-                child: PageView(
-                  controller: _pageController,
-                  physics: const ClampingScrollPhysics(),
-                  onPageChanged: (i) {
-                    FocusScope.of(context).requestFocus(FocusNode());
-                    if (i == 0) {
-                      setState(() {
-                        right = Colors.white;
-                        left = Colors.black;
-                      });
-                    } else if (i == 1) {
-                      setState(() {
-                        right = Colors.black;
-                        left = Colors.white;
-                      });
-                    }
-                  },
-                  children: <Widget>[
-                    ConstrainedBox(
-                      constraints: const BoxConstraints.expand(),
-                      child: const LoginForm(),
+                    image: const AssetImage(
+                      'assets/login_screen/login_cover_image.png',
                     ),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints.expand(),
-                      child: const Register(),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(
+                  height: 10,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 20.0),
+                  child: _buildMenuBar(context),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const ClampingScrollPhysics(),
+                    onPageChanged: (i) {
+                      FocusScope.of(context).requestFocus(FocusNode());
+                      if (i == 0) {
+                        setState(() {
+                          right = Colors.white;
+                          left = Colors.black;
+                        });
+                      } else if (i == 1) {
+                        setState(() {
+                          right = Colors.black;
+                          left = Colors.white;
+                        });
+                      }
+                    },
+                    children: <Widget>[
+                      ConstrainedBox(
+                        constraints: const BoxConstraints.expand(),
+                        child: const LoginForm(),
+                      ),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints.expand(),
+                        child: const Register(),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
 
   Widget _buildMenuBar(BuildContext context) {
@@ -126,8 +128,9 @@ class _LoginPageState extends State<LoginPage>
                 child: Text(
                   'Login',
                   style: TextStyle(
-                      color: left,
-                      fontSize: 16.0,),
+                    color: left,
+                    fontSize: 16.0,
+                  ),
                 ),
               ),
             ),
@@ -141,8 +144,9 @@ class _LoginPageState extends State<LoginPage>
                 child: Text(
                   'Sign Up',
                   style: TextStyle(
-                      color: right,
-                      fontSize: 16.0,),
+                    color: right,
+                    fontSize: 16.0,
+                  ),
                 ),
               ),
             ),
@@ -153,13 +157,22 @@ class _LoginPageState extends State<LoginPage>
   }
 
   void _onSignInButtonPress() {
-    unawaited(_pageController.animateToPage(0,
-        duration: const Duration(milliseconds: 500), curve: Curves.decelerate));
+    unawaited(
+      _pageController.animateToPage(
+        0,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.decelerate,
+      ),
+    );
   }
 
   void _onSignUpButtonPress() {
-    unawaited(_pageController.animateToPage(1,
-        duration: const Duration(milliseconds: 500), curve: Curves.decelerate));
+    unawaited(
+      _pageController.animateToPage(
+        1,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.decelerate,
+      ),
+    );
   }
-
 }

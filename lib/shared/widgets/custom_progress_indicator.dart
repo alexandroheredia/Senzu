@@ -6,10 +6,12 @@ class CustomProgressIndicator extends StatefulWidget {
   const CustomProgressIndicator({super.key});
 
   @override
-  State<CustomProgressIndicator> createState() => _CustomProgressIndicatorState();
+  State<CustomProgressIndicator> createState() =>
+      _CustomProgressIndicatorState();
 }
 
-class _CustomProgressIndicatorState extends State<CustomProgressIndicator> with SingleTickerProviderStateMixin {
+class _CustomProgressIndicatorState extends State<CustomProgressIndicator>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
 
   @override
@@ -42,7 +44,9 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator> with 
             weight: 33.33,
           ),
           TweenSequenceItem<Color>(
-            tween: ConstantTween<Color>(const Color.fromARGB(255,11, 209, 252)),
+            tween: ConstantTween<Color>(
+              const Color.fromARGB(255, 11, 209, 252),
+            ),
             weight: 33.33,
           ),
         ],

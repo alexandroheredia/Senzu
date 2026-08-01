@@ -4,32 +4,39 @@ import 'package:senzu_app/services/user_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/theme.dart';
 
-StreamBuilder<AppUser>  dailyCalories(BuildContext context){
-
-    return StreamBuilder<AppUser>(
+StreamBuilder<AppUser> dailyCalories(BuildContext context) {
+  return StreamBuilder<AppUser>(
     stream: UserRepository(uid: myUID(context)).userData,
-    builder: (context, snapshot){
+    builder: (context, snapshot) {
       if (!snapshot.hasData) {
         return const Text('Loading');
       }
 
       final dailyCaloriesGoal = snapshot.data!.dailyCaloriesGoal;
-      return Text('$dailyCaloriesGoal Cal', style: textColor.copyWith(fontSize: 30));
-      }
-    );
+      return Text(
+        '$dailyCaloriesGoal Cal',
+        style: textColor.copyWith(fontSize: 30),
+      );
+    },
+  );
 }
 
-StreamBuilder<AppUser>  getUsername(BuildContext context){
-
-    return StreamBuilder<AppUser>(
+StreamBuilder<AppUser> getUsername(BuildContext context) {
+  return StreamBuilder<AppUser>(
     stream: UserRepository(uid: myUID(context)).userData,
-    builder: (context, snapshot){
+    builder: (context, snapshot) {
       if (!snapshot.hasData) {
         return const Text('Loading');
       }
 
       final username = snapshot.data!.username;
-      return Text('Hey, $username!', style: textColor.copyWith(fontSize: 30, fontWeight: FontWeight.bold,));
-      }
-    );
+      return Text(
+        'Hey, $username!',
+        style: textColor.copyWith(
+          fontSize: 30,
+          fontWeight: FontWeight.bold,
+        ),
+      );
+    },
+  );
 }

@@ -12,9 +12,6 @@ class NutritionGoals extends StatefulWidget {
 }
 
 class _NutritionGoalsState extends State<NutritionGoals> {
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,73 +25,85 @@ class _NutritionGoalsState extends State<NutritionGoals> {
     );
   }
 
-Widget nutritionGoalsBody(){
-
+  Widget nutritionGoalsBody() {
     return StreamBuilder<AppUser>(
-    stream: UserRepository(uid: myUID(context)).userData,
-    builder: (context, snapshot){
-      if (!snapshot.hasData) {
-        return const Text('Loading');
-      }
+      stream: UserRepository(uid: myUID(context)).userData,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Text('Loading');
+        }
 
-      final dailyCaloriesGoal = snapshot.data!.dailyCaloriesGoal;
-      final usernameController = TextEditingController(text: dailyCaloriesGoal.toString());
-      // return Text(username.toString());
-      return Column(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: <Widget>[
-                Text('Daily Calories Goal: ',
-                style: textColor.copyWith(fontSize: 20),),
-                SizedBox(
-                  width: 70,
-                  height: 40,
-                  child: TextFormField(
-                    style: textColor.copyWith(fontSize: 18),
-                    decoration: textInputDecoration,
-                    controller: usernameController,
+        final dailyCaloriesGoal = snapshot.data!.dailyCaloriesGoal;
+        final usernameController = TextEditingController(
+          text: dailyCaloriesGoal.toString(),
+        );
+        // return Text(username.toString());
+        return Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: <Widget>[
+                  Text(
+                    'Daily Calories Goal: ',
+                    style: textColor.copyWith(fontSize: 20),
                   ),
-                )
-              ],
+                  SizedBox(
+                    width: 70,
+                    height: 40,
+                    child: TextFormField(
+                      style: textColor.copyWith(fontSize: 18),
+                      decoration: textInputDecoration,
+                      controller: usernameController,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Container(
-            height: 40.0,
-            width: 100,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18.0),
-              color: primaryButtonColor
-            ),
-            child: MaterialButton(
-              onPressed: () async {
-                final scaffoldMessenger = ScaffoldMessenger.of(context);
-                try {
-                  await UserRepository(uid: myUID(context))
-                      .updateDailyCaloriesGoal(usernameController.text);
-                  if (!mounted) return;
-                  scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Daily calories intake goal updated successfully!')));
-                } on Object {
-                  if (context.mounted) {
+            Container(
+              height: 40.0,
+              width: 100,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18.0),
+                color: primaryButtonColor,
+              ),
+              child: MaterialButton(
+                onPressed: () async {
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+                  try {
+                    await UserRepository(
+                      uid: myUID(context),
+                    ).updateDailyCaloriesGoal(usernameController.text);
+                    if (!mounted) return;
                     scaffoldMessenger.showSnackBar(
-                      const SnackBar(content: Text('Failed to update goals.')),
+                      const SnackBar(
+                        content: Text(
+                          'Daily calories intake goal updated successfully!',
+                        ),
+                      ),
                     );
+                  } on Object {
+                    if (context.mounted) {
+                      scaffoldMessenger.showSnackBar(
+                        const SnackBar(
+                          content: Text('Failed to update goals.'),
+                        ),
+                      );
+                    }
                   }
-                }
-              },
-              child: const Text('Update',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20.0,
+                },
+                child: const Text(
+                  'Update',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20.0,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      );
-    }
-  );
-}
-
+          ],
+        );
+      },
+    );
+  }
 }

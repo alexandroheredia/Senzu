@@ -65,36 +65,38 @@ class NutrientTablePage extends StatelessWidget {
               ],
               rows: [
                 for (final row in page.rows)
-                  DataRow(cells: [
-                    DataCell(
-                      Center(
-                        child: Text(
-                          row.rank,
+                  DataRow(
+                    cells: [
+                      DataCell(
+                        Center(
+                          child: Text(
+                            row.rank,
+                            style: const TextStyle(fontSize: 20.0),
+                          ),
+                        ),
+                      ),
+                      DataCell(
+                        Text(
+                          row.foodName,
                           style: const TextStyle(fontSize: 20.0),
                         ),
                       ),
-                    ),
-                    DataCell(
-                      Text(
-                        row.foodName,
-                        style: const TextStyle(fontSize: 20.0),
+                      DataCell(
+                        Center(
+                          child: Text(
+                            row.amount,
+                            style: const TextStyle(fontSize: 20.0),
+                          ),
+                        ),
                       ),
-                    ),
-                    DataCell(
-                      Center(
-                        child: Text(
-                          row.amount,
+                      DataCell(
+                        Text(
+                          row.percent,
                           style: const TextStyle(fontSize: 20.0),
                         ),
                       ),
-                    ),
-                    DataCell(
-                      Text(
-                        row.percent,
-                        style: const TextStyle(fontSize: 20.0),
-                      ),
-                    ),
-                  ]),
+                    ],
+                  ),
               ],
             ),
           ),

@@ -8,13 +8,11 @@ import 'package:senzu_app/shared/theme.dart';
 class Home extends StatefulWidget {
   const Home({super.key});
 
-
   @override
   State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-
   @override
   void initState() {
     super.initState();
@@ -24,9 +22,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Senzu',
-        style: titleTextStyle
-        ),
+        title: const Text('Senzu', style: titleTextStyle),
         elevation: 0,
         centerTitle: true,
         backgroundColor: primaryBackgroundColor,
@@ -43,9 +39,17 @@ class _HomeState extends State<Home> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: ListTile(
-                          title: Text('Something is not working?', style: textColor.copyWith(fontSize: 18, fontWeight: FontWeight.bold),),
-                          subtitle: Text('We beg you to please let us know and we will fix it as soon as possible. You can reach us here: \n  - Reddit: r/SenzuApp \n  - Email: nointrobusiness@gmail.com',
-                            style: textColor.copyWith(),),
+                          title: Text(
+                            'Something is not working?',
+                            style: textColor.copyWith(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'We beg you to please let us know and we will fix it as soon as possible. You can reach us here: \n  - Reddit: r/SenzuApp \n  - Email: nointrobusiness@gmail.com',
+                            style: textColor.copyWith(),
+                          ),
                           onTap: () {
                             Navigator.pop(context);
                           },
@@ -53,26 +57,27 @@ class _HomeState extends State<Home> {
                       ),
                     ],
                   );
-                });
-            }, 
-            icon: const FaIcon(FontAwesomeIcons.screwdriverWrench)
-          )
+                },
+              );
+            },
+            icon: const FaIcon(FontAwesomeIcons.screwdriverWrench),
+          ),
         ],
       ),
       body: const HomeWidgets(),
       backgroundColor: primaryBackgroundColor,
       drawer: Theme(
         data: Theme.of(context).copyWith(
-               canvasColor: primaryBackgroundColor,
-            ),
-        child: const CustomDrawer()),
+          canvasColor: primaryBackgroundColor,
+        ),
+        child: const CustomDrawer(),
+      ),
     );
   }
 }
 
 class HomeWidgets extends StatelessWidget {
   const HomeWidgets({super.key});
-
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +100,6 @@ class HomeWidgets extends StatelessWidget {
 class NutrientsListPage extends StatelessWidget {
   const NutrientsListPage({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -104,28 +108,32 @@ class NutrientsListPage extends StatelessWidget {
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () async {
-            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
-              builder: (context) => const NutrientsDisplay()));
+            await Navigator.push<Object>(
+              context,
+              MaterialPageRoute<Object>(
+                builder: (context) => const NutrientsDisplay(),
+              ),
+            );
           },
           child: const SizedBox(
             width: 450,
             height: 100,
             child: Center(
-              child: Text('🏆 Top Nutrients List',
+              child: Text(
+                '🏆 Top Nutrients List',
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 30.0,
-                )
+                ),
               ),
-            )
+            ),
           ),
         ),
       ),
     );
   }
 }
-
 
 class FoodTrackerCard extends StatefulWidget {
   const FoodTrackerCard({super.key});
@@ -135,13 +143,10 @@ class FoodTrackerCard extends StatefulWidget {
 }
 
 class _FoodTrackerCardState extends State<FoodTrackerCard> {
-
-  @override  
-  void initState() {  
-    super.initState();  
-  } 
-
-
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -151,27 +156,32 @@ class _FoodTrackerCardState extends State<FoodTrackerCard> {
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () async {
-            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
-              builder: (context) => const FoodTracker()));
+            await Navigator.push<Object>(
+              context,
+              MaterialPageRoute<Object>(
+                builder: (context) => const FoodTracker(),
+              ),
+            );
           },
           child: const SizedBox(
-              width: 450,
-              height: 100,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text('🥗 Food Tracker',
-                    style: TextStyle(
-                      color: Color(0xFFE0E0E0),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30.0,
-                    )
-                    ),
-                ],
-              )
+            width: 450,
+            height: 100,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  '🥗 Food Tracker',
+                  style: TextStyle(
+                    color: Color(0xFFE0E0E0),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 30.0,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 }

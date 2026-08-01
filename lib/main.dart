@@ -30,8 +30,8 @@ class MyApp extends StatelessWidget {
         Provider<FoodLogRepository>(create: (_) => FoodLogRepository()),
         StreamProvider(
           create: (context) =>
-              context.read<AuthenticationService>().authStateChanges, 
-              initialData: null,
+              context.read<AuthenticationService>().authStateChanges,
+          initialData: null,
         ),
       ],
       child: MaterialApp(

@@ -20,21 +20,20 @@ class FoodShelf extends StatefulWidget {
   final String? mealIdValue;
 
   const FoodShelf({
-    super.key, 
-    this.selectedDateValue2, 
-    this.breakfastMealValue, 
-    this.lunchMealValue, 
+    super.key,
+    this.selectedDateValue2,
+    this.breakfastMealValue,
+    this.lunchMealValue,
     this.snacksMealValue,
-    this.dinnerMealValue, 
-    this.mealIdValue, 
-    });
+    this.dinnerMealValue,
+    this.mealIdValue,
+  });
 
   @override
   State<FoodShelf> createState() => _FoodShelfState();
 }
 
 class _FoodShelfState extends State<FoodShelf> {
-
   final mealNameController = TextEditingController();
   late final ShelfRepository _shelf;
   late final MealRepository _meals;
@@ -56,12 +55,15 @@ class _FoodShelfState extends State<FoodShelf> {
   //   );
   // }
 
-  final _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
+  final _chars =
+      'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
   final Random _rnd = Random();
 
   String getRandomString(int length) => String.fromCharCodes(
-    Iterable.generate(length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))
-    )
+    Iterable.generate(
+      length,
+      (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length)),
+    ),
   );
 
   String generateFoodId() {
@@ -71,22 +73,28 @@ class _FoodShelfState extends State<FoodShelf> {
 
   bool loading = false;
 
-
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Your Food Shelf',
-          style: titleTextStyle,),
+          title: const Text(
+            'Your Food Shelf',
+            style: titleTextStyle,
+          ),
           centerTitle: true,
           backgroundColor: primaryBackgroundColor,
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Food',),
-              Tab(text: 'Meals',),
-            ]),
+              Tab(
+                text: 'Food',
+              ),
+              Tab(
+                text: 'Meals',
+              ),
+            ],
+          ),
         ),
         bottomNavigationBar: const BottomAppBar(
           color: Color(0xFF1e1f38),
@@ -95,57 +103,66 @@ class _FoodShelfState extends State<FoodShelf> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              SizedBox(height: 40,)
-            // _searchButton(FontAwesomeIcons.search, () {}),
-            // _barcodeButton(FontAwesomeIcons.barcode, () {}),
-          ],
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: primaryButtonColor,
-        onPressed: () async {
-          setState(() => loading = true);
-
-          await Navigator.push(context, MaterialPageRoute<Object>(
-            builder: (context) => AddFood(
-              foodIdValue: generateFoodId(),
-            )
-          ));
-          if (mounted) {
-            setState(() => loading = false);
-          }
-        },
-        child: Center(
-          child: Builder(
-            builder: (context) {
-              return loading ? loadingWidget : const Icon(Icons.add, size: 35,);
-            },
+              SizedBox(
+                height: 40,
+              ),
+              // _searchButton(FontAwesomeIcons.search, () {}),
+              // _barcodeButton(FontAwesomeIcons.barcode, () {}),
+            ],
           ),
         ),
-      ),
-      body: TabBarView(
-            children: [
-              _foodShelfBody(),
-              mealsListBody(),
-            ],
-      ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: primaryButtonColor,
+          onPressed: () async {
+            setState(() => loading = true);
+
+            await Navigator.push(
+              context,
+              MaterialPageRoute<Object>(
+                builder: (context) => AddFood(
+                  foodIdValue: generateFoodId(),
+                ),
+              ),
+            );
+            if (mounted) {
+              setState(() => loading = false);
+            }
+          },
+          child: Center(
+            child: Builder(
+              builder: (context) {
+                return loading
+                    ? loadingWidget
+                    : const Icon(
+                        Icons.add,
+                        size: 35,
+                      );
+              },
+            ),
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _foodShelfBody(),
+            mealsListBody(),
+          ],
+        ),
         backgroundColor: primaryBackgroundColor,
       ),
     );
   }
 
-
-  Widget _foodShelfBody(){
+  Widget _foodShelfBody() {
     return Column(
       children: <Widget>[
-      _foodList(),
-      // _addManuallyButton(),
-      ]
+        _foodList(),
+        // _addManuallyButton(),
+      ],
     );
   }
 
-  Widget _foodList(){
+  Widget _foodList() {
     return Expanded(
       child: StreamBuilder<List<ShelfFood>>(
         stream: _shelf.shelfStream(myUID(context)),
@@ -154,124 +171,139 @@ class _FoodShelfState extends State<FoodShelf> {
     );
   }
 
-
-Widget buildFoodList(
-  BuildContext context,
-  AsyncSnapshot<List<ShelfFood>> snapshot,
-) {
-  if (snapshot.hasData) {
-    final foods = snapshot.data!;
-    return ListView.builder(
+  Widget buildFoodList(
+    BuildContext context,
+    AsyncSnapshot<List<ShelfFood>> snapshot,
+  ) {
+    if (snapshot.hasData) {
+      final foods = snapshot.data!;
+      return ListView.builder(
         physics: const BouncingScrollPhysics(),
         // shrinkWrap: true,
         itemCount: foods.length,
         itemBuilder: (context, index) {
+          final food = foods[index];
+          final foodName = food.foodName;
+          final brandName = food.brandName;
 
-    final food = foods[index];
-    final foodName = food.foodName;
-    final brandName = food.brandName;
-
-    return GestureDetector(
-      key: Key(food.id),
-      onLongPress: () async {
-        try {
-          await showDialog<String>(
-          context: context, 
-          builder: (context) => AlertDialog(
-            title: Column(
-              children: <Widget>[
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(0,0,0,10),
-                  child: Text('Removing from your shelf:',
-                  style: TextStyle(fontSize: 16),
-                  textAlign: TextAlign.start,
+          return GestureDetector(
+            key: Key(food.id),
+            onLongPress: () async {
+              try {
+                await showDialog<String>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Column(
+                      children: <Widget>[
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+                          child: Text(
+                            'Removing from your shelf:',
+                            style: TextStyle(fontSize: 16),
+                            textAlign: TextAlign.start,
+                          ),
+                        ),
+                        Text(
+                          foodName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          textAlign: TextAlign.start,
+                        ),
+                      ],
+                    ),
+                    actions: <Widget>[
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent[400], // background
+                          foregroundColor: Colors.white, // foreground
+                        ),
+                        child: const Text('Remove'),
+                        onPressed: () async {
+                          final navigator = Navigator.of(context);
+                          await _shelf.deleteFood(myUID(context), food.foodId);
+                          navigator.pop('ok');
+                        },
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0.0,
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                        ),
+                        onPressed: () => Navigator.pop(context, 'Cancel'),
+                        child: const Text(
+                          'Nope',
+                          style: TextStyle(
+                            fontSize: 15.0,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              } on Object {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Could not remove the food item. '
+                        'Please try again.',
+                      ),
+                    ),
+                  );
+                }
+              }
+            },
+            onTap: () async {
+              await Navigator.push<Object>(
+                context,
+                MaterialPageRoute<Object>(
+                  builder: (context) => FoodDetails(
+                    food: food,
+                    selectedDateSecondStep: widget.selectedDateValue2,
+                    breakfastMealAdd: widget.breakfastMealValue,
+                    lunchMealAdd: widget.lunchMealValue,
+                    snacksMealAdd: widget.snacksMealValue,
+                    dinnerMealAdd: widget.dinnerMealValue,
                   ),
                 ),
-                Text(foodName,
-                  style: const TextStyle(fontSize: 18,
-                  fontStyle: FontStyle.italic),
-                  textAlign: TextAlign.start,),
-                ]
-                ),
-            actions: <Widget>[
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent[400], // background
-                  foregroundColor: Colors.white, // foreground
-                ),
-                child: const Text('Remove'),
-                onPressed: () async {
-                  final navigator = Navigator.of(context);
-                  await _shelf.deleteFood(myUID(context), food.foodId);
-                  navigator.pop('ok');
-                },
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  elevation: 0.0,
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                ),
-                onPressed: () => Navigator.pop(context, 'Cancel'),
-                child: const Text('Nope',
-                style: TextStyle(
-                  fontSize: 15.0,
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white70),
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(8.0),
                   ),
                 ),
+                child: Column(
+                  children: [
+                    ListTile(
+                      title: Text(
+                        foodName,
+                        style: textColor.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      subtitle: Text(
+                        brandName,
+                        style: textColor.copyWith(fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ],
-          )
-        );
-        } on Object {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Could not remove the food item. '
-                    'Please try again.')));
-          }
-        }
-      },
-      onTap: () async {
-        await Navigator.push<Object>(context, MaterialPageRoute<Object>(
-          builder: (context) => FoodDetails(
-            food: food,
-            selectedDateSecondStep: widget.selectedDateValue2,
-            breakfastMealAdd: widget.breakfastMealValue,
-            lunchMealAdd: widget.lunchMealValue,
-            snacksMealAdd: widget.snacksMealValue,
-            dinnerMealAdd: widget.dinnerMealValue,
-          )
-        ));
-      },
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12,6,12,0),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Colors.white70
             ),
-            borderRadius: const BorderRadius.all(
-              Radius.circular(8.0),
-            )
-          ),
-          child: Column(
-            children: [
-              ListTile(
-                title: Text(foodName,
-                  style: textColor.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
-                ),
-                subtitle: Text(brandName,
-                style: textColor.copyWith(fontSize: 14),
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
-    );
-  } 
-        
+          );
+        },
       );
-    } else if (snapshot.connectionState == ConnectionState.done && !snapshot.hasData) {
+    } else if (snapshot.connectionState == ConnectionState.done &&
+        !snapshot.hasData) {
       // Handle no data
       return const Center(
         child: Text('No users found.'),
@@ -282,45 +314,47 @@ Widget buildFoodList(
     }
   }
 
-  Column mealsListBody(){
+  Column mealsListBody() {
     return Column(
       children: <Widget>[
-      _createMealButton(),
-      _mealsList(),
-      ]
+        _createMealButton(),
+        _mealsList(),
+      ],
     );
   }
 
-      // Button to create a new meal
-    Widget _createMealButton() {
-    return Builder(builder: (context){
-      return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          height: 45.0,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15.0),
-            color: primaryButtonColor
-          ),
-          child: MaterialButton(
-            onPressed: () async {
-              await _openCreateMealForm();
-            },
-            child: const Text('CREATE NEW MEAL',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20.0,
+  // Button to create a new meal
+  Widget _createMealButton() {
+    return Builder(
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Container(
+            height: 45.0,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(15.0),
+              color: primaryButtonColor,
+            ),
+            child: MaterialButton(
+              onPressed: () async {
+                await _openCreateMealForm();
+              },
+              child: const Text(
+                'CREATE NEW MEAL',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20.0,
+                ),
               ),
             ),
           ),
-        ),
-      );
-    }
-  );
-}
+        );
+      },
+    );
+  }
 
-   Future<void> _openCreateMealForm(){
+  Future<void> _openCreateMealForm() {
     return showModalBottomSheet<void>(
       isScrollControlled: true,
       context: context,
@@ -336,7 +370,9 @@ Widget buildFoodList(
                   child: TextFormField(
                     controller: mealNameController,
                     style: textColor.copyWith(fontSize: 18),
-                    decoration: textInputDecoration.copyWith(hintText: 'Meal Name'),
+                    decoration: textInputDecoration.copyWith(
+                      hintText: 'Meal Name',
+                    ),
                     keyboardType: TextInputType.name,
                   ),
                 ),
@@ -353,10 +389,10 @@ Widget buildFoodList(
                         final navigator = Navigator.of(context);
                         await saveMeal();
                         navigator.pop();
-                        }
+                      },
                     ),
-                  ]
-                )
+                  ],
+                ),
               ],
             ),
           ),
@@ -365,126 +401,122 @@ Widget buildFoodList(
     );
   }
 
-
   // Displays the list of meals recorded on Firestore
-  Widget _mealsList(){
-  return Expanded(
+  Widget _mealsList() {
+    return Expanded(
       child: StreamBuilder<List<Meal>>(
         stream: _meals.mealsStream(myUID(context)),
         builder: buildMealList,
       ),
-  );
-}
+    );
+  }
 
-
-Widget buildMealList(
-  BuildContext context,
-  AsyncSnapshot<List<Meal>> snapshot,
-) {
-  if (snapshot.hasData) {
-    final meals = snapshot.data!;
-    return ListView.builder(
+  Widget buildMealList(
+    BuildContext context,
+    AsyncSnapshot<List<Meal>> snapshot,
+  ) {
+    if (snapshot.hasData) {
+      final meals = snapshot.data!;
+      return ListView.builder(
         physics: const BouncingScrollPhysics(),
         // shrinkWrap: true,
         itemCount: meals.length,
         itemBuilder: (context, index) {
+          final meal = meals[index];
+          final mealName = meal.mealName;
+          final mealId = meal.mealId;
 
-    final meal = meals[index];
-    final mealName = meal.mealName;
-    final mealId = meal.mealId;
-
-
-
-    return GestureDetector(
-      key: Key(meal.id),
-      onTap: () async {
-        await Navigator.push<Object>(context, MaterialPageRoute<Object>(
-          builder: (context) => MealDetails(
-            mealNameValue: mealName,
-            mealIdValue: mealId,
-            selectedDateSecondStep: widget.selectedDateValue2,
-            breakfastMealAdd: widget.breakfastMealValue,
-            lunchMealAdd: widget.lunchMealValue,
-            snacksMealAdd: widget.snacksMealValue,
-            dinnerMealAdd: widget.dinnerMealValue,
-
-          )
-        ));
-      },
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12,6,12,0),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: Colors.white70
-            ),
-            borderRadius: const BorderRadius.all(
-              Radius.circular(8.0),
-            )
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(15.0),
-                            child: Text('🍽',
-                              style: textColor.copyWith(fontSize: 25),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(mealName,
-                                style: textColor.copyWith(
-                                  fontWeight: FontWeight.bold, 
-                                  fontSize: 18,
-                                  overflow: TextOverflow.ellipsis
-                                  
+          return GestureDetector(
+            key: Key(meal.id),
+            onTap: () async {
+              await Navigator.push<Object>(
+                context,
+                MaterialPageRoute<Object>(
+                  builder: (context) => MealDetails(
+                    mealNameValue: mealName,
+                    mealIdValue: mealId,
+                    selectedDateSecondStep: widget.selectedDateValue2,
+                    breakfastMealAdd: widget.breakfastMealValue,
+                    lunchMealAdd: widget.lunchMealValue,
+                    snacksMealAdd: widget.snacksMealValue,
+                    dinnerMealAdd: widget.dinnerMealValue,
+                  ),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+              child: Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white70),
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(8.0),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(15.0),
+                                child: Text(
+                                  '🍽',
+                                  style: textColor.copyWith(fontSize: 25),
                                 ),
                               ),
+                              Expanded(
+                                child: Text(
+                                  mealName,
+                                  style: textColor.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                  ),
-                  const Icon(Icons.add_circle_outline_rounded,
-                    size: 35,
-                    color: Color(0xFFc5c5c5),
-                  ),
-
-                ],
+                        ),
+                        const Icon(
+                          Icons.add_circle_outline_rounded,
+                          size: 35,
+                          color: Color(0xFFc5c5c5),
+                        ),
+                      ],
+                    ),
+                    // ListTile(
+                    //   leading: Text('🍽',
+                    //   style: textColor.copyWith(fontSize: 25),),
+                    //   title: Row(
+                    //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //     children: <Widget>[
+                    //       Text(mealName,
+                    //         style: textColor.copyWith(
+                    //           fontWeight: FontWeight.bold,
+                    //           fontSize: 18,
+                    //         ),
+                    //       ),
+                    //       Icon(Icons.add_circle_outline_rounded,
+                    //         size: 35,
+                    //         color: Color(0xFFc5c5c5),
+                    //       ),
+                    //     ]
+                    //   ),
+                    // )
+                  ],
+                ),
               ),
-              // ListTile(
-              //   leading: Text('🍽',
-              //   style: textColor.copyWith(fontSize: 25),),
-              //   title: Row(
-              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //     children: <Widget>[
-              //       Text(mealName,
-              //         style: textColor.copyWith(
-              //           fontWeight: FontWeight.bold, 
-              //           fontSize: 18,
-              //         ),
-              //       ),
-              //       Icon(Icons.add_circle_outline_rounded,
-              //         size: 35,
-              //         color: Color(0xFFc5c5c5),
-              //       ),
-              //     ]
-              //   ),
-              // )
-            ],
-          ),
-        ),
-      ),
-    );
-  } 
-        
+            ),
+          );
+        },
       );
-    } else if (snapshot.connectionState == ConnectionState.done && !snapshot.hasData) {
+    } else if (snapshot.connectionState == ConnectionState.done &&
+        !snapshot.hasData) {
       // Handle no data
       return const Center(
         child: Text('No users found.'),
@@ -495,9 +527,11 @@ Widget buildMealList(
     }
   }
 
-
   Future<void> saveMeal() async {
-    await _meals.createMeal(myUID(context), widget.mealIdValue!, mealNameController.text);
+    await _meals.createMeal(
+      myUID(context),
+      widget.mealIdValue!,
+      mealNameController.text,
+    );
   }
-
 }

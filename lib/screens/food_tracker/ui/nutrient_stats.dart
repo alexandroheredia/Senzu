@@ -98,7 +98,6 @@ class _NutrientStatsState extends State<NutrientStats> {
     // final zincSum = summary.zinc / 7;
     // final magnesiumSum = summary.magnesium / 7;
 
-
     return Container(
       padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 30.0),
       child: Column(
@@ -233,7 +232,6 @@ class _NutrientStatsState extends State<NutrientStats> {
     final saturatedFatSum = summary.saturatedFat / 30;
     final sodiumSum = summary.sodium / 30;
     final vitaminDSum = summary.vitaminD / 30;
-
 
     return Container(
       padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 30.0),

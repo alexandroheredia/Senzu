@@ -11,13 +11,14 @@ import 'package:senzu_app/shared/theme.dart';
 class NutrientsDisplay extends StatelessWidget {
   const NutrientsDisplay({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nutrients List',
-        style: titleTextStyle,),
+        title: const Text(
+          'Nutrients List',
+          style: titleTextStyle,
+        ),
         centerTitle: true,
         backgroundColor: primaryBackgroundColor,
         elevation: 0,
@@ -53,7 +54,6 @@ class NutrientList extends StatelessWidget {
 class FiberCard extends StatelessWidget {
   const FiberCard({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -62,20 +62,25 @@ class FiberCard extends StatelessWidget {
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () async {
-            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
-              builder: (context) => const Fiber()));
+            await Navigator.push<Object>(
+              context,
+              MaterialPageRoute<Object>(builder: (context) => const Fiber()),
+            );
           },
           child: const SizedBox(
-              width: 450,
-              height: 100,
-              child: Center(
-                child: Text('Fiber',
-                    style: TextStyle(
-                      color: Color(0xFFE0E0E0),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30.0,
-                    )),
-              )),
+            width: 450,
+            height: 100,
+            child: Center(
+              child: Text(
+                'Fiber',
+                style: TextStyle(
+                  color: Color(0xFFE0E0E0),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 30.0,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -86,7 +91,6 @@ class FiberCard extends StatelessWidget {
 class ProteinCard extends StatelessWidget {
   const ProteinCard({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -95,20 +99,25 @@ class ProteinCard extends StatelessWidget {
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () async {
-            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
-              builder: (context) => const Protein()));
+            await Navigator.push<Object>(
+              context,
+              MaterialPageRoute<Object>(builder: (context) => const Protein()),
+            );
           },
           child: const SizedBox(
-              width: 450,
-              height: 100,
-              child: Center(
-                child: Text('Protein',
-                    style: TextStyle(
-                      color: Color(0xFFE0E0E0),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30.0,
-                    )),
-              )),
+            width: 450,
+            height: 100,
+            child: Center(
+              child: Text(
+                'Protein',
+                style: TextStyle(
+                  color: Color(0xFFE0E0E0),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 30.0,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -119,7 +128,6 @@ class ProteinCard extends StatelessWidget {
 class PotassiumCard extends StatelessWidget {
   const PotassiumCard({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -128,20 +136,27 @@ class PotassiumCard extends StatelessWidget {
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () async {
-            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
-              builder: (context) => const Potassium()));
+            await Navigator.push<Object>(
+              context,
+              MaterialPageRoute<Object>(
+                builder: (context) => const Potassium(),
+              ),
+            );
           },
           child: const SizedBox(
-              width: 450,
-              height: 100,
-              child: Center(
-                child: Text('Potassium',
-                    style: TextStyle(
-                      color: Color(0xFFE0E0E0),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30.0,
-                    )),
-              )),
+            width: 450,
+            height: 100,
+            child: Center(
+              child: Text(
+                'Potassium',
+                style: TextStyle(
+                  color: Color(0xFFE0E0E0),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 30.0,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -152,7 +167,6 @@ class PotassiumCard extends StatelessWidget {
 class VitaminACard extends StatelessWidget {
   const VitaminACard({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -161,20 +175,25 @@ class VitaminACard extends StatelessWidget {
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () async {
-            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
-              builder: (context) => const VitaminA()));
+            await Navigator.push<Object>(
+              context,
+              MaterialPageRoute<Object>(builder: (context) => const VitaminA()),
+            );
           },
           child: const SizedBox(
-              width: 450,
-              height: 100,
-              child: Center(
-                child: Text('Vitamin A',
-                    style: TextStyle(
-                      color: Color(0xFFE0E0E0),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30.0,
-                    )),
-              )),
+            width: 450,
+            height: 100,
+            child: Center(
+              child: Text(
+                'Vitamin A',
+                style: TextStyle(
+                  color: Color(0xFFE0E0E0),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 30.0,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -185,7 +204,6 @@ class VitaminACard extends StatelessWidget {
 class VitaminCCard extends StatelessWidget {
   const VitaminCCard({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -194,20 +212,25 @@ class VitaminCCard extends StatelessWidget {
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () async {
-            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
-              builder: (context) => const VitaminC()));
+            await Navigator.push<Object>(
+              context,
+              MaterialPageRoute<Object>(builder: (context) => const VitaminC()),
+            );
           },
           child: const SizedBox(
-              width: 450,
-              height: 100,
-              child: Center(
-                child: Text('Vitamin C',
-                    style: TextStyle(
-                      color: Color(0xFFE0E0E0),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30.0,
-                    )),
-              )),
+            width: 450,
+            height: 100,
+            child: Center(
+              child: Text(
+                'Vitamin C',
+                style: TextStyle(
+                  color: Color(0xFFE0E0E0),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 30.0,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -218,7 +241,6 @@ class VitaminCCard extends StatelessWidget {
 class IronCard extends StatelessWidget {
   const IronCard({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -227,20 +249,25 @@ class IronCard extends StatelessWidget {
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () async {
-            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
-              builder: (context) => const Iron()));
+            await Navigator.push<Object>(
+              context,
+              MaterialPageRoute<Object>(builder: (context) => const Iron()),
+            );
           },
           child: const SizedBox(
-              width: 450,
-              height: 100,
-              child: Center(
-                child: Text('Iron',
-                    style: TextStyle(
-                      color: Color(0xFFE0E0E0),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30.0,
-                    )),
-              )),
+            width: 450,
+            height: 100,
+            child: Center(
+              child: Text(
+                'Iron',
+                style: TextStyle(
+                  color: Color(0xFFE0E0E0),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 30.0,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -251,7 +278,6 @@ class IronCard extends StatelessWidget {
 class CalciumCard extends StatelessWidget {
   const CalciumCard({super.key});
 
-
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -260,20 +286,25 @@ class CalciumCard extends StatelessWidget {
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () async {
-            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
-              builder: (context) => const Calcium()));
+            await Navigator.push<Object>(
+              context,
+              MaterialPageRoute<Object>(builder: (context) => const Calcium()),
+            );
           },
           child: const SizedBox(
-              width: 450,
-              height: 100,
-              child: Center(
-                child: Text('Calcium',
-                    style: TextStyle(
-                      color: Color(0xFFE0E0E0),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 30.0,
-                    )),
-              )),
+            width: 450,
+            height: 100,
+            child: Center(
+              child: Text(
+                'Calcium',
+                style: TextStyle(
+                  color: Color(0xFFE0E0E0),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 30.0,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

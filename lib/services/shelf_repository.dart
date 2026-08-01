@@ -7,7 +7,7 @@ class ShelfRepository {
   final FirebaseFirestore _db;
 
   ShelfRepository({FirebaseFirestore? db})
-      : _db = db ?? FirebaseFirestore.instance;
+    : _db = db ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _shelf(String uid) =>
       _db.collection('users').doc(uid).collection('foodShelf');
@@ -22,10 +22,9 @@ class ShelfRepository {
 
   /// Live shelf sorted by times added (most-used first).
   Stream<List<ShelfFood>> topFoodsStream(String uid) {
-    return _shelf(uid)
-        .orderBy('timesAdded', descending: true)
-        .snapshots()
-        .map(_toFoods);
+    return _shelf(
+      uid,
+    ).orderBy('timesAdded', descending: true).snapshots().map(_toFoods);
   }
 
   /// Persists a food to the user's shelf.
@@ -40,9 +39,9 @@ class ShelfRepository {
 
   /// Increments the `timesAdded` counter of a shelf food.
   Future<void> incrementTimesAdded(String uid, String foodId) {
-    return _shelf(uid)
-        .doc(foodId)
-        .update({'timesAdded': FieldValue.increment(1)});
+    return _shelf(
+      uid,
+    ).doc(foodId).update({'timesAdded': FieldValue.increment(1)});
   }
 
   /// Persists a food to the global catalog (`foods` collection).

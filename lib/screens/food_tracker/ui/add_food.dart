@@ -35,7 +35,9 @@ class _NutrientField extends StatelessWidget {
               validator: validator,
               decoration: textInputDecoration.copyWith(hintText: hint),
               controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp('[,.0-9]')),
               ],
@@ -234,7 +236,9 @@ class _AddFoodState extends State<AddFood> {
                 );
               } else {
                 scaffoldMessenger.showSnackBar(
-                  const SnackBar(content: Text('Please fill the required boxes')),
+                  const SnackBar(
+                    content: Text('Please fill the required boxes'),
+                  ),
                 );
               }
             } on Object {
@@ -277,166 +281,166 @@ class _AddFoodState extends State<AddFood> {
             children: <Widget>[
               _NutrientField(
                 label: 'Food Name',
-                  controller: foodNameController,
-                  hint: 'Food Name',
-                  validator: _required,
-                ),
-                _NutrientField(
-                  label: 'Brand / Category',
-                  controller: brandNameController,
-                  hint: 'Brand / Category',
-                ),
-                _NutrientField(
-                  label: 'Amount per serving (g/mL)',
-                  controller: servingSizeController,
-                  hint: 'g/mL',
-                  validator: _required,
-                ),
-                _NutrientField(
-                  label: 'Calories (kcal)',
-                  controller: caloriesController,
-                  hint: 'kcal',
-                ),
-                _NutrientField(
-                  label: 'Total Fat',
-                  controller: totalFatController,
-                  hint: 'g',
-                ),
-                _NutrientField(
-                  label: 'Saturated Fat',
-                  controller: saturatedFatController,
-                  hint: 'g',
-                ),
-                _NutrientField(
-                  label: 'Trans Fat',
-                  controller: transFatController,
-                  hint: 'g',
-                ),
-                _NutrientField(
-                  label: 'Cholesterol',
-                  controller: cholesterolController,
-                  hint: 'mg',
-                ),
-                _NutrientField(
-                  label: 'Sodium/Salt',
-                  controller: sodiumController,
-                  hint: 'mg',
-                ),
-                _NutrientField(
-                  label: 'Total Carbohydrate',
-                  controller: totalCarbohydrateController,
-                  hint: 'g',
-                ),
-                _NutrientField(
-                  label: 'Dietary Fiber',
-                  controller: dietaryFiberController,
-                  hint: 'g',
-                ),
-                _NutrientField(
-                  label: 'Sugars',
-                  controller: sugarsController,
-                  hint: 'g',
-                ),
-                _NutrientField(
-                  label: 'Added sugars',
-                  controller: addedSugarsController,
-                  hint: 'g',
-                ),
-                _NutrientField(
-                  label: 'Protein',
-                  controller: proteinController,
-                  hint: 'g',
-                ),
-                _NutrientField(
-                  label: 'Calcium (100% = 800mg)*',
-                  controller: calciumController,
-                  hint: '%',
-                ),
-                _NutrientField(
-                  label: 'Iron (100% = 9mg)*',
-                  controller: ironController,
-                  hint: '%',
-                ),
-                _NutrientField(
-                  label: 'Potassium (100% = 3500mg)',
-                  controller: potassiumController,
-                  hint: '%',
-                ),
-                _NutrientField(
-                  label: 'Vitamin A (100% = 900mcg)*',
-                  controller: vitaminAController,
-                  hint: '%',
-                ),
-                _NutrientField(
-                  label: 'Vitamin C (100% = 75mg)*',
-                  controller: vitaminCController,
-                  hint: '%',
-                ),
-                for (final nutrient in _optionalNutrients)
-                  if (_visible.contains(nutrient.key))
-                    _NutrientField(
-                      label: nutrient.label,
-                      controller: nutrient.controller,
-                      hint: '%',
-                    ),
-                const SizedBox(height: 10),
-                const Divider(
-                  thickness: 1,
-                  indent: 5,
-                  endIndent: 5,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Text(
-                      'Additional fields',
-                      style: textColor.copyWith(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                for (final nutrient in _optionalNutrients)
-                  Theme(
-                    data: ThemeData(unselectedWidgetColor: Colors.white),
-                    child: CheckboxListTile(
-                      title: Text(
-                        nutrient.label.split(' (')[0],
-                        style: textColor.copyWith(fontSize: 20),
-                      ),
-                      activeColor: primaryButtonColor,
-                      controlAffinity: ListTileControlAffinity.trailing,
-                      value: _visible.contains(nutrient.key),
-                      onChanged: (show) {
-                        setState(() {
-                          if (show ?? false) {
-                            _visible.add(nutrient.key);
-                          } else {
-                            _visible.remove(nutrient.key);
-                          }
-                        });
-                      },
+                controller: foodNameController,
+                hint: 'Food Name',
+                validator: _required,
+              ),
+              _NutrientField(
+                label: 'Brand / Category',
+                controller: brandNameController,
+                hint: 'Brand / Category',
+              ),
+              _NutrientField(
+                label: 'Amount per serving (g/mL)',
+                controller: servingSizeController,
+                hint: 'g/mL',
+                validator: _required,
+              ),
+              _NutrientField(
+                label: 'Calories (kcal)',
+                controller: caloriesController,
+                hint: 'kcal',
+              ),
+              _NutrientField(
+                label: 'Total Fat',
+                controller: totalFatController,
+                hint: 'g',
+              ),
+              _NutrientField(
+                label: 'Saturated Fat',
+                controller: saturatedFatController,
+                hint: 'g',
+              ),
+              _NutrientField(
+                label: 'Trans Fat',
+                controller: transFatController,
+                hint: 'g',
+              ),
+              _NutrientField(
+                label: 'Cholesterol',
+                controller: cholesterolController,
+                hint: 'mg',
+              ),
+              _NutrientField(
+                label: 'Sodium/Salt',
+                controller: sodiumController,
+                hint: 'mg',
+              ),
+              _NutrientField(
+                label: 'Total Carbohydrate',
+                controller: totalCarbohydrateController,
+                hint: 'g',
+              ),
+              _NutrientField(
+                label: 'Dietary Fiber',
+                controller: dietaryFiberController,
+                hint: 'g',
+              ),
+              _NutrientField(
+                label: 'Sugars',
+                controller: sugarsController,
+                hint: 'g',
+              ),
+              _NutrientField(
+                label: 'Added sugars',
+                controller: addedSugarsController,
+                hint: 'g',
+              ),
+              _NutrientField(
+                label: 'Protein',
+                controller: proteinController,
+                hint: 'g',
+              ),
+              _NutrientField(
+                label: 'Calcium (100% = 800mg)*',
+                controller: calciumController,
+                hint: '%',
+              ),
+              _NutrientField(
+                label: 'Iron (100% = 9mg)*',
+                controller: ironController,
+                hint: '%',
+              ),
+              _NutrientField(
+                label: 'Potassium (100% = 3500mg)',
+                controller: potassiumController,
+                hint: '%',
+              ),
+              _NutrientField(
+                label: 'Vitamin A (100% = 900mcg)*',
+                controller: vitaminAController,
+                hint: '%',
+              ),
+              _NutrientField(
+                label: 'Vitamin C (100% = 75mg)*',
+                controller: vitaminCController,
+                hint: '%',
+              ),
+              for (final nutrient in _optionalNutrients)
+                if (_visible.contains(nutrient.key))
+                  _NutrientField(
+                    label: nutrient.label,
+                    controller: nutrient.controller,
+                    hint: '%',
+                  ),
+              const SizedBox(height: 10),
+              const Divider(
+                thickness: 1,
+                indent: 5,
+                endIndent: 5,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Text(
+                    'Additional fields',
+                    style: textColor.copyWith(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                const SizedBox(height: 25),
-                SizedBox(
-                  height: 60,
-                  width: 320,
-                  child: Text(
-                    '* The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.',
-                    style: textColor.copyWith(fontSize: 13),
-                    textAlign: TextAlign.justify,
+                ],
+              ),
+              for (final nutrient in _optionalNutrients)
+                Theme(
+                  data: ThemeData(unselectedWidgetColor: Colors.white),
+                  child: CheckboxListTile(
+                    title: Text(
+                      nutrient.label.split(' (')[0],
+                      style: textColor.copyWith(fontSize: 20),
+                    ),
+                    activeColor: primaryButtonColor,
+                    controlAffinity: ListTileControlAffinity.trailing,
+                    value: _visible.contains(nutrient.key),
+                    onChanged: (show) {
+                      setState(() {
+                        if (show ?? false) {
+                          _visible.add(nutrient.key);
+                        } else {
+                          _visible.remove(nutrient.key);
+                        }
+                      });
+                    },
                   ),
                 ),
-                const SizedBox(height: 25),
-              ],
-            ),
+              const SizedBox(height: 25),
+              SizedBox(
+                height: 60,
+                width: 320,
+                child: Text(
+                  '* The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.',
+                  style: textColor.copyWith(fontSize: 13),
+                  textAlign: TextAlign.justify,
+                ),
+              ),
+              const SizedBox(height: 25),
+            ],
           ),
         ),
-      );
+      ),
+    );
   }
 
   /// Parses a controller value to a double; 0 when empty/invalid.
@@ -504,6 +508,9 @@ class _AddFoodState extends State<AddFood> {
 
   // Saves manual food entry to the root database/foods collection
   Future<void> saveToFoodDatabase(BuildContext context) async {
-    await context.read<ShelfRepository>().addToCatalog(widget.foodIdValue!, _foodData());
+    await context.read<ShelfRepository>().addToCatalog(
+      widget.foodIdValue!,
+      _foodData(),
+    );
   }
 }
