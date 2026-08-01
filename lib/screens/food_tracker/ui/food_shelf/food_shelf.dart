@@ -8,8 +8,8 @@ import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_details.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/meal_details.dart';
 import 'package:senzu_app/services/meal_repository.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
-import 'package:senzu_app/shared/theme.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
+import 'package:senzu_app/shared/theme.dart';
 
 class FoodShelf extends StatefulWidget {
   final DateTime? selectedDateValue2;
@@ -30,7 +30,7 @@ class FoodShelf extends StatefulWidget {
     });
 
   @override
-  _FoodShelfState createState() => _FoodShelfState();
+  State<FoodShelf> createState() => _FoodShelfState();
 }
 
 class _FoodShelfState extends State<FoodShelf> {
@@ -107,7 +107,7 @@ class _FoodShelfState extends State<FoodShelf> {
         onPressed: () async {
           setState(() => loading = true);
 
-          await Navigator.push(context, MaterialPageRoute(
+          await Navigator.push(context, MaterialPageRoute<Object>(
             builder: (context) => AddFood(
               foodIdValue: generateFoodId(),
             )
@@ -175,7 +175,7 @@ Widget buildFoodList(
       key: Key(food.id),
       onLongPress: () async {
         try {
-          showDialog<String>(
+          await showDialog<String>(
           context: context, 
           builder: (context) => AlertDialog(
             title: Column(
@@ -200,10 +200,10 @@ Widget buildFoodList(
                   foregroundColor: Colors.white, // foreground
                 ),
                 child: const Text('Remove'),
-                onPressed: () {
-                  // Deletes entry from Firestore database
-                  _shelf.deleteFood(myUID(context), food.foodId);
-                  Navigator.pop(context, 'ok');
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  await _shelf.deleteFood(myUID(context), food.foodId);
+                  navigator.pop('ok');
                 },
               ),
               ElevatedButton(
@@ -222,7 +222,7 @@ Widget buildFoodList(
             ],
           )
         );
-        } catch (e) {
+        } on Object {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Could not remove the food item. '
@@ -231,7 +231,7 @@ Widget buildFoodList(
         }
       },
       onTap: () async {
-        Navigator.push(context, MaterialPageRoute(
+        await Navigator.push<Object>(context, MaterialPageRoute<Object>(
           builder: (context) => FoodDetails(
             food: food,
             selectedDateSecondStep: widget.selectedDateValue2,
@@ -305,7 +305,7 @@ Widget buildFoodList(
           ),
           child: MaterialButton(
             onPressed: () async {
-              _openCreateMealForm();
+              await _openCreateMealForm();
             },
             child: const Text('CREATE NEW MEAL',
               style: TextStyle(
@@ -349,9 +349,10 @@ Widget buildFoodList(
                     ),
                     ElevatedButton(
                       child: const Text('SAVE MEAL'),
-                      onPressed: () {
-                        saveMeal();
-                        Navigator.pop(context);
+                      onPressed: () async {
+                        final navigator = Navigator.of(context);
+                        await saveMeal();
+                        navigator.pop();
                         }
                     ),
                   ]
@@ -397,7 +398,7 @@ Widget buildMealList(
     return GestureDetector(
       key: Key(meal.id),
       onTap: () async {
-        Navigator.push(context, MaterialPageRoute(
+        await Navigator.push<Object>(context, MaterialPageRoute<Object>(
           builder: (context) => MealDetails(
             mealNameValue: mealName,
             mealIdValue: mealId,
@@ -427,8 +428,7 @@ Widget buildMealList(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Container(
-                      child: Row(
+                    child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Padding(
@@ -449,7 +449,6 @@ Widget buildMealList(
                           ),
                         ],
                       ),
-                    ),
                   ),
                   const Icon(Icons.add_circle_outline_rounded,
                     size: 35,
@@ -497,8 +496,8 @@ Widget buildMealList(
   }
 
 
-  void saveMeal() {
-    _meals.createMeal(myUID(context), widget.mealIdValue!, mealNameController.text);
+  Future<void> saveMeal() async {
+    await _meals.createMeal(myUID(context), widget.mealIdValue!, mealNameController.text);
   }
 
 }

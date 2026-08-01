@@ -7,9 +7,8 @@ import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_details.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/services/meal_repository.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
-import 'package:senzu_app/shared/theme.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
-
+import 'package:senzu_app/shared/theme.dart';
 
 
 class MealDetails extends StatefulWidget {
@@ -34,7 +33,7 @@ class MealDetails extends StatefulWidget {
     });
 
   @override
-  _MealDetailsState createState() => _MealDetailsState();
+  State<MealDetails> createState() => _MealDetailsState();
 }
 
 class _MealDetailsState extends State<MealDetails> {
@@ -176,9 +175,11 @@ class _MealDetailsState extends State<MealDetails> {
           ),
           child: MaterialButton(
             onPressed: () async {
+              final navigator = Navigator.of(context);
               await updateFieldsOnFoodItems();
-              documentsLoopFromFirestore();
-              Navigator.of(context).pop();
+              await documentsLoopFromFirestore();
+              if (!mounted) return;
+              navigator.pop();
             },
             child: const Text('ADD THIS MEAL',
               style: TextStyle(
@@ -227,7 +228,7 @@ Widget buildMealFoodItemsList(
       key: Key(item.id),
       onLongPress: () async {
         try {
-          showDialog<String>(
+          await showDialog<String>(
           context: context, 
           builder: (context) => AlertDialog(
             title: Column(
@@ -252,10 +253,10 @@ Widget buildMealFoodItemsList(
                   foregroundColor: Colors.white, // foreground
                 ),
                 child: const Text('DELETE'),
-                onPressed: () {
-                  // Deletes entry from Firestore database
-                  _meals.deleteFoodItem(myUID(context), widget.mealIdValue!, item.id);
-                  Navigator.pop(context, 'ok');
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  await _meals.deleteFoodItem(myUID(context), widget.mealIdValue!, item.id);
+                  navigator.pop('ok');
                 },
               ),
               ElevatedButton(
@@ -274,7 +275,7 @@ Widget buildMealFoodItemsList(
             ],
           )
         );
-        } catch (e) {
+        } on Object {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Could not remove the food item. '
@@ -414,7 +415,7 @@ Widget buildFoodShelfList(
                     width: 40,
                     child: RawMaterialButton(
                       onPressed: () async {
-                        await Navigator.push(context, MaterialPageRoute(
+                        await Navigator.push(context, MaterialPageRoute<Object>(
                           builder: (context) => FoodDetails(
                             food: food,
                             mealIdValue: widget.mealIdValue,

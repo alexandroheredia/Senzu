@@ -10,7 +10,7 @@ class TopFoodsList extends StatefulWidget {
   const TopFoodsList({super.key});
 
   @override
-  _TopFoodsListState createState() => _TopFoodsListState();
+  State<TopFoodsList> createState() => _TopFoodsListState();
 }
 
 class _TopFoodsListState extends State<TopFoodsList> {

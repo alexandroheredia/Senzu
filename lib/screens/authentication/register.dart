@@ -10,7 +10,7 @@ class Register extends StatefulWidget {
   const Register({super.key,  this.toggleView });
 
   @override
-  _RegisterState createState() => _RegisterState();
+  State<Register> createState() => _RegisterState();
 }
 
 class _RegisterState extends State<Register> {
@@ -110,7 +110,7 @@ class _RegisterState extends State<Register> {
                         loading = false;
                         error = e.message;
                       });
-                    } catch (e) {
+                    } on Object {
                       setState(() {
                         loading = false;
                         error = 'There was an error creating your account. Please try again.';

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:senzu_app/screens/authentication/utils/snackbar.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
@@ -63,7 +62,7 @@ class AddFood extends StatefulWidget {
   const AddFood({super.key, this.foodIdValue});
 
   @override
-  _AddFoodState createState() => _AddFoodState();
+  State<AddFood> createState() => _AddFoodState();
 }
 
 class _AddFoodState extends State<AddFood> {
@@ -218,26 +217,30 @@ class _AddFoodState extends State<AddFood> {
           heroTag: 'add_food_button',
           backgroundColor: primaryButtonColor,
           onPressed: () async {
+            final navigator = Navigator.of(context);
+            final scaffoldMessenger = ScaffoldMessenger.of(context);
+            final shelf = context.read<ShelfRepository>();
             try {
               if (_addFoodFormKey.currentState!.validate()) {
                 setState(() => loading = true);
                 await saveFoodToShelf();
-                await saveToFoodDatabase(context);
+                await shelf.addToCatalog(widget.foodIdValue!, _foodData());
                 if (!mounted) return;
-                Navigator.of(context).pop();
-                CustomSnackBar(
-                  context,
-                  const Text('Food item added successfully'),
+                navigator.pop();
+                scaffoldMessenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Food item added successfully'),
+                  ),
                 );
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   const SnackBar(content: Text('Please fill the required boxes')),
                 );
               }
-            } catch (e) {
+            } on Object {
               if (mounted) {
                 setState(() => loading = false);
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   const SnackBar(
                     content: Text(
                       'Could not save the food item. '

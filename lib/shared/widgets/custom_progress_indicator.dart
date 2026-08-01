@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class CustomProgressIndicator extends StatefulWidget {
   const CustomProgressIndicator({super.key});
 
   @override
-  _CustomProgressIndicatorState createState() => _CustomProgressIndicatorState();
+  State<CustomProgressIndicator> createState() => _CustomProgressIndicatorState();
 }
 
 class _CustomProgressIndicatorState extends State<CustomProgressIndicator> with SingleTickerProviderStateMixin {
@@ -15,10 +17,9 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator> with 
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: (3*0.5*2222).toInt())
+      duration: Duration(milliseconds: (3 * 0.5 * 2222).toInt()),
     );
-
-    _animationController.repeat();
+    unawaited(_animationController.repeat());
   }
 
   @override

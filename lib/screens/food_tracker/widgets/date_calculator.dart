@@ -1,6 +1,5 @@
 import 'package:intl/intl.dart';
 
-
 String cleanMonthFormat(String date) {
   final displayFormater = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
   final serverFormater = DateFormat('MM');
@@ -17,18 +16,18 @@ String cleanYearFormat(String date) {
   return formatted;
 }
 
-DateTime cleanDateFormat(){
+DateTime cleanDateFormat() {
   final convertedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
   final parsedDate = DateTime.parse(convertedDate);
   return parsedDate;
 }
 
-int getWeekNumber(DateTime date){
+int getWeekNumber(DateTime date) {
   final year = date.year;
   final stateDate = DateTime(year);
   final weekday = stateDate.weekday;
-  final days = date.difference(stateDate).inDays; 
-  final week = ((weekday+days)/7).ceil();
+  final days = date.difference(stateDate).inDays;
+  final week = ((weekday + days) / 7).ceil();
   return week;
 }
 
@@ -39,5 +38,5 @@ DateTime startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
 DateTime todayMidnight() => startOfDay(DateTime.now());
 
 /// [days] days before [date].
-DateTime daysBefore(DateTime date, int days) => date.subtract(Duration(days: days));
-
+DateTime daysBefore(DateTime date, int days) =>
+    date.subtract(Duration(days: days));

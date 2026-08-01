@@ -20,7 +20,7 @@ class AddToMeal extends StatefulWidget {
   });
 
   @override
-  _AddToMealState createState() => _AddToMealState();
+  State<AddToMeal> createState() => _AddToMealState();
 }
 
 class _AddToMealState extends State<AddToMeal> {
@@ -99,11 +99,12 @@ class _AddToMealState extends State<AddToMeal> {
             child: InkWell(
               splashColor: const Color(0xFF2b2c4a),
               borderRadius: BorderRadius.circular(15.0),
-              onTap: () {
-                Future.delayed(const Duration(milliseconds: 200), () {
+              onTap: () async {
+                await Future<void>.delayed(const Duration(milliseconds: 200), () async {
                   setState(() => loading = true);
                   final meal = mealTypeToString(widget.mealType)!;
-                  Navigator.push(context, MaterialPageRoute(
+                  if (!mounted) return;
+                  await Navigator.push<Object>(context, MaterialPageRoute<Object>(
                     builder: (context) => FoodShelf(
                       selectedDateValue2: widget.selectedDateValue,
                       mealIdValue: generateMealId(),
@@ -154,8 +155,10 @@ class _AddToMealState extends State<AddToMeal> {
           ),
           child: MaterialButton(
             onPressed: () async {
-              Future.delayed(const Duration(milliseconds: 200), () {
-                Navigator.of(context).pop();
+              final navigator = Navigator.of(context);
+              Future<void>.delayed(const Duration(milliseconds: 200), () {
+                if (!mounted) return;
+                navigator.pop();
               });
             },
             child: const Text('Done',
@@ -209,7 +212,7 @@ Widget buildUserList(
       key: Key(food.id),
       onLongPress: () async {
         try {
-          showDialog<String>(
+          await showDialog<String>(
           context: context, 
           builder: (context) => AlertDialog(
             title: Column(
@@ -234,10 +237,10 @@ Widget buildUserList(
                   foregroundColor: Colors.white, // foreground
                 ),
                 child: const Text('Remove'),
-                onPressed: () {
-                  // Deletes entry from Firestore database
-                  context.read<FoodLogRepository>().deleteEntry(myUID(context), food.id);
-                  Navigator.pop(context, 'ok');
+                onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  await context.read<FoodLogRepository>().deleteEntry(myUID(context), food.id);
+                  navigator.pop('ok');
                 },
               ),
               ElevatedButton(
@@ -256,7 +259,7 @@ Widget buildUserList(
             ],
           )
         );
-        } catch (e) {
+        } on Object {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Could not remove the food item. '

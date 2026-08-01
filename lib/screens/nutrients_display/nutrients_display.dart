@@ -49,7 +49,7 @@ class NutrientList extends StatelessWidget {
   }
 }
 
-// TODO: REMOVE ALL OF THESE... It's insane to have all these stateless widgets for this.
+// TODO(alexandro): REMOVE ALL OF THESE... It's insane to have all these stateless widgets for this.
 class FiberCard extends StatelessWidget {
   const FiberCard({super.key});
 
@@ -61,8 +61,8 @@ class FiberCard extends StatelessWidget {
         color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(
+          onTap: () async {
+            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
               builder: (context) => const Fiber()));
           },
           child: const SizedBox(
@@ -94,8 +94,8 @@ class ProteinCard extends StatelessWidget {
         color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(
+          onTap: () async {
+            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
               builder: (context) => const Protein()));
           },
           child: const SizedBox(
@@ -127,8 +127,8 @@ class PotassiumCard extends StatelessWidget {
         color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(
+          onTap: () async {
+            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
               builder: (context) => const Potassium()));
           },
           child: const SizedBox(
@@ -160,8 +160,8 @@ class VitaminACard extends StatelessWidget {
         color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(
+          onTap: () async {
+            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
               builder: (context) => const VitaminA()));
           },
           child: const SizedBox(
@@ -193,8 +193,8 @@ class VitaminCCard extends StatelessWidget {
         color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(
+          onTap: () async {
+            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
               builder: (context) => const VitaminC()));
           },
           child: const SizedBox(
@@ -226,8 +226,8 @@ class IronCard extends StatelessWidget {
         color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(
+          onTap: () async {
+            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
               builder: (context) => const Iron()));
           },
           child: const SizedBox(
@@ -259,8 +259,8 @@ class CalciumCard extends StatelessWidget {
         color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(
+          onTap: () async {
+            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
               builder: (context) => const Calcium()));
           },
           child: const SizedBox(

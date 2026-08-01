@@ -35,16 +35,17 @@ class BubbleIndicatorPainter extends CustomPainter {
     final entry = Offset(left2right ? dxEntry : dxTarget, dy);
     final target = Offset(left2right ? dxTarget : dxEntry, dy);
 
-    final path = Path();
-    path.addArc(
-        Rect.fromCircle(center: entry, radius: radius), 0.5 * pi, 1 * pi);
-    path.addRect(Rect.fromLTRB(entry.dx, dy - radius, target.dx, dy + radius));
-    path.addArc(
+    final path = Path()
+      ..addArc(
+        Rect.fromCircle(center: entry, radius: radius), 0.5 * pi, 1 * pi)
+      ..addRect(Rect.fromLTRB(entry.dx, dy - radius, target.dx, dy + radius))
+      ..addArc(
         Rect.fromCircle(center: target, radius: radius), 1.5 * pi, 1 * pi);
 
-    canvas.translate(size.width * pageOffset, 0.0);
-    canvas.drawShadow(path, Colors.grey.shade600, 3.0, true);
-    canvas.drawPath(path, painter);
+    canvas
+      ..translate(size.width * pageOffset, 0.0)
+      ..drawShadow(path, Colors.grey.shade600, 3.0, true)
+      ..drawPath(path, painter);
   }
 
   @override

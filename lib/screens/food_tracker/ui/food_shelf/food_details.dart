@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -6,9 +8,9 @@ import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/services/food_log_repository.dart';
 import 'package:senzu_app/services/meal_repository.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
+import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/theme.dart';
-import 'package:senzu_app/shared/auth_scope.dart';
 
 class FoodDetails extends StatefulWidget {
   /// The food being logged (name, brand, serving size and all nutrients).
@@ -34,7 +36,7 @@ class FoodDetails extends StatefulWidget {
   });
 
   @override
-  _FoodDetailsState createState() => _FoodDetailsState();
+  State<FoodDetails> createState() => _FoodDetailsState();
 }
 
 class _FoodDetailsState extends State<FoodDetails> {
@@ -305,12 +307,15 @@ class _FoodDetailsState extends State<FoodDetails> {
                 backgroundColor: primaryButtonColor,
                 child: const Icon(Icons.add),
                 onPressed: () async {
+                  final navigator = Navigator.of(context);
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
                   try {
                     await _save();
-                    if (mounted) Navigator.of(context).pop();
-                  } catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                    if (!mounted) return;
+                    navigator.pop();
+                  } on Object {
+                    if (!mounted) return;
+                    scaffoldMessenger.showSnackBar(
                         const SnackBar(
                           content: Text(
                             'Could not save the food entry. '
@@ -318,7 +323,6 @@ class _FoodDetailsState extends State<FoodDetails> {
                           ),
                         ),
                       );
-                    }
                   }
                 },
               ),
@@ -731,12 +735,15 @@ class _FoodDetailsState extends State<FoodDetails> {
             ),
             child: MaterialButton(
               onPressed: () async {
+                final navigator = Navigator.of(context);
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
                 try {
                   await _save();
-                  if (mounted) Navigator.of(context).pop();
-                } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
+                  if (!mounted) return;
+                  navigator.pop();
+                } on Object {
+                  if (!mounted) return;
+                  scaffoldMessenger.showSnackBar(
                       const SnackBar(
                         content: Text(
                           'Could not add the food to your meal. '
@@ -744,7 +751,6 @@ class _FoodDetailsState extends State<FoodDetails> {
                         ),
                       ),
                     );
-                  }
                 }
               },
               child: const Text(
@@ -824,9 +830,9 @@ class _FoodDetailsState extends State<FoodDetails> {
   }
 
   void updateTimesAddedCount() {
-    context.read<ShelfRepository>().incrementTimesAdded(
+    unawaited(context.read<ShelfRepository>().incrementTimesAdded(
       myUID(context),
       widget.food.foodId,
-    );
+    ));
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:senzu_app/models/user.dart';
-import 'package:senzu_app/screens/authentication/utils/snackbar.dart';
 import 'package:senzu_app/services/user_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/theme.dart';
@@ -9,7 +8,7 @@ class NutritionGoals extends StatefulWidget {
   const NutritionGoals({super.key});
 
   @override
-  _NutritionGoalsState createState() => _NutritionGoalsState();
+  State<NutritionGoals> createState() => _NutritionGoalsState();
 }
 
 class _NutritionGoalsState extends State<NutritionGoals> {
@@ -70,11 +69,18 @@ Widget nutritionGoalsBody(){
             ),
             child: MaterialButton(
               onPressed: () async {
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
                 try {
                   await UserRepository(uid: myUID(context))
                       .updateDailyCaloriesGoal(usernameController.text);
-                  CustomSnackBar(context, const Text('Daily calories intake goal updated successfully!'));
-                } catch (e) {
+                  if (!mounted) return;
+                  scaffoldMessenger.showSnackBar(const SnackBar(content: Text('Daily calories intake goal updated successfully!')));
+                } on Object {
+                  if (context.mounted) {
+                    scaffoldMessenger.showSnackBar(
+                      const SnackBar(content: Text('Failed to update goals.')),
+                    );
+                  }
                 }
               },
               child: const Text('Update',

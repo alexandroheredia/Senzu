@@ -43,7 +43,7 @@ class AuthenticationService {
       return _userFromFirebaseUser(user);
     } on FirebaseAuthException catch (e) {
       throw AuthException(_friendlyMessage(e.code));
-    } catch (e) {
+    } on Object {
       throw const AuthException('Could not sign in. Please try again.');
     }
   }
@@ -64,7 +64,7 @@ class AuthenticationService {
       return _userFromFirebaseUser(user);
     } on FirebaseAuthException catch (e) {
       throw AuthException(_friendlyMessage(e.code));
-    } catch (e) {
+    } on Object {
       throw const AuthException('Could not create your account. Please try again.');
     }
   }

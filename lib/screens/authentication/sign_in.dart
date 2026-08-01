@@ -10,7 +10,7 @@ class LoginForm extends StatefulWidget {
   const LoginForm({super.key,  this.toggleView });
 
   @override
-  _LoginFormState createState() => _LoginFormState();
+  State<LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends State<LoginForm> {
@@ -129,7 +129,7 @@ class _LoginFormState extends State<LoginForm> {
                           loading = false;
                           error = e.message;
                         });
-                      } catch (e) {
+                      } on Object {
                         setState(() {
                           loading = false;
                           error = 'Could not sign in. Please try again.';

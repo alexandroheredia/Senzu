@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:senzu_app/screens/authentication/register.dart';
 import 'package:senzu_app/screens/authentication/sign_in.dart';
@@ -9,7 +11,7 @@ class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  _LoginPageState createState() => _LoginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage>
@@ -151,13 +153,13 @@ class _LoginPageState extends State<LoginPage>
   }
 
   void _onSignInButtonPress() {
-    _pageController.animateToPage(0,
-        duration: const Duration(milliseconds: 500), curve: Curves.decelerate);
+    unawaited(_pageController.animateToPage(0,
+        duration: const Duration(milliseconds: 500), curve: Curves.decelerate));
   }
 
   void _onSignUpButtonPress() {
-    _pageController.animateToPage(1,
-        duration: const Duration(milliseconds: 500), curve: Curves.decelerate);
+    unawaited(_pageController.animateToPage(1,
+        duration: const Duration(milliseconds: 500), curve: Curves.decelerate));
   }
 
 }

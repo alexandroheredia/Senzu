@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:senzu_app/models/user.dart';
 import 'package:senzu_app/services/user_repository.dart';
-import 'package:senzu_app/shared/theme.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
+import 'package:senzu_app/shared/theme.dart';
 
 StreamBuilder<AppUser>  dailyCalories(BuildContext context){
 

@@ -11,7 +11,7 @@ class NutrientStats extends StatefulWidget {
   const NutrientStats({super.key});
 
   @override
-  _NutrientStatsState createState() => _NutrientStatsState();
+  State<NutrientStats> createState() => _NutrientStatsState();
 }
 
 class _NutrientStatsState extends State<NutrientStats> {

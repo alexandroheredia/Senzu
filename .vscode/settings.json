@@ -1,3 +1,6 @@
 {
-  "workbench.colorTheme": "Andromeda Bordered"
+  "workbench.colorTheme": "Andromeda Bordered",
+  "chat.tools.terminal.autoApprove": {
+    "/Users/alexandro/Dev/flutter/bin/flutter": true
+  }
 }

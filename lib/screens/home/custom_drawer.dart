@@ -9,7 +9,7 @@ class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
 
   @override
-  _CustomDrawerState createState() => _CustomDrawerState();
+  State<CustomDrawer> createState() => _CustomDrawerState();
 }
 
 class _CustomDrawerState extends State<CustomDrawer> {
@@ -60,10 +60,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  onTap: () {
-                    Navigator.push(
+                  onTap: () async {
+                    await Navigator.push<Object>(
                       context,
-                      MaterialPageRoute(builder: (context) => const NutritionGoals()),
+                      MaterialPageRoute<Object>(builder: (context) => const NutritionGoals()),
                     );
                   },
                 ),
@@ -85,7 +85,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
               ),
               RawMaterialButton(
                 onPressed: () async {
-                  showDialog<String>(
+                  await showDialog<String>(
                     barrierColor: Colors.black54,
                     context: context,
                     builder: (context) => AlertDialog(

@@ -30,6 +30,7 @@ linter:
     lines_longer_than_80_chars: false # 561 issues — too restrictive for Firebase/Flutter code
     sort_constructors_first: false # 115 issues — pure style preference
     prefer_int_literals: false # 117 issues — 1.0 vs 1 for doubles is cosmetic
+    sort_pub_dependencies: false
     always_put_required_named_parameters_first: false # 89 issues — groups params by meaning
     # avoid_print: false  # Uncomment to disable the `avoid_print` rule
     # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule

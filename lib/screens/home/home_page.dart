@@ -10,7 +10,7 @@ class Home extends StatefulWidget {
 
 
   @override
-  _HomeState createState() => _HomeState();
+  State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
@@ -32,8 +32,8 @@ class _HomeState extends State<Home> {
         backgroundColor: primaryBackgroundColor,
         actions: [
           IconButton(
-            onPressed: (){
-              showModalBottomSheet(
+            onPressed: () async {
+              await showModalBottomSheet<Object>(
                 backgroundColor: primaryBackgroundColor,
                 context: context,
                 builder: (context) {
@@ -103,9 +103,8 @@ class NutrientsListPage extends StatelessWidget {
         color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
-          onTap: () {
-            // Navigator.pushNamed(context, '/nutrients_display');
-            Navigator.push(context, MaterialPageRoute(
+          onTap: () async {
+            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
               builder: (context) => const NutrientsDisplay()));
           },
           child: const SizedBox(
@@ -132,7 +131,7 @@ class FoodTrackerCard extends StatefulWidget {
   const FoodTrackerCard({super.key});
 
   @override
-  _FoodTrackerCardState createState() => _FoodTrackerCardState();
+  State<FoodTrackerCard> createState() => _FoodTrackerCardState();
 }
 
 class _FoodTrackerCardState extends State<FoodTrackerCard> {
@@ -151,9 +150,8 @@ class _FoodTrackerCardState extends State<FoodTrackerCard> {
         color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
-          onTap: () {
-            // Navigator.pushNamed(context, '/food_tracker');
-            Navigator.push(context, MaterialPageRoute(
+          onTap: () async {
+            await Navigator.push<Object>(context, MaterialPageRoute<Object>(
               builder: (context) => const FoodTracker()));
           },
           child: const SizedBox(
@@ -177,4 +175,3 @@ class _FoodTrackerCardState extends State<FoodTrackerCard> {
       );
     }
 }
-

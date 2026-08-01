@@ -18,7 +18,7 @@ class FoodTracker extends StatefulWidget {
   const FoodTracker({super.key});
 
   @override
-  _FoodTrackerState createState() => _FoodTrackerState();
+  State<FoodTracker> createState() => _FoodTrackerState();
 }
 
 class _FoodTrackerState extends State<FoodTracker> {
@@ -90,7 +90,7 @@ class FoodOverview extends StatefulWidget {
   const FoodOverview({super.key});
 
   @override
-  _FoodOverviewState createState() => _FoodOverviewState();
+  State<FoodOverview> createState() => _FoodOverviewState();
 }
 
 class _FoodOverviewState extends State<FoodOverview> {
@@ -110,12 +110,12 @@ class _FoodOverviewState extends State<FoodOverview> {
   /// The selected day normalized to midnight; used for queries and saving.
   DateTime get _selectedDate => startOfDay(_value);
 
-  void _openMeal(MealType mealType) {
-    Future.delayed(const Duration(milliseconds: 200), () {
+  Future<void> _openMeal(MealType mealType) async {
+    await Future<void>.delayed(const Duration(milliseconds: 200), () async {
       if (!mounted) return;
-      Navigator.push(
+      await Navigator.push<void>(
         context,
-        MaterialPageRoute(
+        MaterialPageRoute<void>(
           builder: (context) =>
               AddToMeal(mealType: mealType, selectedDateValue: _selectedDate),
         ),
@@ -129,7 +129,7 @@ class _FoodOverviewState extends State<FoodOverview> {
       stream: _foodLog.daySummary(myUID(context), _selectedDate),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: loadingWidget);
-        final summary = snapshot.data;
+        final summary = snapshot.data!;
         final totalCaloriesSum = summary.totalCalories;
         final breakfastCaloriesSum = summary.breakfastCalories;
         final lunchCaloriesSum = summary.lunchCalories;
@@ -532,7 +532,7 @@ class _FoodOverviewState extends State<FoodOverview> {
     );
   }
 
-  Future _selectDate() async {
+  Future<void> _selectDate() async {
     final picked = await showDatePicker(
       context: context,
       initialDate: _value,
@@ -565,7 +565,7 @@ class _FoodOverviewState extends State<FoodOverview> {
   }
 
   String _dateFormatter(DateTime tm) {
-    final var today = DateTime.now();
+    final today = DateTime.now();
     const oneDay = Duration(days: 1);
     const twoDay = Duration(days: 2);
     var month = '';
