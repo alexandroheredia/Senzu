@@ -1,6 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:senzu_app/screens/authentication/login_page.dart';
 import 'package:senzu_app/screens/authentication/register.dart';
-import 'package:flutter/material.dart';
 
 class Authenticate extends StatefulWidget {
   const Authenticate({super.key});
@@ -20,7 +20,7 @@ class _AuthenticateState extends State<Authenticate> {
   Widget build(BuildContext context) {
     if (showSignIn) {
       // return SignIn(toggleView: toggleView);
-      return LoginPage();
+      return const LoginPage();
     } else {
       return Register(toggleView: toggleView);
     }

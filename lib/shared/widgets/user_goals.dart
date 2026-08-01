@@ -4,13 +4,13 @@ import 'package:senzu_app/services/user_repository.dart';
 import 'package:senzu_app/shared/theme.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 
-dailyCalories(BuildContext context){
+StreamBuilder<AppUser> StreamBuilder<AppUser> dynamic dynamic dynamic dynamic dynamic dynamic dailyCalories(BuildContext context){
 
     return StreamBuilder<AppUser>(
     stream: UserRepository(uid: myUID(context)).userData,
-    builder: (context, AsyncSnapshot<AppUser> snapshot){
+    builder: (context, snapshot){
       if (!snapshot.hasData) {
-        return Text("Loading");
+        return const Text('Loading');
       }
 
       final dailyCaloriesGoal = snapshot.data!.dailyCaloriesGoal;
@@ -19,13 +19,13 @@ dailyCalories(BuildContext context){
     );
 }
 
-getUsername(BuildContext context){
+StreamBuilder<AppUser> StreamBuilder<AppUser> dynamic dynamic dynamic dynamic dynamic dynamic getUsername(BuildContext context){
 
     return StreamBuilder<AppUser>(
     stream: UserRepository(uid: myUID(context)).userData,
-    builder: (context, AsyncSnapshot<AppUser> snapshot){
+    builder: (context, snapshot){
       if (!snapshot.hasData) {
-        return Text("Loading");
+        return const Text('Loading');
       }
 
       final username = snapshot.data!.username;

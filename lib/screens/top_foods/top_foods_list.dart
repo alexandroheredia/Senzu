@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:senzu_app/models/shelf_food.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
-import 'package:senzu_app/shared/theme.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
+import 'package:senzu_app/shared/theme.dart';
 
 
 class TopFoodsList extends StatefulWidget {
@@ -51,15 +51,14 @@ Widget buildUserList(
   if (snapshot.hasData) {
     final foods = snapshot.data!;
     return ListView.builder(
-        physics: BouncingScrollPhysics(),
-        scrollDirection: Axis.vertical,
+        physics: const BouncingScrollPhysics(),
         // shrinkWrap: true,
         itemCount: foods.length,
-        itemBuilder: (BuildContext context, int index) {
+        itemBuilder: (context, index) {
 
     final food = foods[index];
-    var foodName = food.foodName;
-    var brandName = food.brandName;
+    final foodName = food.foodName;
+    final brandName = food.brandName;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12,6,12,0),
@@ -91,8 +90,8 @@ Widget buildUserList(
       );
     } else if (snapshot.connectionState == ConnectionState.done && !snapshot.hasData) {
       // Handle no data
-      return Center(
-        child: Text("No foods found."),
+      return const Center(
+        child: Text('No foods found.'),
       );
     } else {
       // Still loading

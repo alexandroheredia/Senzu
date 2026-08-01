@@ -19,38 +19,37 @@ class _InitialProfileSetupState extends State<InitialProfileSetup> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        padding: EdgeInsets.fromLTRB(20.0, 50.0, 20.0, 20.0),
+        padding: const EdgeInsets.fromLTRB(20.0, 50.0, 20.0, 20.0),
         child: SingleChildScrollView(
           child: Column(
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   InkWell(
                     onTap: () {
                       Navigator.of(context).pop();
                     },
-                    child: Icon(Icons.arrow_back_ios),
+                    child: const Icon(Icons.arrow_back_ios),
                   )
                 ],
               ),
-              SizedBox(height: 20,),
+              const SizedBox(height: 20,),
               Column(
                 children: [
-                  Icon(Icons.person),
-                  SizedBox(height: 10,),
-                  Text('Profile Setup'),
-                  SizedBox(height: 20,),
+                  const Icon(Icons.person),
+                  const SizedBox(height: 10,),
+                  const Text('Profile Setup'),
+                  const SizedBox(height: 20,),
                   Container(
-                    constraints: BoxConstraints(maxWidth: 270),
-                    child: Text('With this info, we are going to tweak the numbers to give you the best recommendations',
+                    constraints: const BoxConstraints(maxWidth: 270),
+                    child: const Text('With this info, we are going to tweak the numbers to give you the best recommendations',
                     textAlign: TextAlign.center,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 50,),
-              InitialProfileSetupForm(),
+              const SizedBox(height: 50,),
+              const InitialProfileSetupForm(),
             ],
           ),
         ),
@@ -93,7 +92,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
       builder: (context, snapshot) {
         if (snapshot.hasData) {
 
-          AppUser userData = snapshot.data!;
+          final userData = snapshot.data!;
           return Form(
             key: _formKey,
             child: Column(
@@ -107,7 +106,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                         label: 'Sex',
                         child: DropdownButtonFormField<String>(
                           initialValue: _sex ?? userData.sex,
-                          items: <DropdownMenuItem<String>>[
+                          items: const <DropdownMenuItem<String>>[
                             DropdownMenuItem(
                               value: 'male',
                               child: Text(
@@ -121,10 +120,10 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                                 ),
                             ),
                           ],
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             border: InputBorder.none
                             ),
-                          onChanged: (String? sex){
+                          onChanged: (sex){
                             setState(() {
                               _sex = sex;
                             });
@@ -132,7 +131,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                         ),
                       ),
                     ),
-                    Expanded(
+                    const Expanded(
                       flex: 6,
                       child: SizedBox(width: 20,),
                     ),
@@ -169,7 +168,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                     // ),
                   ],
                 ),
-                SizedBox(height: 15,),
+                const SizedBox(height: 15,),
                 Row(
                   children: [
                     // Expanded(
@@ -201,7 +200,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                     //     ),
                     //   ),
                     // ),
-                    Expanded(
+                    const Expanded(
                       flex: 6,
                       child: SizedBox(height: 20,)
                     ),
@@ -211,7 +210,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                         label: 'Activity Level',
                         child: DropdownButtonFormField<String>(
                           initialValue: _activityLevel ?? userData.activityLevel,
-                          items: <DropdownMenuItem<String>>[
+                          items: const <DropdownMenuItem<String>>[
                             DropdownMenuItem(
                               value: 'sedentary',
                               child: Text(
@@ -237,10 +236,10 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                                 ),
                             ),
                           ],
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             border: InputBorder.none
                             ),
-                          onChanged: (String? activityLevel){
+                          onChanged: (activityLevel){
                             setState(() {
                               _activityLevel = activityLevel;
                             });
@@ -250,11 +249,11 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                     ),
                   ],
                 ),
-                SizedBox(height: 15,),
+                const SizedBox(height: 15,),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Expanded(
+                    const Expanded(
                       child: SizedBox(width: 0,),
                     ),
                     ElevatedButton(
@@ -262,11 +261,11 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                         backgroundColor: Colors.red, // background
                         foregroundColor: Colors.white, // foreground
                       ),
-                      child: _loading ? SizedBox(
+                      child: _loading ? const SizedBox(
                         height: 22,
                         width: 22,
                         child: CustomProgressIndicator()
-                      ) : Text(
+                      ) : const Text(
                         'Update',
                       ),
                         onPressed: () async {

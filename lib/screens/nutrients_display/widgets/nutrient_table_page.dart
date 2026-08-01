@@ -23,23 +23,22 @@ class NutrientTablePage extends StatelessWidget {
       body: Container(
         alignment: Alignment.topCenter,
         child: SingleChildScrollView(
-          scrollDirection: Axis.vertical,
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: DataTable(
               columnSpacing: 15.0,
               dividerThickness: 1.5,
               columns: [
-                DataColumn(
+                const DataColumn(
                   label: Text(
                     'No.',
-                    style: const TextStyle(fontSize: 20.0),
+                    style: TextStyle(fontSize: 20.0),
                   ),
                 ),
-                DataColumn(
+                const DataColumn(
                   label: Text(
                     'Food Name',
-                    style: const TextStyle(fontSize: 20.0),
+                    style: TextStyle(fontSize: 20.0),
                   ),
                 ),
                 DataColumn(
@@ -57,10 +56,10 @@ class NutrientTablePage extends StatelessWidget {
                     ],
                   ),
                 ),
-                DataColumn(
+                const DataColumn(
                   label: Text(
                     ' %DV',
-                    style: const TextStyle(fontSize: 20.0),
+                    style: TextStyle(fontSize: 20.0),
                   ),
                 ),
               ],

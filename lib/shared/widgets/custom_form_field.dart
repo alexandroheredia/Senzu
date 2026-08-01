@@ -17,8 +17,8 @@ class CustomFormField extends StatelessWidget {
           Container(
             width: double.infinity,
             height: double.infinity,
-            margin: EdgeInsets.only(top: 6),
-            padding: EdgeInsets.symmetric(horizontal: 12),
+            margin: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.black.withValues(alpha: 0.3), width: 1.1),
               borderRadius: BorderRadius.circular(4)
@@ -30,10 +30,10 @@ class CustomFormField extends StatelessWidget {
             left: 14,
             child: Container(
               color: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 3),
               child: Text(
                 label,
-                style:  TextStyle(
+                style:  const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500
                 ),

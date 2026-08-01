@@ -1,18 +1,18 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:senzu_app/screens/authentication/wrapper.dart';
 import 'package:senzu_app/services/auth_service.dart';
 import 'package:senzu_app/services/food_log_repository.dart';
 import 'package:senzu_app/services/meal_repository.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/shared/theme.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -35,14 +35,14 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        home: Wrapper(),
+        home: const Wrapper(),
         theme: ThemeData(
           brightness: Brightness.dark,
           primaryColor: primaryButtonColor,
           scaffoldBackgroundColor: primaryBackgroundColor,
-          colorScheme: ColorScheme.dark(
+          colorScheme: const ColorScheme.dark(
             primary: primaryButtonColor,
-            surface: const Color(0xFF1e1f38),
+            surface: Color(0xFF1e1f38),
           ),
           appBarTheme: const AppBarTheme(
             backgroundColor: primaryBackgroundColor,

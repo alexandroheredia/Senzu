@@ -41,14 +41,14 @@ void main() {
         'calories': 500.5,
         'protein': 30,
         'mealType': 'lunch',
-        'dateAdded': DateTime(2026, 8, 1),
+        'dateAdded': DateTime(2026, 8),
       });
       expect(entry.id, 'abc');
       expect(entry.calories, 500);
       expect(entry.protein, 30);
       expect(entry.totalFat, 0);
       expect(entry.mealType, MealType.lunch);
-      expect(entry.dateAdded, DateTime(2026, 8, 1));
+      expect(entry.dateAdded, DateTime(2026, 8));
     });
 
     test('defaults missing fields to zero/empty values', () {
@@ -73,7 +73,7 @@ void main() {
     test('sums nutrients across entries', () {
       final e1 = FoodEntry(
         id: '1',
-        dateAdded: DateTime(2026, 8, 1),
+        dateAdded: DateTime(2026, 8),
         calories: 200,
         protein: 10,
         totalFat: 5,
@@ -81,7 +81,7 @@ void main() {
       );
       final e2 = FoodEntry(
         id: '2',
-        dateAdded: DateTime(2026, 8, 1),
+        dateAdded: DateTime(2026, 8),
         calories: 300,
         protein: 20,
         totalFat: 15,

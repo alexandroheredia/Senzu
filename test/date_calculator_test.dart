@@ -5,25 +5,25 @@ void main() {
   group('startOfDay', () {
     test('normalizes a date to midnight', () {
       final date = DateTime(2026, 8, 1, 14, 30, 45);
-      expect(startOfDay(date), DateTime(2026, 8, 1));
+      expect(startOfDay(date), DateTime(2026, 8));
     });
 
     test('keeps midnight dates unchanged', () {
-      final date = DateTime(2026, 8, 1);
+      final date = DateTime(2026, 8);
       expect(startOfDay(date), date);
     });
   });
 
   group('daysBefore', () {
     test('subtracts the given number of days', () {
-      expect(daysBefore(DateTime(2026, 8, 1), 7), DateTime(2026, 7, 25));
-      expect(daysBefore(DateTime(2026, 8, 1), 30), DateTime(2026, 7, 2));
+      expect(daysBefore(DateTime(2026, 8), 7), DateTime(2026, 7, 25));
+      expect(daysBefore(DateTime(2026, 8), 30), DateTime(2026, 7, 2));
     });
   });
 
   group('getWeekNumber', () {
     test('returns week 1 for January 1st', () {
-      expect(getWeekNumber(DateTime(2026, 1, 1)), 1);
+      expect(getWeekNumber(DateTime(2026)), 1);
     });
 
     test('returns a higher week later in the year', () {

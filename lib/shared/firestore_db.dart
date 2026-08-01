@@ -3,8 +3,8 @@ library;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-final dbUsersCollection = FirebaseFirestore.instance.collection('users');
+final CollectionReference<Map<String, dynamic>> dbUsersCollection = FirebaseFirestore.instance.collection('users');
 
-final dbFoodsCollection = FirebaseFirestore.instance.collection('foods');
+final CollectionReference<Map<String, dynamic>> dbFoodsCollection = FirebaseFirestore.instance.collection('foods');
 
-final db = FirebaseFirestore.instance;
+final FirebaseFirestore db = FirebaseFirestore.instance;

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:senzu_app/models/user.dart';
 import 'package:senzu_app/screens/authentication/utils/snackbar.dart';
 import 'package:senzu_app/services/user_repository.dart';
-import 'package:senzu_app/shared/theme.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
+import 'package:senzu_app/shared/theme.dart';
 
 class NutritionGoals extends StatefulWidget {
   const NutritionGoals({super.key});
@@ -20,7 +20,7 @@ class _NutritionGoalsState extends State<NutritionGoals> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nutrition Goals'),
+        title: const Text('Nutrition Goals'),
         centerTitle: true,
         backgroundColor: primaryBackgroundColor,
       ),
@@ -33,9 +33,9 @@ Widget nutritionGoalsBody(){
 
     return StreamBuilder<AppUser>(
     stream: UserRepository(uid: myUID(context)).userData,
-    builder: (context, AsyncSnapshot<AppUser> snapshot){
+    builder: (context, snapshot){
       if (!snapshot.hasData) {
-        return Text("Loading");
+        return const Text('Loading');
       }
 
       final dailyCaloriesGoal = snapshot.data!.dailyCaloriesGoal;
@@ -77,7 +77,7 @@ Widget nutritionGoalsBody(){
                 } catch (e) {
                 }
               },
-              child: Text('Update',
+              child: const Text('Update',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20.0,

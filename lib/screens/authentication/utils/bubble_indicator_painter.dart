@@ -25,17 +25,17 @@ class BubbleIndicatorPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final ScrollPosition pos = pageController.position;
-    final double fullExtent =
+    final pos = pageController.position;
+    final fullExtent =
         pos.maxScrollExtent - pos.minScrollExtent + pos.viewportDimension;
 
-    final double pageOffset = pos.extentBefore / fullExtent;
+    final pageOffset = pos.extentBefore / fullExtent;
 
-    final bool left2right = dxEntry < dxTarget;
-    final Offset entry = Offset(left2right ? dxEntry : dxTarget, dy);
-    final Offset target = Offset(left2right ? dxTarget : dxEntry, dy);
+    final left2right = dxEntry < dxTarget;
+    final entry = Offset(left2right ? dxEntry : dxTarget, dy);
+    final target = Offset(left2right ? dxTarget : dxEntry, dy);
 
-    final Path path = Path();
+    final path = Path();
     path.addArc(
         Rect.fromCircle(center: entry, radius: radius), 0.5 * pi, 1 * pi);
     path.addRect(Rect.fromLTRB(entry.dx, dy - radius, target.dx, dy + radius));

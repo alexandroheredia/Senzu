@@ -48,7 +48,6 @@ class _LoginPageState extends State<LoginPage>
           
 
           child: Column(
-            mainAxisSize: MainAxisSize.max,
             children: <Widget>[
               Padding(
                 padding: const EdgeInsets.only(top: 75.0),
@@ -58,7 +57,7 @@ class _LoginPageState extends State<LoginPage>
                     fit: BoxFit.fill,
                     image: const AssetImage('assets/login_screen/login_cover_image.png')),
               ),
-              SizedBox(
+              const SizedBox(
                 height: 10,
               ),
               Padding(
@@ -70,7 +69,7 @@ class _LoginPageState extends State<LoginPage>
                 child: PageView(
                   controller: _pageController,
                   physics: const ClampingScrollPhysics(),
-                  onPageChanged: (int i) {
+                  onPageChanged: (i) {
                     FocusScope.of(context).requestFocus(FocusNode());
                     if (i == 0) {
                       setState(() {
@@ -87,11 +86,11 @@ class _LoginPageState extends State<LoginPage>
                   children: <Widget>[
                     ConstrainedBox(
                       constraints: const BoxConstraints.expand(),
-                      child: LoginForm(),
+                      child: const LoginForm(),
                     ),
                     ConstrainedBox(
                       constraints: const BoxConstraints.expand(),
-                      child: Register(),
+                      child: const Register(),
                     ),
                   ],
                 ),

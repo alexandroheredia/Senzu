@@ -1,6 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:senzu_app/models/user.dart';
 import 'package:senzu_app/services/user_repository.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 /// User-friendly auth failure that can be shown directly in the UI.
 class AuthException implements Exception {
@@ -24,8 +24,8 @@ class AuthenticationService {
 
   // sign in anon
   Future<AppUser?> signInAnon() async {
-    final UserCredential result = await _firebaseAuth.signInAnonymously();
-    final User? user = result.user;
+    final result = await _firebaseAuth.signInAnonymously();
+    final user = result.user;
     if (user == null) return null;
     return _userFromFirebaseUser(user);
   }
@@ -36,15 +36,15 @@ class AuthenticationService {
     String password,
   ) async {
     try {
-      final UserCredential result = await _firebaseAuth
+      final result = await _firebaseAuth
           .signInWithEmailAndPassword(email: email, password: password);
-      final User? user = result.user;
+      final user = result.user;
       if (user == null) return null;
       return _userFromFirebaseUser(user);
     } on FirebaseAuthException catch (e) {
       throw AuthException(_friendlyMessage(e.code));
     } catch (e) {
-      throw AuthException('Could not sign in. Please try again.');
+      throw const AuthException('Could not sign in. Please try again.');
     }
   }
 
@@ -54,9 +54,9 @@ class AuthenticationService {
     String password,
   ) async {
     try {
-      final UserCredential result = await _firebaseAuth
+      final result = await _firebaseAuth
           .createUserWithEmailAndPassword(email: email, password: password);
-      final User? user = result.user;
+      final user = result.user;
       if (user == null) return null;
       // create a new document for the user with the uid
       await UserRepository(uid: user.uid)
@@ -65,7 +65,7 @@ class AuthenticationService {
     } on FirebaseAuthException catch (e) {
       throw AuthException(_friendlyMessage(e.code));
     } catch (e) {
-      throw AuthException('Could not create your account. Please try again.');
+      throw const AuthException('Could not create your account. Please try again.');
     }
   }
 

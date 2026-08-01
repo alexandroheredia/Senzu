@@ -1,12 +1,13 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_shelf.dart';
 import 'package:senzu_app/services/food_log_repository.dart';
-import 'package:senzu_app/shared/theme.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
-import 'package:provider/provider.dart';
+import 'package:senzu_app/shared/theme.dart';
 
 class AddToMeal extends StatefulWidget {
   final DateTime selectedDateValue;
@@ -33,7 +34,7 @@ class _AddToMealState extends State<AddToMeal> {
   );
 
   String generateMealId() {
-    String foodId = getRandomString(20);
+    final foodId = getRandomString(20);
     return foodId;
   }
 
@@ -60,7 +61,7 @@ class _AddToMealState extends State<AddToMeal> {
         addFoodButton(),
         _mealList(),
         _doneButton(),
-        SizedBox(height: 20,),
+        const SizedBox(height: 20,),
       ],
     );
   }
@@ -94,12 +95,12 @@ class _AddToMealState extends State<AddToMeal> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15.0),
             ),
-            color: Color(0xFF1e1f38),
+            color: const Color(0xFF1e1f38),
             child: InkWell(
-              splashColor: Color(0xFF2b2c4a),
+              splashColor: const Color(0xFF2b2c4a),
               borderRadius: BorderRadius.circular(15.0),
               onTap: () {
-                Future.delayed(Duration(milliseconds: 200), () {
+                Future.delayed(const Duration(milliseconds: 200), () {
                   setState(() => loading = true);
                   final meal = mealTypeToString(widget.mealType)!;
                   Navigator.push(context, MaterialPageRoute(
@@ -125,7 +126,7 @@ class _AddToMealState extends State<AddToMeal> {
                           Text('Add Food ',
                             style: textColor.copyWith(fontWeight: FontWeight.bold, fontSize: 22)
                           ),
-                          FaIcon(FontAwesomeIcons.plus,
+                          const FaIcon(FontAwesomeIcons.plus,
                           color: Colors.white,
                           size: 22,)
                         ],
@@ -141,7 +142,7 @@ class _AddToMealState extends State<AddToMeal> {
   }
 
   Widget _doneButton() {
-    return Builder(builder: (BuildContext context){
+    return Builder(builder: (context){
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Container(
@@ -153,11 +154,11 @@ class _AddToMealState extends State<AddToMeal> {
           ),
           child: MaterialButton(
             onPressed: () async {
-              Future.delayed(Duration(milliseconds: 200), () {
+              Future.delayed(const Duration(milliseconds: 200), () {
                 Navigator.of(context).pop();
               });
             },
-            child: Text('Done',
+            child: const Text('Done',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20.0,
@@ -193,11 +194,10 @@ Widget buildUserList(
   if (snapshot.hasData) {
     final entries = snapshot.data!;
     return ListView.builder(
-        physics: BouncingScrollPhysics(),
-        scrollDirection: Axis.vertical,
+        physics: const BouncingScrollPhysics(),
         // shrinkWrap: true,
         itemCount: entries.length,
-        itemBuilder: (BuildContext context, int index) {
+        itemBuilder: (context, index) {
 
     final food = entries[index];
     
@@ -211,18 +211,18 @@ Widget buildUserList(
         try {
           showDialog<String>(
           context: context, 
-          builder: (BuildContext context) => AlertDialog(
+          builder: (context) => AlertDialog(
             title: Column(
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(0,0,0,10),
                   child: Text('Removing from your ${widget.mealType.name}:',
-                  style: TextStyle(fontSize: 16),
+                  style: const TextStyle(fontSize: 16),
                   textAlign: TextAlign.start,
                   ),
                 ),
                 Text(foodName,
-                style: TextStyle(fontSize: 18,
+                style: const TextStyle(fontSize: 18,
                 fontStyle: FontStyle.italic),
                 textAlign: TextAlign.start,),
                 ]
@@ -233,7 +233,7 @@ Widget buildUserList(
                   backgroundColor: Colors.redAccent[400], // background
                   foregroundColor: Colors.white, // foreground
                 ),
-                child: Text('Remove'),
+                child: const Text('Remove'),
                 onPressed: () {
                   // Deletes entry from Firestore database
                   context.read<FoodLogRepository>().deleteEntry(myUID(context), food.id);
@@ -247,7 +247,7 @@ Widget buildUserList(
                   foregroundColor: Colors.black,
                 ),
                 onPressed: () => Navigator.pop(context, 'Cancel'),
-                child: Text('Nope',
+                child: const Text('Nope',
                 style: TextStyle(
                   fontSize: 15.0,
                   ),
@@ -300,8 +300,8 @@ Widget buildUserList(
       );
     } else if (snapshot.connectionState == ConnectionState.done && !snapshot.hasData) {
       // Handle no data
-      return Center(
-        child: Text("No food items in list"),
+      return const Center(
+        child: Text('No food items in list'),
       );
     } else {
       // Still loading

@@ -9,10 +9,10 @@ import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/meal_card.dart';
 import 'package:senzu_app/screens/top_foods/top_foods_list.dart';
 import 'package:senzu_app/services/food_log_repository.dart';
-import 'package:senzu_app/shared/daily_values_constants.dart';
-import 'package:senzu_app/shared/widgets/user_goals.dart';
-import 'package:senzu_app/shared/theme.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
+import 'package:senzu_app/shared/daily_values_constants.dart';
+import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/widgets/user_goals.dart';
 
 class FoodTracker extends StatefulWidget {
   const FoodTracker({super.key});
@@ -32,9 +32,9 @@ class _FoodTrackerState extends State<FoodTracker> {
   // static const TextStyle optionStyle =
   //   TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
   static final List<Widget> _widgetOptions = <Widget>[
-    FoodOverview(),
-    NutrientStats(),
-    TopFoodsList(),
+    const FoodOverview(),
+    const NutrientStats(),
+    const TopFoodsList(),
   ];
 
   void _onItemTapped(int index) {
@@ -49,7 +49,7 @@ class _FoodTrackerState extends State<FoodTracker> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Food', style: titleTextStyle),
+          title: const Text('Food', style: titleTextStyle),
           centerTitle: true,
           elevation: 0,
           backgroundColor: primaryBackgroundColor,
@@ -57,8 +57,8 @@ class _FoodTrackerState extends State<FoodTracker> {
         bottomNavigationBar: Theme(
           data: ThemeData(unselectedWidgetColor: Colors.white),
           child: BottomNavigationBar(
-            backgroundColor: Color(0xFF1e1f38),
-            items: <BottomNavigationBarItem>[
+            backgroundColor: const Color(0xFF1e1f38),
+            items: const <BottomNavigationBarItem>[
               BottomNavigationBarItem(
                 backgroundColor: Colors.white,
                 icon: FaIcon(FontAwesomeIcons.utensils),
@@ -105,7 +105,7 @@ class _FoodOverviewState extends State<FoodOverview> {
     _foodLog = context.read<FoodLogRepository>();
   }
 
-  Color _rightArrowColour = Color(0xffC1C1C1);
+  Color _rightArrowColour = const Color(0xffC1C1C1);
 
   /// The selected day normalized to midnight; used for queries and saving.
   DateTime get _selectedDate => startOfDay(_value);
@@ -127,9 +127,9 @@ class _FoodOverviewState extends State<FoodOverview> {
   Widget build(BuildContext context) {
     return StreamBuilder<FoodLogSummary>(
       stream: _foodLog.daySummary(myUID(context), _selectedDate),
-      builder: (BuildContext context, AsyncSnapshot<FoodLogSummary> snapshot) {
-        if (!snapshot.hasData) return Center(child: loadingWidget);
-        final summary = snapshot.data!;
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return const Center(child: loadingWidget);
+        final summary = snapshot.data;
         final totalCaloriesSum = summary.totalCalories;
         final breakfastCaloriesSum = summary.breakfastCalories;
         final lunchCaloriesSum = summary.lunchCalories;
@@ -139,18 +139,18 @@ class _FoodOverviewState extends State<FoodOverview> {
         final fatSum = summary.totalFat;
         final proteinSum = summary.protein;
 
-        fatPercentage() {
-          var fatPercentage = fatSum / totalFatDailyValue;
+        double fatPercentage() {
+          final fatPercentage = fatSum / totalFatDailyValue;
           return fatPercentage;
         }
 
-        carbsPercentage() {
-          var carbsPercentage = carbsSum / totalCarbohydrateDailyValue;
+        double carbsPercentage() {
+          final carbsPercentage = carbsSum / totalCarbohydrateDailyValue;
           return carbsPercentage;
         }
 
-        proteinPercentage() {
-          var proteinPercentage = proteinSum / proteinDailyValue;
+        double proteinPercentage() {
+          final proteinPercentage = proteinSum / proteinDailyValue;
           return proteinPercentage;
         }
 
@@ -161,22 +161,22 @@ class _FoodOverviewState extends State<FoodOverview> {
               child: Column(
                 children: [
                   Container(
-                    padding: EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 10.0),
+                    padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 10.0),
                     child: Column(
                       children: <Widget>[
                         // Date picker
                         Row(
                           children: <Widget>[
                             // Left edge box
-                            SizedBox(height: 10, width: 10),
+                            const SizedBox(height: 10, width: 10),
 
                             // Back 1 day arrow
                             IconButton(
-                              icon: Icon(Icons.arrow_back_ios, size: 25.0),
+                              icon: const Icon(Icons.arrow_back_ios, size: 25.0),
                               color: Colors.grey,
                               onPressed: () {
                                 setState(() {
-                                  _value = _value.subtract(Duration(days: 1));
+                                  _value = _value.subtract(const Duration(days: 1));
                                   _rightArrowColour = Colors.grey;
                                 });
                               },
@@ -205,10 +205,10 @@ class _FoodOverviewState extends State<FoodOverview> {
                                         ),
                                       ),
                                 ),
-                                onPressed: () => _selectDate(),
+                                onPressed: _selectDate,
                                 child: Text(
                                   _dateFormatter(_value),
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontFamily: 'Open Sans',
                                     fontSize: 18.0,
                                     fontWeight: FontWeight.w700,
@@ -219,23 +219,23 @@ class _FoodOverviewState extends State<FoodOverview> {
 
                             // forward 1 day arrow (disabled if date picker is on current date)
                             IconButton(
-                              icon: Icon(Icons.arrow_forward_ios, size: 25.0),
+                              icon: const Icon(Icons.arrow_forward_ios, size: 25.0),
                               color: _rightArrowColour,
                               onPressed: () {
                                 if (today
                                         .difference(_value)
-                                        .compareTo(Duration(days: 1)) ==
+                                        .compareTo(const Duration(days: 1)) ==
                                     -1) {
                                   setState(() {
                                     _rightArrowColour = Colors.grey.shade900;
                                   });
                                 } else {
                                   setState(() {
-                                    _value = _value.add(Duration(days: 1));
+                                    _value = _value.add(const Duration(days: 1));
                                   });
                                   if (today
                                           .difference(_value)
-                                          .compareTo(Duration(days: 1)) ==
+                                          .compareTo(const Duration(days: 1)) ==
                                       -1) {
                                     setState(() {
                                       _rightArrowColour = Colors.grey.shade900;
@@ -246,7 +246,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                             ),
 
                             // Right edge box
-                            SizedBox(height: 10, width: 20),
+                            const SizedBox(height: 10, width: 20),
                           ],
                         ),
                         // Intake vs Target totals
@@ -315,7 +315,7 @@ class _FoodOverviewState extends State<FoodOverview> {
 
                   // Nutrient intake summary panel
                   Container(
-                    padding: EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 10.0),
+                    padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 10.0),
                     child: Column(
                       children: <Widget>[
                         Row(
@@ -334,18 +334,18 @@ class _FoodOverviewState extends State<FoodOverview> {
                     ),
                   ),
                   LayoutBuilder(
-                    builder: (BuildContext context, BoxConstraints constraints) {
+                    builder: (context, constraints) {
                       // 3 circular indicators (2 * radius each) + 2 x 10px
                       // spacers must fit within the available width.
-                      final double radius = ((constraints.maxWidth - 20) / 6)
+                      final radius = ((constraints.maxWidth - 20) / 6)
                           .clamp(30.0, 80.0);
                       return Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: <Widget>[
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Builder(
-                              builder: (BuildContext context) {
+                              builder: (context) {
                                 if (carbsPercentage() > 1) {
                                   return Column(
                                     children: [
@@ -356,7 +356,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                                         lineWidth: 13.0,
                                         percent: 1.0,
                                         center: Text(
-                                          "${(carbsPercentage() * 100).toStringAsFixed(0)}%",
+                                          '${(carbsPercentage() * 100).toStringAsFixed(0)}%',
                                           style: textColor.copyWith(
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -381,7 +381,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                                         lineWidth: 13.0,
                                         percent: carbsPercentage(),
                                         center: Text(
-                                          "${(carbsPercentage() * 100).toStringAsFixed(0)}%",
+                                          '${(carbsPercentage() * 100).toStringAsFixed(0)}%',
                                           style: textColor.copyWith(
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -402,7 +402,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                           ),
                           Expanded(
                             child: Builder(
-                              builder: (BuildContext context) {
+                              builder: (context) {
                                 if (proteinPercentage() > 1) {
                                   return Column(
                                     children: [
@@ -413,7 +413,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                                         lineWidth: 13.0,
                                         percent: 1.0,
                                         center: Text(
-                                          "${(proteinPercentage() * 100).toStringAsFixed(0)}%",
+                                          '${(proteinPercentage() * 100).toStringAsFixed(0)}%',
                                           style: textColor.copyWith(
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -438,7 +438,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                                         lineWidth: 13.0,
                                         percent: proteinPercentage(),
                                         center: Text(
-                                          "${(proteinPercentage() * 100).toStringAsFixed(0)}%",
+                                          '${(proteinPercentage() * 100).toStringAsFixed(0)}%',
                                           style: textColor.copyWith(
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -459,7 +459,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                           ),
                           Expanded(
                             child: Builder(
-                              builder: (BuildContext context) {
+                              builder: (context) {
                                 if (fatPercentage() > 1) {
                                   return Column(
                                     children: [
@@ -470,7 +470,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                                         lineWidth: 13.0,
                                         percent: 1.0,
                                         center: Text(
-                                          "${(fatPercentage() * 100).toStringAsFixed(0)}%",
+                                          '${(fatPercentage() * 100).toStringAsFixed(0)}%',
                                           style: textColor.copyWith(
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -495,7 +495,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                                         lineWidth: 13.0,
                                         percent: fatPercentage(),
                                         center: Text(
-                                          "${(fatPercentage() * 100).toStringAsFixed(0)}%",
+                                          '${(fatPercentage() * 100).toStringAsFixed(0)}%',
                                           style: textColor.copyWith(
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -514,12 +514,12 @@ class _FoodOverviewState extends State<FoodOverview> {
                               },
                             ),
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                         ],
                       );
                     },
                   ),
-                  SizedBox(height: 6),
+                  const SizedBox(height: 6),
 
                   // Nutrients intake values
                   _nutrientsTotal(),
@@ -533,17 +533,17 @@ class _FoodOverviewState extends State<FoodOverview> {
   }
 
   Future _selectDate() async {
-    DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
       initialDate: _value,
       firstDate: DateTime(2015),
       lastDate: DateTime.now(),
-      builder: (BuildContext context, Widget? child) {
+      builder: (context, child) {
         return Theme(
           data: ThemeData().copyWith(
             primaryColor: Colors.black,
             shadowColor: Colors.black,
-            buttonTheme: ButtonThemeData(textTheme: ButtonTextTheme.primary),
+            buttonTheme: const ButtonThemeData(textTheme: ButtonTextTheme.primary),
             colorScheme: ColorScheme.light(
               primary: Colors.grey.shade900,
             ).copyWith(surface: Colors.yellow),
@@ -557,7 +557,7 @@ class _FoodOverviewState extends State<FoodOverview> {
   }
 
   void _stateSetter() {
-    if (today.difference(_value).compareTo(Duration(days: 1)) == -1) {
+    if (today.difference(_value).compareTo(const Duration(days: 1)) == -1) {
       setState(() => _rightArrowColour = Colors.grey);
     } else {
       setState(() => _rightArrowColour = Colors.grey);
@@ -565,55 +565,43 @@ class _FoodOverviewState extends State<FoodOverview> {
   }
 
   String _dateFormatter(DateTime tm) {
-    DateTime today = DateTime.now();
-    Duration oneDay = Duration(days: 1);
-    Duration twoDay = Duration(days: 2);
-    String month = '';
+    final var today = DateTime.now();
+    const oneDay = Duration(days: 1);
+    const twoDay = Duration(days: 2);
+    var month = '';
     switch (tm.month) {
       case 1:
-        month = "Jan";
-        break;
+        month = 'Jan';
       case 2:
-        month = "Feb";
-        break;
+        month = 'Feb';
       case 3:
-        month = "Mar";
-        break;
+        month = 'Mar';
       case 4:
-        month = "Apr";
-        break;
+        month = 'Apr';
       case 5:
-        month = "May";
-        break;
+        month = 'May';
       case 6:
-        month = "Jun";
-        break;
+        month = 'Jun';
       case 7:
-        month = "Jul";
-        break;
+        month = 'Jul';
       case 8:
-        month = "Aug";
-        break;
+        month = 'Aug';
       case 9:
-        month = "Sep";
-        break;
+        month = 'Sep';
       case 10:
-        month = "Oct";
-        break;
+        month = 'Oct';
       case 11:
-        month = "Nov";
-        break;
+        month = 'Nov';
       case 12:
-        month = "Dec";
-        break;
+        month = 'Dec';
     }
 
-    Duration difference = today.difference(tm);
+    final difference = today.difference(tm);
 
     if (difference.compareTo(oneDay) < 1) {
-      return "Today";
+      return 'Today';
     } else if (difference.compareTo(twoDay) < 1) {
-      return "Yesterday";
+      return 'Yesterday';
     } else {
       return '${tm.day} $month ${tm.year}';
     }
@@ -648,7 +636,7 @@ class _FoodOverviewState extends State<FoodOverview> {
 
 
     return Container(
-      padding: EdgeInsets.fromLTRB(30.0, 0, 30.0, 30.0),
+      padding: const EdgeInsets.fromLTRB(30.0, 0, 30.0, 30.0),
       child: Column(
         children: <Widget>[
           Row(
@@ -666,7 +654,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Protein', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 proteinSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -692,7 +680,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Dietary Fiber', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 dietaryFiberSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -718,7 +706,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Potassium', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 potassiumSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -744,7 +732,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Vitamin A', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 vitaminASum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -770,7 +758,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Vitamin C', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 vitaminCSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -796,7 +784,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Vitamin D', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 vitaminDSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -822,7 +810,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Calcium', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 calciumSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -848,7 +836,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Iron', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 ironSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -875,7 +863,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Saturated Fat', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 saturatedFatSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -904,7 +892,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Sodium', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 sodiumSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -930,7 +918,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Magnesium', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 magnesiumSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -956,7 +944,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                 ),
               ),
               Text('Zinc', style: textColor.copyWith(fontSize: 15)),
-              Expanded(child: nutrientsDivider),
+              const Expanded(child: nutrientsDivider),
               Text(
                 zincSum.toStringAsFixed(0),
                 style: textColor.copyWith(fontSize: 15),
@@ -973,13 +961,13 @@ class _FoodOverviewState extends State<FoodOverview> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Container(child: lowIntakeIcon),
-                Text(' Low intake', style: textColor),
-                SizedBox(height: 10, width: 15),
+                const Text(' Low intake', style: textColor),
+                const SizedBox(height: 10, width: 15),
                 Container(child: goodIntakeIcon),
-                Text(' Average', style: textColor),
-                SizedBox(height: 10, width: 15),
+                const Text(' Average', style: textColor),
+                const SizedBox(height: 10, width: 15),
                 Container(child: highIntakeIcon),
-                Text(' High intake', style: textColor),
+                const Text(' High intake', style: textColor),
               ],
             ),
           ),

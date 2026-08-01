@@ -2,33 +2,33 @@ import 'package:intl/intl.dart';
 
 
 String cleanMonthFormat(String date) {
-  final DateFormat displayFormater = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
-  final DateFormat serverFormater = DateFormat('MM');
-  final DateTime displayDate = displayFormater.parse(date);
-  final String formatted = serverFormater.format(displayDate);
+  final displayFormater = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
+  final serverFormater = DateFormat('MM');
+  final displayDate = displayFormater.parse(date);
+  final formatted = serverFormater.format(displayDate);
   return formatted;
 }
 
 String cleanYearFormat(String date) {
-  final DateFormat displayFormater = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
-  final DateFormat serverFormater = DateFormat('yyyy');
-  final DateTime displayDate = displayFormater.parse(date);
-  final String formatted = serverFormater.format(displayDate);
+  final displayFormater = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
+  final serverFormater = DateFormat('yyyy');
+  final displayDate = displayFormater.parse(date);
+  final formatted = serverFormater.format(displayDate);
   return formatted;
 }
 
 DateTime cleanDateFormat(){
-  String convertedDate = DateFormat("yyyy-MM-dd").format(DateTime.now());
-  var parsedDate = DateTime.parse(convertedDate);
+  final convertedDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  final parsedDate = DateTime.parse(convertedDate);
   return parsedDate;
 }
 
 int getWeekNumber(DateTime date){
-  int year = date.year;
-  DateTime stateDate = DateTime(year,1,1);
-  int weekday = stateDate.weekday;
-  int days = date.difference(stateDate).inDays; 
-  int week = ((weekday+days)/7).ceil();
+  final year = date.year;
+  final stateDate = DateTime(year);
+  final weekday = stateDate.weekday;
+  final days = date.difference(stateDate).inDays; 
+  final week = ((weekday+days)/7).ceil();
   return week;
 }
 

@@ -65,7 +65,7 @@ class _FoodShelfState extends State<FoodShelf> {
   );
 
   String generateFoodId() {
-    String foodId = getRandomString(20);
+    final foodId = getRandomString(20);
     return foodId;
   }
 
@@ -78,17 +78,17 @@ class _FoodShelfState extends State<FoodShelf> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Your Food Shelf',
+          title: const Text('Your Food Shelf',
           style: titleTextStyle,),
           centerTitle: true,
           backgroundColor: primaryBackgroundColor,
-          bottom: TabBar(
+          bottom: const TabBar(
             tabs: [
               Tab(text: 'Food',),
               Tab(text: 'Meals',),
             ]),
         ),
-        bottomNavigationBar: BottomAppBar(
+        bottomNavigationBar: const BottomAppBar(
           color: Color(0xFF1e1f38),
           notchMargin: 8.0,
           shape: CircularNotchedRectangle(),
@@ -119,7 +119,7 @@ class _FoodShelfState extends State<FoodShelf> {
         child: Center(
           child: Builder(
             builder: (context) {
-              return loading ? loadingWidget : Icon(Icons.add, size: 35,);
+              return loading ? loadingWidget : const Icon(Icons.add, size: 35,);
             },
           ),
         ),
@@ -162,11 +162,10 @@ Widget buildFoodList(
   if (snapshot.hasData) {
     final foods = snapshot.data!;
     return ListView.builder(
-        physics: BouncingScrollPhysics(),
-        scrollDirection: Axis.vertical,
+        physics: const BouncingScrollPhysics(),
         // shrinkWrap: true,
         itemCount: foods.length,
-        itemBuilder: (BuildContext context, int index) {
+        itemBuilder: (context, index) {
 
     final food = foods[index];
     final foodName = food.foodName;
@@ -178,18 +177,18 @@ Widget buildFoodList(
         try {
           showDialog<String>(
           context: context, 
-          builder: (BuildContext context) => AlertDialog(
+          builder: (context) => AlertDialog(
             title: Column(
               children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(0,0,0,10),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(0,0,0,10),
                   child: Text('Removing from your shelf:',
                   style: TextStyle(fontSize: 16),
                   textAlign: TextAlign.start,
                   ),
                 ),
                 Text(foodName,
-                  style: TextStyle(fontSize: 18,
+                  style: const TextStyle(fontSize: 18,
                   fontStyle: FontStyle.italic),
                   textAlign: TextAlign.start,),
                 ]
@@ -200,7 +199,7 @@ Widget buildFoodList(
                   backgroundColor: Colors.redAccent[400], // background
                   foregroundColor: Colors.white, // foreground
                 ),
-                child: Text('Remove'),
+                child: const Text('Remove'),
                 onPressed: () {
                   // Deletes entry from Firestore database
                   _shelf.deleteFood(myUID(context), food.foodId);
@@ -214,7 +213,7 @@ Widget buildFoodList(
                   foregroundColor: Colors.black,
                 ),
                 onPressed: () => Navigator.pop(context, 'Cancel'),
-                child: Text('Nope',
+                child: const Text('Nope',
                 style: TextStyle(
                   fontSize: 15.0,
                   ),
@@ -274,8 +273,8 @@ Widget buildFoodList(
       );
     } else if (snapshot.connectionState == ConnectionState.done && !snapshot.hasData) {
       // Handle no data
-      return Center(
-        child: Text("No users found."),
+      return const Center(
+        child: Text('No users found.'),
       );
     } else {
       // Still loading
@@ -283,7 +282,7 @@ Widget buildFoodList(
     }
   }
 
-  mealsListBody(){
+  Column Column dynamic dynamic dynamic dynamic dynamic dynamic mealsListBody(){
     return Column(
       children: <Widget>[
       _createMealButton(),
@@ -294,7 +293,7 @@ Widget buildFoodList(
 
       // Button to create a new meal
     Widget _createMealButton() {
-    return Builder(builder: (BuildContext context){
+    return Builder(builder: (context){
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Container(
@@ -308,7 +307,7 @@ Widget buildFoodList(
             onPressed: () async {
               _openCreateMealForm();
             },
-            child: Text('CREATE NEW MEAL',
+            child: const Text('CREATE NEW MEAL',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20.0,
@@ -321,11 +320,11 @@ Widget buildFoodList(
   );
 }
 
-  _openCreateMealForm(){
+  Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> _openCreateMealForm(){
     return showModalBottomSheet<void>(
       isScrollControlled: true,
       context: context,
-      builder: (BuildContext context) {
+      builder: (context) {
         return Container(
           color: primaryBackgroundColor,
           height: MediaQuery.of(context).size.height * 0.6,
@@ -384,15 +383,14 @@ Widget buildMealList(
   if (snapshot.hasData) {
     final meals = snapshot.data!;
     return ListView.builder(
-        physics: BouncingScrollPhysics(),
-        scrollDirection: Axis.vertical,
+        physics: const BouncingScrollPhysics(),
         // shrinkWrap: true,
         itemCount: meals.length,
-        itemBuilder: (BuildContext context, int index) {
+        itemBuilder: (context, index) {
 
     final meal = meals[index];
-    var mealName = meal.mealName;
-    var mealId = meal.mealId;
+    final mealName = meal.mealName;
+    final mealId = meal.mealId;
 
 
 
@@ -453,7 +451,7 @@ Widget buildMealList(
                       ),
                     ),
                   ),
-                  Icon(Icons.add_circle_outline_rounded,
+                  const Icon(Icons.add_circle_outline_rounded,
                     size: 35,
                     color: Color(0xFFc5c5c5),
                   ),
@@ -489,8 +487,8 @@ Widget buildMealList(
       );
     } else if (snapshot.connectionState == ConnectionState.done && !snapshot.hasData) {
       // Handle no data
-      return Center(
-        child: Text("No users found."),
+      return const Center(
+        child: Text('No users found.'),
       );
     } else {
       // Still loading

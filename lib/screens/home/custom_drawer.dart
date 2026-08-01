@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:senzu_app/services/auth_service.dart';
 import 'package:senzu_app/screens/profile/goals.dart';
+import 'package:senzu_app/services/auth_service.dart';
 import 'package:senzu_app/shared/theme.dart';
 
 class CustomDrawer extends StatefulWidget {
@@ -21,7 +21,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
       elevation: 20.0,
       child: Column(
         children: <Widget>[
-          Row(
+          const Row(
             children: [
               Expanded(
                 child: DrawerHeader(
@@ -34,18 +34,18 @@ class _CustomDrawerState extends State<CustomDrawer> {
           Expanded(
             child: Column(
               children: <Widget>[
-                SizedBox(height: 150),
+                const SizedBox(height: 150),
                 ListTile(
-                  trailing: Icon(Icons.arrow_forward_ios, color: Colors.white),
+                  trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white),
                   leading: MaterialButton(
-                    color: Color(0xFF503859),
+                    color: const Color(0xFF503859),
                     minWidth: 40.0,
                     onPressed: () async {},
                     elevation: 2.0,
-                    padding: EdgeInsets.all(8.0),
-                    shape: CircleBorder(),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 0, 3.5, 0),
+                    padding: const EdgeInsets.all(8.0),
+                    shape: const CircleBorder(),
+                    child: const Padding(
+                      padding: EdgeInsets.fromLTRB(0, 0, 3.5, 0),
                       child: FaIcon(
                         FontAwesomeIcons.trophy,
                         color: Color(0XFFfeba8e),
@@ -63,7 +63,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => NutritionGoals()),
+                      MaterialPageRoute(builder: (context) => const NutritionGoals()),
                     );
                   },
                 ),
@@ -88,9 +88,9 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   showDialog<String>(
                     barrierColor: Colors.black54,
                     context: context,
-                    builder: (BuildContext context) => AlertDialog(
+                    builder: (context) => AlertDialog(
                       backgroundColor: primaryBackgroundColor,
-                      title: Text('Do you want to sign out?', style: textColor),
+                      title: const Text('Do you want to sign out?', style: textColor),
                       actions: <Widget>[
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
@@ -98,7 +98,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                                 Colors.redAccent[400], // background
                             foregroundColor: Colors.white, // foreground
                           ),
-                          child: Text('Sign out'),
+                          child: const Text('Sign out'),
                           onPressed: () async {
                             Navigator.pop(context, 'Cancel');
                             await context
@@ -113,7 +113,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                             foregroundColor: Colors.black,
                           ),
                           onPressed: () => Navigator.pop(context, 'Cancel'),
-                          child: Text(
+                          child: const Text(
                             'Go back',
                             style: TextStyle(fontSize: 15.0),
                           ),
@@ -122,11 +122,10 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     ),
                   );
                 },
-                elevation: 2.0,
-                padding: EdgeInsets.all(5.0),
-                shape: CircleBorder(),
+                padding: const EdgeInsets.all(5.0),
+                shape: const CircleBorder(),
                 // fillColor: Colors.red,
-                child: Icon(
+                child: const Icon(
                   Icons.power_settings_new,
                   color: Colors.red,
                   size: 30.0,

@@ -1,6 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:senzu_app/models/user.dart';
 import 'package:senzu_app/shared/firestore_db.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserRepository {
 
@@ -8,7 +8,7 @@ class UserRepository {
   UserRepository({ required this.uid });
 
   Future<void> updateUserData(String sex, String activityLevel, int dailyCaloriesGoal) async {
-    return await dbUsersCollection.doc(uid).set({
+    return dbUsersCollection.doc(uid).set({
       'sex': sex,
       'activityLevel': activityLevel,
       'dailyCaloriesGoal': dailyCaloriesGoal,
@@ -17,7 +17,7 @@ class UserRepository {
 
   /// Updates only the daily calories goal of the user document.
   Future<void> updateDailyCaloriesGoal(dynamic dailyCaloriesGoal) async {
-    return await dbUsersCollection
+    return dbUsersCollection
         .doc(uid)
         .update({'dailyCaloriesGoal': dailyCaloriesGoal});
   }
@@ -25,7 +25,7 @@ class UserRepository {
   // users list from snapshot
   List<AppUser> _usersListFromSnapshot(QuerySnapshot snapshot) {
     return snapshot.docs.map((doc) {
-      return AppUser.fromMap(doc.data() as Map<String, dynamic>, uid: doc.id);
+      return AppUser.fromMap(doc.data()! as Map<String, dynamic>, uid: doc.id);
     }).toList();
   }
 

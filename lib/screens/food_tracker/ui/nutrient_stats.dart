@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/services/food_log_repository.dart';
+import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/theme.dart';
-import 'package:senzu_app/shared/auth_scope.dart';
 
 class NutrientStats extends StatefulWidget {
   const NutrientStats({super.key});
@@ -38,7 +38,7 @@ class _NutrientStatsState extends State<NutrientStats> {
           child: icon ?? (value > dailyValue ? goodIntakeIcon : lowIntakeIcon),
         ),
         Text(label, style: textColor.copyWith(fontSize: 15)),
-        Expanded(child: nutrientsDivider),
+        const Expanded(child: nutrientsDivider),
         Text(
           value.toStringAsFixed(0),
           style: textColor.copyWith(fontSize: 15),
@@ -100,7 +100,7 @@ class _NutrientStatsState extends State<NutrientStats> {
 
 
     return Container(
-      padding: EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 30.0),
+      padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 30.0),
       child: Column(
         children: <Widget>[
           Row(
@@ -191,13 +191,13 @@ class _NutrientStatsState extends State<NutrientStats> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Container(child: lowIntakeIcon),
-                Text(' Low intake', style: textColor),
-                SizedBox(height: 10, width: 15),
+                const Text(' Low intake', style: textColor),
+                const SizedBox(height: 10, width: 15),
                 Container(child: goodIntakeIcon),
-                Text(' Average', style: textColor),
-                SizedBox(height: 10, width: 15),
+                const Text(' Average', style: textColor),
+                const SizedBox(height: 10, width: 15),
                 Container(child: highIntakeIcon),
-                Text(' High intake', style: textColor),
+                const Text(' High intake', style: textColor),
               ],
             ),
           ),
@@ -236,7 +236,7 @@ class _NutrientStatsState extends State<NutrientStats> {
 
 
     return Container(
-      padding: EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 30.0),
+      padding: const EdgeInsets.fromLTRB(30.0, 20.0, 30.0, 30.0),
       child: Column(
         children: <Widget>[
           Row(
@@ -327,13 +327,13 @@ class _NutrientStatsState extends State<NutrientStats> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Container(child: lowIntakeIcon),
-                Text(' Low intake', style: textColor),
-                SizedBox(height: 10, width: 15),
+                const Text(' Low intake', style: textColor),
+                const SizedBox(height: 10, width: 15),
                 Container(child: goodIntakeIcon),
-                Text(' Average', style: textColor),
-                SizedBox(height: 10, width: 15),
+                const Text(' Average', style: textColor),
+                const SizedBox(height: 10, width: 15),
                 Container(child: highIntakeIcon),
-                Text(' High intake', style: textColor),
+                const Text(' High intake', style: textColor),
               ],
             ),
           ),

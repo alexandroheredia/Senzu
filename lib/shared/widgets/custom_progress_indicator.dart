@@ -33,15 +33,15 @@ class _CustomProgressIndicatorState extends State<CustomProgressIndicator> with 
       valueColor: TweenSequence(
         <TweenSequenceItem<Color>>[
           TweenSequenceItem<Color>(
-            tween: ConstantTween<Color>(Color.fromARGB(255, 0, 60, 192)),
+            tween: ConstantTween<Color>(const Color.fromARGB(255, 0, 60, 192)),
             weight: 33.33,
           ),
           TweenSequenceItem<Color>(
-            tween: ConstantTween<Color>(Color.fromARGB(255, 0, 140, 238)),
+            tween: ConstantTween<Color>(const Color.fromARGB(255, 0, 140, 238)),
             weight: 33.33,
           ),
           TweenSequenceItem<Color>(
-            tween: ConstantTween<Color>(Color.fromARGB(255,11, 209, 252)),
+            tween: ConstantTween<Color>(const Color.fromARGB(255,11, 209, 252)),
             weight: 33.33,
           ),
         ],

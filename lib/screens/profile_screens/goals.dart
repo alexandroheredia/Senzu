@@ -18,7 +18,7 @@ class _NutritionGoalsState extends State<NutritionGoals> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nutrition Goals'),
+        title: const Text('Nutrition Goals'),
         centerTitle: true,
         backgroundColor: primaryBackgroundColor,
       ),
@@ -33,9 +33,9 @@ Widget nutritionGoalsBody(){
     stream: dbUsersCollection
       .doc(myUID(context))
       .snapshots(),
-    builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot){
+    builder: (context, snapshot){
       if (!snapshot.hasData) {
-        return Text("Loading");
+        return const Text('Loading');
       }
 
       final documents = snapshot.data!;
@@ -79,7 +79,7 @@ Widget nutritionGoalsBody(){
                 } catch (e) {
                 }
               },
-              child: Text('Update',
+              child: const Text('Update',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20.0,

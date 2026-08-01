@@ -16,13 +16,13 @@ class NutrientsDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Nutrients List',
+        title: const Text('Nutrients List',
         style: titleTextStyle,),
         centerTitle: true,
         backgroundColor: primaryBackgroundColor,
         elevation: 0,
       ),
-      body: NutrientList(),
+      body: const NutrientList(),
       backgroundColor: primaryBackgroundColor,
     );
   }
@@ -34,9 +34,9 @@ class NutrientList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      physics: BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(8),
-      children: <Widget>[
+      children: const <Widget>[
         FiberCard(),
         ProteinCard(),
         PotassiumCard(),
@@ -58,12 +58,12 @@ class FiberCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Card(
-        color: Color(0xFF1e1f38),
+        color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () {
             Navigator.push(context, MaterialPageRoute(
-              builder: (context) => Fiber()));
+              builder: (context) => const Fiber()));
           },
           child: const SizedBox(
               width: 450,
@@ -91,12 +91,12 @@ class ProteinCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Card(
-        color: Color(0xFF1e1f38),
+        color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () {
             Navigator.push(context, MaterialPageRoute(
-              builder: (context) => Protein()));
+              builder: (context) => const Protein()));
           },
           child: const SizedBox(
               width: 450,
@@ -124,12 +124,12 @@ class PotassiumCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Card(
-        color: Color(0xFF1e1f38),
+        color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () {
             Navigator.push(context, MaterialPageRoute(
-              builder: (context) => Potassium()));
+              builder: (context) => const Potassium()));
           },
           child: const SizedBox(
               width: 450,
@@ -157,12 +157,12 @@ class VitaminACard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Card(
-        color: Color(0xFF1e1f38),
+        color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () {
             Navigator.push(context, MaterialPageRoute(
-              builder: (context) => VitaminA()));
+              builder: (context) => const VitaminA()));
           },
           child: const SizedBox(
               width: 450,
@@ -190,12 +190,12 @@ class VitaminCCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Card(
-        color: Color(0xFF1e1f38),
+        color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () {
             Navigator.push(context, MaterialPageRoute(
-              builder: (context) => VitaminC()));
+              builder: (context) => const VitaminC()));
           },
           child: const SizedBox(
               width: 450,
@@ -223,12 +223,12 @@ class IronCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Card(
-        color: Color(0xFF1e1f38),
+        color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () {
             Navigator.push(context, MaterialPageRoute(
-              builder: (context) => Iron()));
+              builder: (context) => const Iron()));
           },
           child: const SizedBox(
               width: 450,
@@ -256,12 +256,12 @@ class CalciumCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Card(
-        color: Color(0xFF1e1f38),
+        color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () {
             Navigator.push(context, MaterialPageRoute(
-              builder: (context) => Calcium()));
+              builder: (context) => const Calcium()));
           },
           child: const SizedBox(
               width: 450,

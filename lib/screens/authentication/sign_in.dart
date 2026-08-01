@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:senzu_app/services/auth_service.dart';
 import 'package:senzu_app/shared/theme.dart';
-import 'package:flutter/material.dart';
 
 class LoginForm extends StatefulWidget {
 
@@ -45,7 +45,7 @@ class _LoginFormState extends State<LoginForm> {
   @override
   Widget build(BuildContext context) {
     return Container(
-        padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 35.0),
+        padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 35.0),
         child: Form(
           key: _formKey,
           child: Column(
@@ -55,8 +55,8 @@ class _LoginFormState extends State<LoginForm> {
                 style: textColor,
                 keyboardType: TextInputType.emailAddress,
                 
-                decoration: InputDecoration(
-                    labelText: "Email",
+                decoration: const InputDecoration(
+                    labelText: 'Email',
                     labelStyle: textColor,
                     focusColor: Colors.green,
                     enabledBorder: UnderlineInputBorder(
@@ -78,7 +78,7 @@ class _LoginFormState extends State<LoginForm> {
                 },
                 
               ),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
               TextFormField(
                 style: textColor,
                 obscureText: _obscureTextPassword,
@@ -93,20 +93,20 @@ class _LoginFormState extends State<LoginForm> {
                       color: Colors.white,
                     ),
                   ),
-                    labelText: "Password",
+                    labelText: 'Password',
                     labelStyle: textColor,
                     focusColor: Colors.white,
-                    enabledBorder: UnderlineInputBorder(
+                    enabledBorder: const UnderlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF979797))),
-                    border: UnderlineInputBorder(
+                    border: const UnderlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF979797))),
-                    focusedErrorBorder: UnderlineInputBorder(
+                    focusedErrorBorder: const UnderlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF979797))),
-                    disabledBorder: UnderlineInputBorder(
+                    disabledBorder: const UnderlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF979797))),
-                    errorBorder: UnderlineInputBorder(
+                    errorBorder: const UnderlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF979797))),
-                    focusedBorder: UnderlineInputBorder(
+                    focusedBorder: const UnderlineInputBorder(
                         borderSide: BorderSide(color: Color(0xFF979797)))
                         ),
                 validator: (val) => val!.length < 6 ? 'Your password must be longer than 6 characters' : null,
@@ -114,7 +114,7 @@ class _LoginFormState extends State<LoginForm> {
                   setState(() => password = val);
                 },
               ),
-              SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
               Padding(
                 padding: const EdgeInsets.fromLTRB(17,0,17,0),
                 child: ElevatedButton(
@@ -147,7 +147,7 @@ class _LoginFormState extends State<LoginForm> {
                     child: Center(
                       child: Builder(
                         builder: (context) {
-                          return loading ? loadingWidget : Text("Login",
+                          return loading ? loadingWidget : const Text('Login',
                           style: TextStyle(
                             color: Color(0xFFFBFBFB),
                             fontSize: 16.0,
@@ -159,9 +159,9 @@ class _LoginFormState extends State<LoginForm> {
                   ),
                 ),
               ),
-              SizedBox(height: 12.0),
+              const SizedBox(height: 12.0),
               Text(error,
-                style: TextStyle(color: Colors.red, fontSize: 14.0),
+                style: const TextStyle(color: Colors.red, fontSize: 14.0),
               ),
             ],
           ),

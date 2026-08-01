@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:senzu_app/screens/authentication/utils/snackbar.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
+import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/theme.dart';
-import 'package:senzu_app/shared/auth_scope.dart';
 
 /// One label + numeric-input row of the add-food form.
 class _NutrientField extends StatelessWidget {
@@ -36,7 +36,7 @@ class _NutrientField extends StatelessWidget {
               validator: validator,
               decoration: textInputDecoration.copyWith(hintText: hint),
               controller: controller,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp('[,.0-9]')),
               ],
@@ -202,21 +202,20 @@ class _AddFoodState extends State<AddFood> {
         appBar: AppBar(
           backgroundColor: primaryBackgroundColor,
           centerTitle: true,
-          title: Text('Add To Your Shelf'),
+          title: const Text('Add To Your Shelf'),
         ),
-        bottomNavigationBar: BottomAppBar(
+        bottomNavigationBar: const BottomAppBar(
           color: Color(0xFF1e1f38),
           notchMargin: 8.0,
           shape: CircularNotchedRectangle(),
           child: Row(
-            mainAxisSize: MainAxisSize.max,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[SizedBox(height: 40, width: 150.0)],
           ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: FloatingActionButton(
-          heroTag: "add_food_button",
+          heroTag: 'add_food_button',
           backgroundColor: primaryButtonColor,
           onPressed: () async {
             try {
@@ -232,14 +231,14 @@ class _AddFoodState extends State<AddFood> {
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Please fill the required boxes')),
+                  const SnackBar(content: Text('Please fill the required boxes')),
                 );
               }
             } catch (e) {
               if (mounted) {
                 setState(() => loading = false);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
+                  const SnackBar(
                     content: Text(
                       'Could not save the food item. '
                       'Please check your connection and try again.',
@@ -252,7 +251,7 @@ class _AddFoodState extends State<AddFood> {
           child: Center(
             child: Builder(
               builder: (context) {
-                return loading ? loadingWidget : Icon(Icons.add);
+                return loading ? loadingWidget : const Icon(Icons.add);
               },
             ),
           ),
@@ -377,14 +376,14 @@ class _AddFoodState extends State<AddFood> {
                       controller: nutrient.controller,
                       hint: '%',
                     ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 const Divider(
                   thickness: 1,
                   indent: 5,
                   endIndent: 5,
                   color: Colors.white,
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
@@ -408,7 +407,7 @@ class _AddFoodState extends State<AddFood> {
                       activeColor: primaryButtonColor,
                       controlAffinity: ListTileControlAffinity.trailing,
                       value: _visible.contains(nutrient.key),
-                      onChanged: (bool? show) {
+                      onChanged: (show) {
                         setState(() {
                           if (show ?? false) {
                             _visible.add(nutrient.key);
@@ -419,7 +418,7 @@ class _AddFoodState extends State<AddFood> {
                       },
                     ),
                   ),
-                SizedBox(height: 25),
+                const SizedBox(height: 25),
                 SizedBox(
                   height: 60,
                   width: 320,
@@ -429,13 +428,12 @@ class _AddFoodState extends State<AddFood> {
                     textAlign: TextAlign.justify,
                   ),
                 ),
-                SizedBox(height: 25),
+                const SizedBox(height: 25),
               ],
             ),
           ),
         ),
       );
-    }
   }
 
   /// Parses a controller value to a double; 0 when empty/invalid.
@@ -454,40 +452,40 @@ class _AddFoodState extends State<AddFood> {
     double raw(TextEditingController c) => _parse(c);
     double pct(TextEditingController c, num daily) => _percent(c, daily);
     return {
-      "foodId": widget.foodIdValue,
-      "foodName": foodNameController.text,
-      "brandName": brandNameController.text,
-      "servingSize": raw(servingSizeController),
-      "calories": raw(caloriesController),
-      "totalFat": raw(totalFatController),
-      "saturatedFat": raw(saturatedFatController),
-      "transFat": raw(transFatController),
-      "cholesterol": raw(cholesterolController),
-      "sodium": raw(sodiumController),
-      "totalCarbohydrate": raw(totalCarbohydrateController),
-      "dietaryFiber": raw(dietaryFiberController),
-      "sugars": raw(sugarsController),
-      "addedSugars": raw(addedSugarsController),
-      "protein": raw(proteinController),
-      "vitaminD": pct(vitaminDController, vitaminDDailyValue),
-      "calcium": pct(calciumController, calciumDailyValue),
-      "iron": pct(ironController, ironDailyValue),
-      "potassium": pct(potassiumController, potassiumDailyValue),
-      "vitaminA": pct(vitaminAController, vitaminADailyValue),
-      "vitaminC": pct(vitaminCController, vitaminCDailyValue),
-      "vitaminB6": pct(vitaminB6Controller, vitaminB6DailyValue),
-      "folate": pct(folateController, folateDailyValue),
-      "thiamin": pct(thiaminController, thiaminDailyValue),
-      "magnesium": pct(magnesiumController, magnesiumDailyValue),
-      "zinc": pct(zincController, zincDailyValue),
-      "phosphorus": pct(phosphorusController, phosphorusDailyValue),
-      "riboflavin": pct(riboflavinController, riboflavinDailyValue),
-      "niacin": pct(niacinController, niacinDailyValue),
-      "pantothenicAcid": pct(
+      'foodId': widget.foodIdValue,
+      'foodName': foodNameController.text,
+      'brandName': brandNameController.text,
+      'servingSize': raw(servingSizeController),
+      'calories': raw(caloriesController),
+      'totalFat': raw(totalFatController),
+      'saturatedFat': raw(saturatedFatController),
+      'transFat': raw(transFatController),
+      'cholesterol': raw(cholesterolController),
+      'sodium': raw(sodiumController),
+      'totalCarbohydrate': raw(totalCarbohydrateController),
+      'dietaryFiber': raw(dietaryFiberController),
+      'sugars': raw(sugarsController),
+      'addedSugars': raw(addedSugarsController),
+      'protein': raw(proteinController),
+      'vitaminD': pct(vitaminDController, vitaminDDailyValue),
+      'calcium': pct(calciumController, calciumDailyValue),
+      'iron': pct(ironController, ironDailyValue),
+      'potassium': pct(potassiumController, potassiumDailyValue),
+      'vitaminA': pct(vitaminAController, vitaminADailyValue),
+      'vitaminC': pct(vitaminCController, vitaminCDailyValue),
+      'vitaminB6': pct(vitaminB6Controller, vitaminB6DailyValue),
+      'folate': pct(folateController, folateDailyValue),
+      'thiamin': pct(thiaminController, thiaminDailyValue),
+      'magnesium': pct(magnesiumController, magnesiumDailyValue),
+      'zinc': pct(zincController, zincDailyValue),
+      'phosphorus': pct(phosphorusController, phosphorusDailyValue),
+      'riboflavin': pct(riboflavinController, riboflavinDailyValue),
+      'niacin': pct(niacinController, niacinDailyValue),
+      'pantothenicAcid': pct(
         pantothenicAcidController,
         pantothenicAcidDailyValue,
       ),
-      "vitaminE": pct(vitaminEController, vitaminEDailyValue),
+      'vitaminE': pct(vitaminEController, vitaminEDailyValue),
     };
   }
 
@@ -497,7 +495,7 @@ class _AddFoodState extends State<AddFood> {
     await context.read<ShelfRepository>().addFood(
       myUID(context),
       widget.foodIdValue!,
-      {..._foodData(), "timesAdded": 0},
+      {..._foodData(), 'timesAdded': 0},
     );
   }
 

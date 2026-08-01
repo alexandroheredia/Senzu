@@ -76,7 +76,7 @@ class _MealDetailsState extends State<MealDetails> {
       backgroundColor: primaryBackgroundColor,
       appBar: AppBar(
         backgroundColor: primaryBackgroundColor,
-        title: Text('Meal Details',
+        title: const Text('Meal Details',
         style: titleTextStyle,),
         centerTitle: true,
       ),
@@ -91,7 +91,7 @@ class _MealDetailsState extends State<MealDetails> {
         addFoodItemToMealButton(),
         _mealFoodItemsList(),
         _addMealFoodItemsButton(),
-        SizedBox(height: 20,),
+        const SizedBox(height: 20,),
       ],
     );
   }
@@ -113,7 +113,7 @@ class _MealDetailsState extends State<MealDetails> {
             ],
           ),
         ),
-        SizedBox(
+        const SizedBox(
           height: 20,
           width: 10,
         ),
@@ -132,14 +132,11 @@ class _MealDetailsState extends State<MealDetails> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15.0),
             ),
-            color: Color(0xFF1e1f38),
+            color: const Color(0xFF1e1f38),
             child: InkWell(
-              splashColor: Color(0xFF2b2c4a),
+              splashColor: const Color(0xFF2b2c4a),
               borderRadius: BorderRadius.circular(15.0),
-              onTap: () {
-                _openFoodShelf();
-            
-              },
+              onTap: _openFoodShelf,
               child: Column(
                 children: <Widget>[
                     Padding(
@@ -150,7 +147,7 @@ class _MealDetailsState extends State<MealDetails> {
                           Text('ADD TO MEAL ',
                             style: textColor.copyWith(fontWeight: FontWeight.bold, fontSize: 22)
                           ),
-                          FaIcon(FontAwesomeIcons.plus,
+                          const FaIcon(FontAwesomeIcons.plus,
                           color: Colors.white,
                           size: 22,)
                         ],
@@ -167,7 +164,7 @@ class _MealDetailsState extends State<MealDetails> {
 
   // Adds food items in meal to the food log
   Widget _addMealFoodItemsButton() {
-    return Builder(builder: (BuildContext context){
+    return Builder(builder: (context){
       return Padding(
         padding: const EdgeInsets.all(8.0),
         child: Container(
@@ -183,7 +180,7 @@ class _MealDetailsState extends State<MealDetails> {
               documentsLoopFromFirestore();
               Navigator.of(context).pop();
             },
-            child: Text('ADD THIS MEAL',
+            child: const Text('ADD THIS MEAL',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20.0,
@@ -215,17 +212,16 @@ Widget buildMealFoodItemsList(
   if (snapshot.hasData) {
     final items = snapshot.data!;
     return ListView.builder(
-        physics: BouncingScrollPhysics(),
-        scrollDirection: Axis.vertical,
+        physics: const BouncingScrollPhysics(),
         // shrinkWrap: true,
         itemCount: items.length,
-        itemBuilder: (BuildContext context, int index) {
+        itemBuilder: (context, index) {
 
     final item = items[index];
 
-    var foodName = item.foodName;
-    var calories = item.calories;
-    var portionSize = item.portionSize;
+    final foodName = item.foodName;
+    final calories = item.calories;
+    final portionSize = item.portionSize;
 
     return GestureDetector(
       key: Key(item.id),
@@ -233,18 +229,18 @@ Widget buildMealFoodItemsList(
         try {
           showDialog<String>(
           context: context, 
-          builder: (BuildContext context) => AlertDialog(
+          builder: (context) => AlertDialog(
             title: Column(
               children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(0,0,0,10),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(0,0,0,10),
                   child: Text('Removing from your dinner:',
                   style: TextStyle(fontSize: 16),
                   textAlign: TextAlign.start,
                   ),
                 ),
                 Text(foodName,
-                style: TextStyle(fontSize: 18,
+                style: const TextStyle(fontSize: 18,
                 fontStyle: FontStyle.italic),
                 textAlign: TextAlign.start,),
                 ]
@@ -255,7 +251,7 @@ Widget buildMealFoodItemsList(
                   backgroundColor: Colors.redAccent[400], // background
                   foregroundColor: Colors.white, // foreground
                 ),
-                child: Text('DELETE'),
+                child: const Text('DELETE'),
                 onPressed: () {
                   // Deletes entry from Firestore database
                   _meals.deleteFoodItem(myUID(context), widget.mealIdValue!, item.id);
@@ -269,7 +265,7 @@ Widget buildMealFoodItemsList(
                   foregroundColor: Colors.black,
                 ),
                 onPressed: () => Navigator.pop(context, 'Cancel'),
-                child: Text('Nope',
+                child: const Text('Nope',
                 style: TextStyle(
                   fontSize: 15.0,
                   ),
@@ -322,8 +318,8 @@ Widget buildMealFoodItemsList(
       );
     } else if (snapshot.connectionState == ConnectionState.done && !snapshot.hasData) {
       // Handle no data
-      return Center(
-        child: Text("No food items in list"),
+      return const Center(
+        child: Text('No food items in list'),
       );
     } else {
       // Still loading
@@ -332,10 +328,10 @@ Widget buildMealFoodItemsList(
   }
 
   // Opens a screen from the bottom up with the list of foods from the user's food shelf
-  _openFoodShelf(){
+  Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> Future<void> _openFoodShelf(){
     return showModalBottomSheet<void>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (context) {
         return Container(
           color: primaryBackgroundColor,
           height: 600,
@@ -373,15 +369,14 @@ Widget buildFoodShelfList(
   if (snapshot.hasData) {
     final foods = snapshot.data!;
     return ListView.builder(
-        physics: BouncingScrollPhysics(),
-        scrollDirection: Axis.vertical,
+        physics: const BouncingScrollPhysics(),
         // shrinkWrap: true,
         itemCount: foods.length,
-        itemBuilder: (BuildContext context, int index) {
+        itemBuilder: (context, index) {
 
     final food = foods[index];
-    var foodName = food.foodName;
-    var brandName = food.brandName;
+    final foodName = food.foodName;
+    final brandName = food.brandName;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12,6,12,0),
@@ -426,13 +421,13 @@ Widget buildFoodShelfList(
                           )
                         ));
                       },
-                      padding: EdgeInsets.all(5.0),
-                      shape: CircleBorder(),
+                      padding: const EdgeInsets.all(5.0),
+                      shape: const CircleBorder(),
 
 
 
 
-                      child: Icon(
+                      child: const Icon(
                         Icons.add_circle_outline_rounded,
                         color: Colors.white,
                         size: 30.0,
@@ -451,8 +446,8 @@ Widget buildFoodShelfList(
       );
     } else if (snapshot.connectionState == ConnectionState.done && !snapshot.hasData) {
       // Handle no data
-      return Center(
-        child: Text("No users found."),
+      return const Center(
+        child: Text('No users found.'),
       );
     } else {
       // Still loading

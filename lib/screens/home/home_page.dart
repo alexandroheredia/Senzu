@@ -1,7 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:senzu_app/screens/food_tracker/food_tracker.dart';
 import 'package:senzu_app/screens/home/custom_drawer.dart';
-import 'package:flutter/material.dart';
 import 'package:senzu_app/screens/nutrients_display/nutrients_display.dart';
 import 'package:senzu_app/shared/theme.dart';
 
@@ -24,7 +24,7 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Senzu',
+        title: const Text('Senzu',
         style: titleTextStyle
         ),
         elevation: 0,
@@ -55,17 +55,17 @@ class _HomeState extends State<Home> {
                   );
                 });
             }, 
-            icon: FaIcon(FontAwesomeIcons.screwdriverWrench)
+            icon: const FaIcon(FontAwesomeIcons.screwdriverWrench)
           )
         ],
       ),
-      body: HomeWidgets(),
+      body: const HomeWidgets(),
       backgroundColor: primaryBackgroundColor,
       drawer: Theme(
         data: Theme.of(context).copyWith(
                canvasColor: primaryBackgroundColor,
             ),
-        child: CustomDrawer()),
+        child: const CustomDrawer()),
     );
   }
 }
@@ -77,9 +77,9 @@ class HomeWidgets extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      physics: BouncingScrollPhysics(),
+      physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(8),
-      children: <Widget>[
+      children: const <Widget>[
         NutrientsListPage(),
         FoodTrackerCard(),
         // Text('${myUID(context)}',
@@ -100,13 +100,13 @@ class NutrientsListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Card(
-        color: Color(0xFF1e1f38),
+        color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () {
             // Navigator.pushNamed(context, '/nutrients_display');
             Navigator.push(context, MaterialPageRoute(
-              builder: (context) => NutrientsDisplay()));
+              builder: (context) => const NutrientsDisplay()));
           },
           child: const SizedBox(
             width: 450,
@@ -148,15 +148,15 @@ class _FoodTrackerCardState extends State<FoodTrackerCard> {
   Widget build(BuildContext context) {
     return Center(
       child: Card(
-        color: Color(0xFF1e1f38),
+        color: const Color(0xFF1e1f38),
         child: InkWell(
           splashColor: Colors.blue.withAlpha(30),
           onTap: () {
             // Navigator.pushNamed(context, '/food_tracker');
             Navigator.push(context, MaterialPageRoute(
-              builder: (context) => FoodTracker()));
+              builder: (context) => const FoodTracker()));
           },
-          child: SizedBox(
+          child: const SizedBox(
               width: 450,
               height: 100,
               child: Column(

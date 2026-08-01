@@ -81,7 +81,7 @@ final breakfastTitleCard = Card(
   shape: RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(20.0),
   ),
-  color: Color(0xFF1e1f38),
+  color: const Color(0xFF1e1f38),
   child: Padding(
     padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
     child: Text('Breakfast',
@@ -93,7 +93,7 @@ final lunchTitleCard = Card(
   shape: RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(20.0),
   ),
-  color: Color(0xFF1e1f38),
+  color: const Color(0xFF1e1f38),
   child: Padding(
     padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
     child: Text('Lunch',
@@ -105,7 +105,7 @@ final snacksTitleCard = Card(
   shape: RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(20.0),
   ),
-  color: Color(0xFF1e1f38),
+  color: const Color(0xFF1e1f38),
   child: Padding(
     padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
     child: Text('Snacks',
@@ -117,7 +117,7 @@ final dinnerTitleCard = Card(
   shape: RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(20.0),
   ),
-  color: Color(0xFF1e1f38),
+  color: const Color(0xFF1e1f38),
   child: Padding(
     padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
     child: Text('Dinner',
