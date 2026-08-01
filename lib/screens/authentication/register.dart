@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:senzu_app/screens/authentication/services/auth.dart';
+import 'package:senzu_app/services/auth_service.dart';
 import 'package:senzu_app/shared/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -14,21 +14,6 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
-
-  final usernameController = TextEditingController();
-
-  
-
-  @override
-  void dispose() {
-    // Clean up the controller when the widget is disposed.
-    usernameController.dispose();
-    super.dispose();
-  }
-
-
-
-
 
   final AuthenticationService _auth = AuthenticationService(FirebaseAuth.instance);
   final _formKey = GlobalKey<FormState>();
@@ -117,19 +102,21 @@ class _RegisterState extends State<Register> {
                 onPressed: () async {
                   if(_formKey.currentState!.validate()){
                     setState(() => loading = true);
-                    dynamic result = await _auth.registerWithEmailAndPassword(email, password);
-                    
-                    if(result == null) {
+                    try {
+                      await _auth.registerWithEmailAndPassword(email, password);
+                      // On success the auth stream switches to Home.
+                    } on AuthException catch (e) {
                       setState(() {
                         loading = false;
-                        error = 'There was an error with the email, either it was badly formatted or there is another account using it already';
+                        error = e.message;
+                      });
+                    } catch (e) {
+                      setState(() {
+                        loading = false;
+                        error = 'There was an error creating your account. Please try again.';
                       });
                     }
                   }
-            
-
-
-
                 },
                   style: ElevatedButton.styleFrom(
                         backgroundColor: primaryButtonColor, // background

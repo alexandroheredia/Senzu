@@ -18,7 +18,7 @@ String cleanYearFormat(String date) {
 }
 
 DateTime cleanDateFormat(){
-  String convertedDate = new DateFormat("yyyy-MM-dd").format(today);
+  String convertedDate = new DateFormat("yyyy-MM-dd").format(DateTime.now());
   var parsedDate = DateTime.parse(convertedDate);
   return parsedDate;
 }
@@ -32,17 +32,12 @@ int getWeekNumber(DateTime date){
   return week;
 }
 
-var today = DateTime.now();
+/// Normalizes [date] to midnight (start of day).
+DateTime startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
 
-var currentWeek = getWeekNumber(today);
+/// Today's date normalized to midnight.
+DateTime todayMidnight() => startOfDay(DateTime.now());
 
-var currentMonth = cleanMonthFormat(today.toString());
-
-var currentYear = cleanYearFormat(today.toString());
-
-var currentDate = cleanDateFormat();
-
-final lastWeek = currentDate.subtract(Duration(days: 7));
-
-final lastMonth = currentDate.subtract(Duration(days: 30));
+/// [days] days before [date].
+DateTime daysBefore(DateTime date, int days) => date.subtract(Duration(days: days));
 

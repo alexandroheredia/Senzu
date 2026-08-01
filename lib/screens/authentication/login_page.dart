@@ -15,13 +15,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage>
     with SingleTickerProviderStateMixin {
 
-  String error = '';
-  bool loading = false;
-
-  // text field state
-  String email = '';
-  String password = '';
-  
   late PageController _pageController;
 
   Color left = Colors.black;

@@ -28,8 +28,16 @@ class FoodDetails extends StatefulWidget {
   final dynamic vitaminAValue;
   final dynamic vitaminCValue;
   final dynamic vitaminDValue;
+  final dynamic vitaminB6Value;
+  final dynamic folateValue;
+  final dynamic thiaminValue;
   final dynamic magnesiumValue;
   final dynamic zincValue;
+  final dynamic phosphorusValue;
+  final dynamic riboflavinValue;
+  final dynamic niacinValue;
+  final dynamic pantothenicAcidValue;
+  final dynamic vitaminEValue;
   final DateTime? selectedDateSecondStep;
   final String? foodIdValue;
   final String? breakfastMealAdd;
@@ -38,6 +46,7 @@ class FoodDetails extends StatefulWidget {
   final String? dinnerMealAdd;
   final dynamic timesAddedValue;
   final String? getFoodIdValue;
+  final String? mealIdValue;
 
 
   FoodDetails({
@@ -73,6 +82,15 @@ class FoodDetails extends StatefulWidget {
     this.getFoodIdValue, 
     this.magnesiumValue, 
     this.zincValue, 
+    this.mealIdValue,
+    this.vitaminB6Value, 
+    this.folateValue, 
+    this.thiaminValue, 
+    this.phosphorusValue, 
+    this.riboflavinValue, 
+    this.niacinValue, 
+    this.pantothenicAcidValue, 
+    this.vitaminEValue, 
     }) : super(key: key);
 
   @override
@@ -81,104 +99,126 @@ class FoodDetails extends StatefulWidget {
 
 class _FoodDetailsState extends State<FoodDetails> {
 
-  selectedMealValue(){
-    return widget.breakfastMealAdd;
-  
+  String selectedMealValue() {
+    for (final meal in [
+      widget.breakfastMealAdd,
+      widget.lunchMealAdd,
+      widget.snacksMealAdd,
+      widget.dinnerMealAdd,
+    ]) {
+      if (meal != null && meal.isNotEmpty) return meal;
+    }
+    return '';
   }
 
   final portionSizeController = TextEditingController();
+
+  /// Parsed portion size; falls back to 0 when empty/invalid.
+  int get _portionSize => int.tryParse(portionSizeController.text) ?? 0;
+
+  /// Whether this screen is opened from a meal builder (has a mealId).
+  bool get _isMealContext => widget.mealIdValue != null;
 
   Widget _bottomAction(IconData icon, Function callback) {
     return Icon(icon, color: Color(0xFF1e1f38));
   }
 
+  Future<void> _save() async {
+    if (_isMealContext) {
+      await _saveFoodItemToMeal();
+    } else {
+      updateTimesAddedCount();
+      await saveFoodToMeal();
+    }
+  }
+
   _caloriesIntake(){
-    var caloriesIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.caloriesValue;
+    var caloriesIntake = (_portionSize / widget.servingSizeValue) * widget.caloriesValue;
     return caloriesIntake.toInt();
   }
    
   _totalFatIntake(){
-    var totalFatIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.totalFatValue;
+    var totalFatIntake = (_portionSize / widget.servingSizeValue) * widget.totalFatValue;
     return totalFatIntake.toInt();
   }
 
   _saturatedFatIntake(){
-    var saturatedFatIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.saturatedFatValue;
+    var saturatedFatIntake = (_portionSize / widget.servingSizeValue) * widget.saturatedFatValue;
     return saturatedFatIntake.toInt();
   }
 
   _transFatIntake(){
-    var transFatIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.transFatValue;
+    var transFatIntake = (_portionSize / widget.servingSizeValue) * widget.transFatValue;
     return transFatIntake.toInt();
   }
 
   _cholesterolIntake(){
-    var cholesterolIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.cholesterolValue;
+    var cholesterolIntake = (_portionSize / widget.servingSizeValue) * widget.cholesterolValue;
     return cholesterolIntake.toInt();
   }
 
   _sodiumIntake(){
-    var sodiumIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.sodiumValue;
+    var sodiumIntake = (_portionSize / widget.servingSizeValue) * widget.sodiumValue;
     return sodiumIntake.toInt();
   }
 
   _totalCarbohydrateIntake(){
-    var totalCarbohydrateIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.totalCarbohydrateValue;
+    var totalCarbohydrateIntake = (_portionSize / widget.servingSizeValue) * widget.totalCarbohydrateValue;
     return totalCarbohydrateIntake.toInt();
   }
 
   _dietaryFiberIntake(){
-    var dietaryFiberIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.dietaryFiberValue;
+    var dietaryFiberIntake = (_portionSize / widget.servingSizeValue) * widget.dietaryFiberValue;
     return dietaryFiberIntake.toInt();
   }
 
   _sugarsIntake(){
-    var sugarsIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.sugarsValue;
+    var sugarsIntake = (_portionSize / widget.servingSizeValue) * widget.sugarsValue;
     return sugarsIntake.toInt();
   }
 
   _proteinIntake(){
-    var proteinIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.proteinValue;
+    var proteinIntake = (_portionSize / widget.servingSizeValue) * widget.proteinValue;
     return proteinIntake.toInt();
   }
 
   _calciumIntake(){
-    var calciumIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.calciumValue;
+    var calciumIntake = (_portionSize / widget.servingSizeValue) * widget.calciumValue;
     return calciumIntake.toInt();
   }
 
   _ironIntake(){
-    var ironIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.ironValue;
+    var ironIntake = (_portionSize / widget.servingSizeValue) * widget.ironValue;
     return ironIntake.toInt();
   }
 
   _potassiumIntake(){
-    var potassiumIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.potassiumValue;
+    var potassiumIntake = (_portionSize / widget.servingSizeValue) * widget.potassiumValue;
     return potassiumIntake.toInt();
   }
 
   _vitaminAIntake(){
-    var vitaminAIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.vitaminAValue;
+    var vitaminAIntake = (_portionSize / widget.servingSizeValue) * widget.vitaminAValue;
     return vitaminAIntake.toInt();
   }
 
   _vitaminCIntake(){
-    var vitaminCIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.vitaminCValue;
+    var vitaminCIntake = (_portionSize / widget.servingSizeValue) * widget.vitaminCValue;
     return vitaminCIntake.toInt();
   }
 
   _vitaminDIntake(){
-    var vitaminDIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.vitaminDValue;
+    var vitaminDIntake = (_portionSize / widget.servingSizeValue) * widget.vitaminDValue;
     return vitaminDIntake.toInt();
   }
 
   _magnesiumIntake(){
-    var magnesiumIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.magnesiumValue;
+    var magnesiumIntake = (_portionSize / widget.servingSizeValue) * widget.magnesiumValue;
     return magnesiumIntake.toInt();
   }
 
   _zincIntake(){
-    var zincIntake = (int.parse(portionSizeController.text) / widget.servingSizeValue) * widget.zincValue;
+    var zincIntake = (_portionSize / widget.servingSizeValue) * widget.zincValue;
     return zincIntake.toInt();
   }
 
@@ -323,34 +363,48 @@ class _FoodDetailsState extends State<FoodDetails> {
           title: Text('Nutrition Facts'
           )
         ),
-        bottomNavigationBar: BottomAppBar(
-          color: Color(0xFF1e1f38),
-          notchMargin: 8.0,
-          shape: CircularNotchedRectangle(),
-          child: Row(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              _bottomAction(Icons.cleaning_services_outlined, () {}),
-              SizedBox(width: 150.0),
-            ],
-          ),
-        ),
+        bottomNavigationBar: _isMealContext
+            ? null
+            : BottomAppBar(
+                color: Color(0xFF1e1f38),
+                notchMargin: 8.0,
+                shape: CircularNotchedRectangle(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    _bottomAction(Icons.cleaning_services_outlined, () {}),
+                    SizedBox(width: 150.0),
+                  ],
+                ),
+              ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: primaryButtonColor,
-          child: Icon(Icons.add),
-          onPressed: () {
-            try {
-              updateTimesAddedCount();
-              saveFoodToMeal();
-              Navigator.of(context).pop();
-            } catch (e) {
-              print(e);
-            }
-          },
-        ),
-        body: _foodDetailsBody(),
+        floatingActionButton: _isMealContext
+            ? null
+            : FloatingActionButton(
+                backgroundColor: primaryButtonColor,
+                child: Icon(Icons.add),
+                onPressed: () async {
+                  try {
+                    await _save();
+                    if (mounted) Navigator.of(context).pop();
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text('Could not save the food entry. '
+                              'Please check your connection and try again.')));
+                    }
+                  }
+                },
+              ),
+        body: _isMealContext
+            ? Column(
+                children: <Widget>[
+                  Expanded(child: _foodDetailsBody()),
+                  _addMealFoodItemsButton(),
+                ],
+              )
+            : _foodDetailsBody(),
       ),
     );
   }
@@ -754,16 +808,84 @@ class _FoodDetailsState extends State<FoodDetails> {
 );
 }
 
-  void saveFoodToMeal() {
+  // Adds food items in meal to the food log
+  Widget _addMealFoodItemsButton() {
+    return Builder(builder: (BuildContext context){
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Container(
+          height: 50.0,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18.0),
+            color: primaryButtonColor
+          ),
+          child: MaterialButton(
+            onPressed: () async {
+              try {
+                await _save();
+                if (mounted) Navigator.of(context).pop();
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Could not add the food to your meal. '
+                          'Please check your connection and try again.')));
+                }
+              }
+            },
+            child: Text('ADD FOOD TO MEAL',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20.0,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+  );
+}
 
-    dbUsersCollection
+  Future<void> _saveFoodItemToMeal() async {
+    await dbUsersCollection
+      .doc(myUID(context))
+      .collection('meals')
+      .doc(widget.mealIdValue)
+      .collection('foodItems')
+      .add({
+      "foodId": widget.getFoodIdValue,
+      "foodName": widget.foodNameValue,
+      "brandName": widget.brandNameValue,
+      "mealId": widget.mealIdValue,
+      'portionSize': _portionSize,
+      "servingSize": widget.servingSizeValue,
+      "calories": _caloriesIntake(),
+      "totalFat": _totalFatIntake(),
+      "saturatedFat": _saturatedFatIntake(),
+      "transFat": _transFatIntake(),
+      "cholesterol": _cholesterolIntake(),
+      "sodium": _sodiumIntake(),
+      "totalCarbohydrate": _totalCarbohydrateIntake(),
+      "dietaryFiber": _dietaryFiberIntake(),
+      "sugars": _sugarsIntake(),
+      "protein": _proteinIntake(),
+      "calcium": _calciumIntake(),
+      "iron": _ironIntake(),
+      "potassium": _potassiumIntake(),
+      "vitaminA": _vitaminAIntake(),
+      "vitaminC": _vitaminCIntake(),
+    });
+  }
+
+  Future<void> saveFoodToMeal() async {
+    await dbUsersCollection
       .doc(myUID(context))
       .collection('foodEntries')
       .add({
       "foodId": widget.getFoodIdValue,
       "foodName": widget.foodNameValue,
       "brandName": widget.brandNameValue,
-      'portionSize': int.parse(portionSizeController.text),
+      'portionSize': _portionSize,
       "servingSize": widget.servingSizeValue,
       'mealType': selectedMealValue(),
       "calories": _caloriesIntake(),

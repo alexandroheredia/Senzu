@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:senzu_app/models/user.dart';
-import 'package:senzu_app/screens/authentication/services/database.dart';
+import 'package:senzu_app/services/user_repository.dart';
 import 'package:senzu_app/shared/constants.dart';
 import 'package:senzu_app/shared/widgets/custom_form_field.dart';
 import 'package:senzu_app/shared/widgets/custom_progress_indicator.dart';
@@ -85,7 +85,7 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
   Widget build(BuildContext context) {
 
     return StreamBuilder<AppUser>(
-      stream: DatabaseService(uid: myUID(context)).userData,
+      stream: UserRepository(uid: myUID(context)).userData,
       builder: (context, snapshot) {
         if (snapshot.hasData) {
 
@@ -261,13 +261,13 @@ class _InitialProfileSetupFormState extends State<InitialProfileSetupForm> {
                       child: _loading ? SizedBox(
                         height: 22,
                         width: 22,
-                        child: CustomProgressIndicatior()
+                        child: CustomProgressIndicator()
                       ) : Text(
                         'Update',
                       ),
                         onPressed: () async {
                           if(_formKey.currentState!.validate()){
-                            await DatabaseService(uid: myUID(context)).updateUserData(
+                            await UserRepository(uid: myUID(context)).updateUserData(
                               _sex ?? userData.sex, 
                               // _birthday ?? snapshot.data.birthday, 
                               _activityLevel ?? userData.activityLevel,

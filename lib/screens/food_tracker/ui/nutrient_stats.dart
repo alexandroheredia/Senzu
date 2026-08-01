@@ -1,6 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
+import 'package:senzu_app/services/food_log_repository.dart';
 import 'package:senzu_app/shared/constants.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 
@@ -13,6 +14,7 @@ class NutrientStats extends StatefulWidget {
 
 class _NutrientStatsState extends State<NutrientStats> {
 
+  final FoodLogRepository _foodLog = FoodLogRepository();
 
   @override
   Widget build(BuildContext context) {
@@ -31,36 +33,37 @@ class _NutrientStatsState extends State<NutrientStats> {
 
 
   Widget _weeklyNutrientsTotal() {
-    return StreamBuilder(
-      stream: dbUsersCollection
-        .doc(myUID(context))
-        .collection('foodEntries')
-        .where("dateAdded", isGreaterThan: lastWeek)
-        .snapshots(),
+    return StreamBuilder<List<FoodEntry>>(
+      stream: _foodLog.entriesSince(
+        myUID(context),
+        daysBefore(todayMidnight(), 7),
+      ),
       builder: _buildNutrientsTotal,
     );
   }
 
 
-  Widget _buildNutrientsTotal(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-    if(snapshot.data == null) 
-      return loadingWidget;
+  Widget _buildNutrientsTotal(
+    BuildContext context,
+    AsyncSnapshot<List<FoodEntry>> snapshot,
+  ) {
+    if (!snapshot.hasData) return loadingWidget;
 
-      final documents = snapshot.data!.docs;
-      final proteinSum = documents.fold<double>(0, (s, n) => s + (n['protein'] as num) / 7);
-      final dietaryFiberSum = documents.fold<double>(0, (s, n) => s + (n['dietaryFiber'] as num) / 7);
-      final potassiumSum = documents.fold<double>(0, (s, n) => s + (n['potassium'] as num) / 7);
-      final vitaminASum = documents.fold<double>(0, (s, n) => s + (n['vitaminA'] as num) / 7);
-      final vitaminCSum = documents.fold<double>(0, (s, n) => s + (n['vitaminC'] as num) / 7);
-      final calciumSum = documents.fold<double>(0, (s, n) => s + (n['calcium'] as num) / 7);
-      final ironSum = documents.fold<double>(0, (s, n) => s + (n['iron'] as num) / 7);
-      final saturatedFatSum = documents.fold<double>(0, (s, n) => s + (n['saturatedFat'] as num) / 7);
-      final sodiumSum = documents.fold<double>(0, (s, n) => s + (n['sodium'] as num) / 7);
-      final vitaminDSum = documents.fold<double>(0, (s, n) => s + (n['vitaminD'] as num) / 7);
-      // final zincSum = documents.fold(0, (s, n) => s + n['zinc'] / 7);
-      // final magnesiumSum = documents.fold(0, (s, n) => s + n['magnesium'] / 7);
+    final summary = FoodLogSummary.fromEntries(snapshot.data!);
+    final proteinSum = summary.protein / 7;
+    final dietaryFiberSum = summary.dietaryFiber / 7;
+    final potassiumSum = summary.potassium / 7;
+    final vitaminASum = summary.vitaminA / 7;
+    final vitaminCSum = summary.vitaminC / 7;
+    final calciumSum = summary.calcium / 7;
+    final ironSum = summary.iron / 7;
+    final saturatedFatSum = summary.saturatedFat / 7;
+    final sodiumSum = summary.sodium / 7;
+    final vitaminDSum = summary.vitaminD / 7;
+    // final zincSum = summary.zinc / 7;
+    // final magnesiumSum = summary.magnesium / 7;
 
-      // TODO: ZINC and Magnesium to be added after 17 may 2023
+    // TODO: ZINC and Magnesium to be added after 17 may 2023
 
 
       return Container(
@@ -324,36 +327,37 @@ class _NutrientStatsState extends State<NutrientStats> {
 
 
   Widget _monthlyNutrientsTotal() {
-    return StreamBuilder(
-      stream: dbUsersCollection
-        .doc(myUID(context))
-        .collection('foodEntries')
-        .where("dateAdded", isGreaterThan: lastMonth)
-        .snapshots(),
+    return StreamBuilder<List<FoodEntry>>(
+      stream: _foodLog.entriesSince(
+        myUID(context),
+        daysBefore(todayMidnight(), 30),
+      ),
       builder: _buildMonthlyNutrientsTotal,
     );
   }
 
 
-  Widget _buildMonthlyNutrientsTotal(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-    if(snapshot.data == null) 
-      return loadingWidget;
+  Widget _buildMonthlyNutrientsTotal(
+    BuildContext context,
+    AsyncSnapshot<List<FoodEntry>> snapshot,
+  ) {
+    if (!snapshot.hasData) return loadingWidget;
 
-      final documents = snapshot.data!.docs;
-      final proteinSum = documents.fold<double>(0, (s, n) => s + (n['protein'] as num) / 30);
-      final dietaryFiberSum = documents.fold<double>(0, (s, n) => s + (n['dietaryFiber'] as num) / 30);
-      final potassiumSum = documents.fold<double>(0, (s, n) => s + (n['potassium'] as num) / 30);
-      final vitaminASum = documents.fold<double>(0, (s, n) => s + (n['vitaminA'] as num) / 30);
-      final vitaminCSum = documents.fold<double>(0, (s, n) => s + (n['vitaminC'] as num) / 30);
-      final calciumSum = documents.fold<double>(0, (s, n) => s + (n['calcium'] as num) / 30);
-      final ironSum = documents.fold<double>(0, (s, n) => s + (n['iron'] as num) / 30);
-      final saturatedFatSum = documents.fold<double>(0, (s, n) => s + (n['saturatedFat'] as num) / 30);
-      final sodiumSum = documents.fold<double>(0, (s, n) => s + (n['sodium'] as num) / 30);
-      final vitaminDSum = documents.fold<double>(0, (s, n) => s + (n['vitaminD'] as num) / 30);
-      // final zincSum = documents.fold(0, (s, n) => s + n['sodium'] / 30);
-      // final magnesiumSum = documents.fold(0, (s, n) => s + n['sodium'] / 30);
+    final summary = FoodLogSummary.fromEntries(snapshot.data!);
+    final proteinSum = summary.protein / 30;
+    final dietaryFiberSum = summary.dietaryFiber / 30;
+    final potassiumSum = summary.potassium / 30;
+    final vitaminASum = summary.vitaminA / 30;
+    final vitaminCSum = summary.vitaminC / 30;
+    final calciumSum = summary.calcium / 30;
+    final ironSum = summary.iron / 30;
+    final saturatedFatSum = summary.saturatedFat / 30;
+    final sodiumSum = summary.sodium / 30;
+    final vitaminDSum = summary.vitaminD / 30;
+    // final zincSum = summary.zinc / 30;
+    // final magnesiumSum = summary.magnesium / 30;
 
-      // TODO: ZINC and Magnesium to be added after 17 may 2023
+    // TODO: ZINC and Magnesium to be added after 17 may 2023
 
 
       return Container(

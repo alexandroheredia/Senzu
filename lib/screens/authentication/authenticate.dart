@@ -1,4 +1,4 @@
-import 'package:senzu_app/screens/authentication/loginpage.dart';
+import 'package:senzu_app/screens/authentication/login_page.dart';
 import 'package:senzu_app/screens/authentication/register.dart';
 import 'package:flutter/material.dart';
 

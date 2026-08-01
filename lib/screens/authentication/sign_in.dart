@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:senzu_app/screens/authentication/services/auth.dart';
+import 'package:senzu_app/services/auth_service.dart';
 import 'package:senzu_app/shared/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -121,11 +121,18 @@ class _LoginFormState extends State<LoginForm> {
                   onPressed: () async {
                     if(_formKey.currentState!.validate()){
                       setState(() => loading = true);
-                      dynamic result = await _auth.signInWithEmailAndPassword(email, password);
-                      if(result == null) {
+                      try {
+                        await _auth.signInWithEmailAndPassword(email, password);
+                        // On success the auth stream switches to Home.
+                      } on AuthException catch (e) {
                         setState(() {
                           loading = false;
-                          error = 'Could not sign in with those credentials';
+                          error = e.message;
+                        });
+                      } catch (e) {
+                        setState(() {
+                          loading = false;
+                          error = 'Could not sign in. Please try again.';
                         });
                       }
                     }

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_details_for_meals.dart';
+import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_details.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/shared/constants.dart';
 
@@ -38,9 +38,16 @@ class _MealDetailsState extends State<MealDetails> {
   
   bool loading = false;
 
-  selectedMealValue(){
-    return widget.breakfastMealAdd;
-  
+  String selectedMealValue() {
+    for (final meal in [
+      widget.breakfastMealAdd,
+      widget.lunchMealAdd,
+      widget.snacksMealAdd,
+      widget.dinnerMealAdd,
+    ]) {
+      if (meal != null && meal.isNotEmpty) return meal;
+    }
+    return '';
   }
 
 
@@ -437,8 +444,8 @@ Widget buildFoodShelfList(BuildContext context, AsyncSnapshot<QuerySnapshot> sna
                     width: 40,
                     child: RawMaterialButton(
                       onPressed: () async {
-                        await Navigator.pushReplacement(context, MaterialPageRoute(
-                          builder: (context) => FoodDetailsForMeals(
+                        await Navigator.push(context, MaterialPageRoute(
+                          builder: (context) => FoodDetails(
                             foodNameValue: foodName,
                             brandNameValue: brandName,
                             servingSizeValue: servingSize,

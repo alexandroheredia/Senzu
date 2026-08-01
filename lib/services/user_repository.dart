@@ -2,10 +2,10 @@ import 'package:senzu_app/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:senzu_app/shared/constants.dart';
 
-class DatabaseService {
+class UserRepository {
 
   final String uid;
-  DatabaseService({ required this.uid });
+  UserRepository({ required this.uid });
 
   Future<void> updateUserData(String sex, String activityLevel, int dailyCaloriesGoal) async {
     return await dbUsersCollection.doc(uid).set({
@@ -17,22 +17,17 @@ class DatabaseService {
 
   // users list from snapshot
   List<AppUser> _usersListFromSnapshot(QuerySnapshot snapshot) {
-    return snapshot.docs.map((doc){
-      return AppUser(
-        sex: doc.get('sex') ?? '',
-        activityLevel: doc.get('activityLevel') ?? '',
-        dailyCaloriesGoal: doc.get('dailyCaloriesGoal') ?? 0, uid: '', username: ''
-      );
+    return snapshot.docs.map((doc) {
+      return AppUser.fromMap(doc.data() as Map<String, dynamic>, uid: doc.id);
     }).toList();
   }
 
   // user data from snapshots
   AppUser _userDataFromSnapshot(DocumentSnapshot snapshot) {
-    return AppUser(
+    final data = snapshot.data();
+    return AppUser.fromMap(
+      data is Map<String, dynamic> ? data : const {},
       uid: uid,
-      sex: snapshot.get('sex'),
-      activityLevel: snapshot.get('activityLevel'),
-      dailyCaloriesGoal: snapshot.get('dailyCaloriesGoal'),
     );
   }
 

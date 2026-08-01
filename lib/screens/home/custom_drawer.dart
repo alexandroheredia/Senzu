@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:senzu_app/screens/authentication/services/auth.dart';
-import 'package:senzu_app/screens/profile_screens/goals.dart';
+import 'package:senzu_app/services/auth_service.dart';
+import 'package:senzu_app/screens/profile/goals.dart';
 import 'package:senzu_app/shared/constants.dart';
 
 class CustomDrawer extends StatefulWidget {

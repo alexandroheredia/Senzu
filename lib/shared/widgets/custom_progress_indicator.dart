@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class CustomProgressIndicatior extends StatefulWidget {
+class CustomProgressIndicator extends StatefulWidget {
   @override
-  _CustomProgressIndicatiorState createState() => _CustomProgressIndicatiorState();
+  _CustomProgressIndicatorState createState() => _CustomProgressIndicatorState();
 }
 
-class _CustomProgressIndicatiorState extends State<CustomProgressIndicatior> with SingleTickerProviderStateMixin {
+class _CustomProgressIndicatorState extends State<CustomProgressIndicator> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
 
   @override

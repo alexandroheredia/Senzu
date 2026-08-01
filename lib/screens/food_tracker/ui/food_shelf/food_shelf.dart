@@ -99,12 +99,14 @@ class _FoodShelfState extends State<FoodShelf> {
         onPressed: () async {
           setState(() => loading = true);
 
-          await Navigator.pushReplacement(context, MaterialPageRoute(
+          await Navigator.push(context, MaterialPageRoute(
             builder: (context) => AddFood(
               foodIdValue: generateFoodId(),
             )
           ));
-          setState(() => loading = false);
+          if (mounted) {
+            setState(() => loading = false);
+          }
         },
         child: Container(
           child: Center(
@@ -267,7 +269,7 @@ Widget buildFoodList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
         }
       },
       onTap: () async {
-        Navigator.pushReplacement(context, MaterialPageRoute(
+        Navigator.push(context, MaterialPageRoute(
           builder: (context) => FoodDetails(
             foodNameValue: foodName,
             brandNameValue: brandName,
@@ -457,7 +459,7 @@ Widget buildMealList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
     return GestureDetector(
       key: Key(user.id),
       onTap: () async {
-        Navigator.pushReplacement(context, MaterialPageRoute(
+        Navigator.push(context, MaterialPageRoute(
           builder: (context) => MealDetails(
             mealNameValue: mealName,
             mealIdValue: mealId,

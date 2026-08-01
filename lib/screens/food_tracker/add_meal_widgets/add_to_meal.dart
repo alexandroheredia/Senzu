@@ -2,24 +2,34 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_shelf.dart';
-import 'package:senzu_app/screens/food_tracker/ui/food_shelf/meals.dart';
 import 'package:senzu_app/shared/constants.dart';
 
+/// Per-meal presentation details.
+extension MealTypePresentation on MealType {
+  /// 'Log Your Breakfast' / 'Log Your Lunch' / ...
+  String get title => 'Log Your ${name[0].toUpperCase()}${name.substring(1)}';
 
-class AddToDinner extends StatefulWidget {
-
-  final DateTime selectedDateValue;
-  
-  AddToDinner({
-    Key? key, 
-    required this.selectedDateValue}) : super(key: key);
-
-  @override
-  _AddToDinnerState createState() => _AddToDinnerState();
+  /// Asset key of the meal icon.
+  String get assetPath => 'assets/meal_icons/${name}_medium.png';
 }
 
-class _AddToDinnerState extends State<AddToDinner> {
+class AddToMeal extends StatefulWidget {
+  final DateTime selectedDateValue;
+  final MealType mealType;
+
+  AddToMeal({
+    Key? key,
+    required this.selectedDateValue,
+    required this.mealType,
+  }) : super(key: key);
+
+  @override
+  _AddToMealState createState() => _AddToMealState();
+}
+
+class _AddToMealState extends State<AddToMeal> {
 
   var _chars = 'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
   Random _rnd = Random();
@@ -34,7 +44,6 @@ class _AddToDinnerState extends State<AddToDinner> {
     return foodId;
   }
 
-
   bool loading = false;
 
   @override
@@ -43,27 +52,27 @@ class _AddToDinnerState extends State<AddToDinner> {
       backgroundColor: primaryBackgroundColor,
       appBar: AppBar(
         backgroundColor: primaryBackgroundColor,
-        title: Text('Log Your Dinner',
+        title: Text(widget.mealType.title,
         style: titleTextStyle,),
         centerTitle: true,
       ),
-      body: _addToDinnerBody(),
+      body: _body(),
     );
   }
 
-  Widget _addToDinnerBody(){
+  Widget _body(){
     return Column(
       children: <Widget>[
-        dinnerHeader(),
+        _header(),
         addFoodButton(),
-        _dinnerList(),
+        _mealList(),
         _doneButton(),
         SizedBox(height: 20,),
       ],
     );
   }
 
-  Widget dinnerHeader(){
+  Widget _header(){
     return Column(
       children: <Widget>[
         Padding(
@@ -74,7 +83,7 @@ class _AddToDinnerState extends State<AddToDinner> {
               Image(
                 height: 180,
                 fit: BoxFit.fitHeight,
-                image: const AssetImage('assets/meal_icons/dinner_medium.png')),
+                image: AssetImage(widget.mealType.assetPath)),
               ],
             ),
           ),
@@ -99,22 +108,17 @@ class _AddToDinnerState extends State<AddToDinner> {
               onTap: () {
                 Future.delayed(Duration(milliseconds: 200), () {
                   setState(() => loading = true);
-                  String dinnerMeal = 'dinner';
-                  MaterialPageRoute(
-                    builder: (context) => MealsList(
-                      selectedDateValue2: widget.selectedDateValue,
-                      dinnerMealValue: dinnerMeal,
-                    )
-                  );
+                  final meal = mealTypeToString(widget.mealType)!;
                   Navigator.push(context, MaterialPageRoute(
                     builder: (context) => FoodShelf(
                       selectedDateValue2: widget.selectedDateValue,
-                      dinnerMealValue: dinnerMeal,
                       mealIdValue: generateMealId(),
-                    )
+                      breakfastMealValue: meal == 'breakfast' ? meal : null,
+                      lunchMealValue: meal == 'lunch' ? meal : null,
+                      snacksMealValue: meal == 'snacks' ? meal : null,
+                      dinnerMealValue: meal == 'dinner' ? meal : null,
+                      )
                   ));
-
-
                   setState(() => loading = false);
                 });
               },
@@ -175,33 +179,32 @@ class _AddToDinnerState extends State<AddToDinner> {
 
 
 
-  Widget _dinnerList(){
-  return Expanded(
+  Widget _mealList(){
+    return Expanded(
       child: StreamBuilder(
         stream: dbUsersCollection
         .doc(myUID(context))
         .collection('foodEntries')
-        .where("mealType", isEqualTo: 'dinner')
+        .where("mealType", isEqualTo: mealTypeToString(widget.mealType))
         .where("dateAdded", isEqualTo: widget.selectedDateValue)
         .snapshots(),
         builder: buildUserList,
       ),
-  );
-}
+    );
+  }
 
 
 Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-  
   if (snapshot.hasData) {
     return ListView.builder(
         physics: BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         // shrinkWrap: true,
-        itemCount: snapshot.data?.docs.length,
+        itemCount: snapshot.data!.docs.length,
         itemBuilder: (BuildContext context, int index) {
 
     DocumentSnapshot food = snapshot.data!.docs[index];
-
+    
     var foodName = food.get('foodName');
     var calories = food.get('calories');
     var portionSize = food.get('portionSize');
@@ -209,7 +212,8 @@ Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
     return GestureDetector(
       key: Key(food.id),
       onLongPress: () async {
-        var doc = snapshot.data?.docs[index];
+      
+        var doc = snapshot.data!.docs[index];
         try {
           showDialog<String>(
           context: context, 
@@ -218,7 +222,7 @@ Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(0,0,0,10),
-                  child: Text('Removing from your dinner:',
+                  child: Text('Removing from your ${widget.mealType.name}:',
                   style: TextStyle(fontSize: 16),
                   textAlign: TextAlign.start,
                   ),
@@ -235,13 +239,13 @@ Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
                   backgroundColor: Colors.redAccent[400], // background
                   foregroundColor: Colors.white, // foreground
                 ),
-                child: Text('DELETE'),
+                child: Text('Remove'),
                 onPressed: () {
                   // Deletes entry from Firestore database
                   dbUsersCollection
                     .doc(myUID(context))
                     .collection('foodEntries')
-                    .doc(doc?.id)
+                    .doc(doc.id)
                     .delete();
                   Navigator.pop(context, 'ok');
                 },
@@ -310,10 +314,4 @@ Widget buildUserList(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot
       return loadingWidget;
     }
   }
-
-
-
-
-
-
 }

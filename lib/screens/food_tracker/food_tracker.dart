@@ -1,14 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:senzu_app/screens/food_tracker/add_meal_widgets/add_to_breakfast.dart';
-import 'package:senzu_app/screens/food_tracker/add_meal_widgets/add_to_dinner.dart';
-import 'package:senzu_app/screens/food_tracker/add_meal_widgets/add_to_lunch.dart';
-import 'package:senzu_app/screens/food_tracker/add_meal_widgets/add_to_snacks.dart';
+import 'package:senzu_app/models/food_entry.dart';
+import 'package:senzu_app/screens/food_tracker/add_meal_widgets/add_to_meal.dart';
 import 'package:senzu_app/screens/food_tracker/ui/nutrient_stats.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/screens/top_foods/top_foods_list.dart';
+import 'package:senzu_app/services/food_log_repository.dart';
 import 'package:senzu_app/shared/constants.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/widgets/user_goals.dart';
@@ -94,27 +92,28 @@ class _FoodOverviewState extends State<FoodOverview> {
   DateTime _value = DateTime.now();
   DateTime today = DateTime.now();
 
+  final FoodLogRepository _foodLog = FoodLogRepository();
+
   Color _rightArrowColour = Color(0xffC1C1C1);
+
+  /// The selected day normalized to midnight; used for queries and saving.
+  DateTime get _selectedDate => startOfDay(_value);
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: dbUsersCollection
-          .doc(myUID(context))
-          .collection('foodEntries')
-          .where("dateAdded", isEqualTo: currentDate)
-          .snapshots(),
-      builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-        if (snapshot.data == null) return Center(child: loadingWidget);
-        final documents = snapshot.data!.docs;
-        final totalCaloriesSum = documents.fold<int>(0, (s, n) => s + (n['calories'] as num).toInt());
-        final breakfastCaloriesSum = documents.fold<int>(0, (s, n) => s + (n['breakfastCalories'] as num).toInt());
-        final lunchCaloriesSum = documents.fold<int>(0, (s, n) => s + (n['lunchCalories'] as num).toInt());
-        final snacksCaloriesSum = documents.fold<int>(0, (s, n) => s + (n['snacksCalories'] as num).toInt());
-        final dinnerCaloriesSum = documents.fold<int>(0, (s, n) => s + (n['dinnerCalories'] as num).toInt());
-        final carbsSum = documents.fold<int>(0, (s, n) => s + (n['totalCarbohydrate'] as num).toInt());
-        final fatSum = documents.fold<int>(0, (s, n) => s + (n['totalFat'] as num).toInt());
-        final proteinSum = documents.fold<int>(0, (s, n) => s + (n['protein'] as num).toInt());
+    return StreamBuilder<FoodLogSummary>(
+      stream: _foodLog.daySummary(myUID(context), _selectedDate),
+      builder: (BuildContext context, AsyncSnapshot<FoodLogSummary> snapshot) {
+        if (!snapshot.hasData) return Center(child: loadingWidget);
+        final summary = snapshot.data!;
+        final totalCaloriesSum = summary.totalCalories;
+        final breakfastCaloriesSum = summary.breakfastCalories;
+        final lunchCaloriesSum = summary.lunchCalories;
+        final snacksCaloriesSum = summary.snacksCalories;
+        final dinnerCaloriesSum = summary.dinnerCalories;
+        final carbsSum = summary.totalCarbohydrate;
+        final fatSum = summary.totalFat;
+        final proteinSum = summary.protein;
 
         fatPercentage() {
           var fatPercentage = fatSum / totalFatDailyValue;
@@ -154,9 +153,6 @@ class _FoodOverviewState extends State<FoodOverview> {
                               onPressed: () {
                                 setState(() {
                                   _value = _value.subtract(Duration(days: 1));
-                                  currentDate = currentDate.subtract(
-                                    Duration(days: 1),
-                                  );
                                   _rightArrowColour = Colors.grey;
                                 });
                               },
@@ -207,7 +203,7 @@ class _FoodOverviewState extends State<FoodOverview> {
                                         .compareTo(Duration(days: 1)) ==
                                     -1) {
                                   setState(() {
-                                    _rightArrowColour = Colors.grey[900]!;
+                                    _rightArrowColour = Colors.grey.shade900;
                                   });
                                 } else {
                                   setState(() {
@@ -218,30 +214,8 @@ class _FoodOverviewState extends State<FoodOverview> {
                                           .compareTo(Duration(days: 1)) ==
                                       -1) {
                                     setState(() {
-                                      _rightArrowColour = Colors.grey[900]!;
-                                    });
-                                  }
-                                }
-
-                                if (today
-                                        .difference(currentDate)
-                                        .compareTo(Duration(days: 1)) ==
-                                    -1) {
-                                  setState(() {
-                                    _rightArrowColour = Colors.grey[900]!;
-                                  });
-                                } else {
-                                  setState(() {
-                                    currentDate = currentDate.add(
-                                      Duration(days: 1),
-                                    );
-                                  });
-                                  if (today
-                                          .difference(currentDate)
-                                          .compareTo(Duration(days: 1)) ==
-                                      -1) {
-                                    setState(() {
-                                      _rightArrowColour = Colors.grey[900]!;
+                                      _rightArrowColour =
+                                          Colors.grey.shade900;
                                     });
                                   }
                                 }
@@ -308,9 +282,10 @@ class _FoodOverviewState extends State<FoodOverview> {
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
-                                                    AddToBreakfast(
+                                                    AddToMeal(
+                                                      mealType: MealType.breakfast,
                                                       selectedDateValue:
-                                                          currentDate,
+                                                          _selectedDate,
                                                     ),
                                               ),
                                             );
@@ -347,9 +322,10 @@ class _FoodOverviewState extends State<FoodOverview> {
                                                           context,
                                                           MaterialPageRoute(
                                                             builder: (context) =>
-                                                                AddToBreakfast(
+                                                                AddToMeal(
+                                                                  mealType: MealType.breakfast,
                                                                   selectedDateValue:
-                                                                      currentDate,
+                                                                      _selectedDate,
                                                                 ),
                                                           ),
                                                         );
@@ -439,9 +415,10 @@ class _FoodOverviewState extends State<FoodOverview> {
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
-                                                    AddToLunch(
+                                                    AddToMeal(
+                                                      mealType: MealType.lunch,
                                                       selectedDateValue:
-                                                          currentDate,
+                                                          _selectedDate,
                                                     ),
                                               ),
                                             );
@@ -480,9 +457,10 @@ class _FoodOverviewState extends State<FoodOverview> {
                                                             builder:
                                                                 (
                                                                   context,
-                                                                ) => AddToLunch(
+                                                                ) => AddToMeal(
+                                                                  mealType: MealType.lunch,
                                                                   selectedDateValue:
-                                                                      currentDate,
+                                                                      _selectedDate,
                                                                 ),
                                                           ),
                                                         );
@@ -576,9 +554,10 @@ class _FoodOverviewState extends State<FoodOverview> {
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
-                                                    AddToSnacks(
+                                                    AddToMeal(
+                                                      mealType: MealType.snacks,
                                                       selectedDateValue:
-                                                          currentDate,
+                                                          _selectedDate,
                                                     ),
                                               ),
                                             );
@@ -615,9 +594,10 @@ class _FoodOverviewState extends State<FoodOverview> {
                                                           context,
                                                           MaterialPageRoute(
                                                             builder: (context) =>
-                                                                AddToSnacks(
+                                                                AddToMeal(
+                                                                  mealType: MealType.snacks,
                                                                   selectedDateValue:
-                                                                      currentDate,
+                                                                      _selectedDate,
                                                                 ),
                                                           ),
                                                         );
@@ -707,9 +687,10 @@ class _FoodOverviewState extends State<FoodOverview> {
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
-                                                    AddToDinner(
+                                                    AddToMeal(
+                                                      mealType: MealType.dinner,
                                                       selectedDateValue:
-                                                          currentDate,
+                                                          _selectedDate,
                                                     ),
                                               ),
                                             );
@@ -746,9 +727,10 @@ class _FoodOverviewState extends State<FoodOverview> {
                                                           context,
                                                           MaterialPageRoute(
                                                             builder: (context) =>
-                                                                AddToDinner(
+                                                                AddToMeal(
+                                                                  mealType: MealType.dinner,
                                                                   selectedDateValue:
-                                                                      currentDate,
+                                                                      _selectedDate,
                                                                 ),
                                                           ),
                                                         );
@@ -847,172 +829,185 @@ class _FoodOverviewState extends State<FoodOverview> {
                       ],
                     ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      SizedBox(width: 10),
-                      Builder(
-                        builder: (BuildContext context) {
-                          if (carbsPercentage() > 1) {
-                            return Column(
-                              children: [
-                                CircularPercentIndicator(
-                                  circularStrokeCap: CircularStrokeCap.round,
-                                  radius: 80.0,
-                                  lineWidth: 13.0,
-                                  percent: 1.0,
-                                  center: Text(
-                                    "${(carbsPercentage() * 100).toStringAsFixed(0)}%",
-                                    style: textColor.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  progressColor: Colors.red,
-                                ),
-                                Text(
-                                  'Carbs',
-                                  style: textColor.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            );
-                          } else {
-                            return Column(
-                              children: [
-                                CircularPercentIndicator(
-                                  circularStrokeCap: CircularStrokeCap.round,
-                                  radius: 80.0,
-                                  lineWidth: 13.0,
-                                  percent: carbsPercentage(),
-                                  center: Text(
-                                    "${(carbsPercentage() * 100).toStringAsFixed(0)}%",
-                                    style: textColor.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  progressColor: Colors.green,
-                                ),
-                                Text(
-                                  'Carbs',
-                                  style: textColor.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-                        },
-                      ),
-                      Builder(
-                        builder: (BuildContext context) {
-                          if (proteinPercentage() > 1) {
-                            return Column(
-                              children: [
-                                CircularPercentIndicator(
-                                  circularStrokeCap: CircularStrokeCap.round,
-                                  radius: 80.0,
-                                  lineWidth: 13.0,
-                                  percent: 1.0,
-                                  center: Text(
-                                    "${(proteinPercentage() * 100).toStringAsFixed(0)}%",
-                                    style: textColor.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  progressColor: Colors.green,
-                                ),
-                                Text(
-                                  'Protein',
-                                  style: textColor.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            );
-                          } else {
-                            return Column(
-                              children: [
-                                CircularPercentIndicator(
-                                  circularStrokeCap: CircularStrokeCap.round,
-                                  radius: 80.0,
-                                  lineWidth: 13.0,
-                                  percent: proteinPercentage(),
-                                  center: Text(
-                                    "${(proteinPercentage() * 100).toStringAsFixed(0)}%",
-                                    style: textColor.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  progressColor: Colors.green,
-                                ),
-                                Text(
-                                  'Protein',
-                                  style: textColor.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-                        },
-                      ),
-
-                      Builder(
-                        builder: (BuildContext context) {
-                          if (fatPercentage() > 1) {
-                            return Column(
-                              children: [
-                                CircularPercentIndicator(
-                                  circularStrokeCap: CircularStrokeCap.round,
-                                  radius: 80.0,
-                                  lineWidth: 13.0,
-                                  percent: 1.0,
-                                  center: Text(
-                                    "${(fatPercentage() * 100).toStringAsFixed(0)}%",
-                                    style: textColor.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  progressColor: Colors.red,
-                                ),
-                                Text(
-                                  'Fat',
-                                  style: textColor.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            );
-                          } else {
-                            return Column(
-                              children: [
-                                CircularPercentIndicator(
-                                  circularStrokeCap: CircularStrokeCap.round,
-                                  radius: 80.0,
-                                  lineWidth: 13.0,
-                                  percent: fatPercentage(),
-                                  center: Text(
-                                    "${(fatPercentage() * 100).toStringAsFixed(0)}%",
-                                    style: textColor.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  progressColor: Colors.green,
-                                ),
-                                Text(
-                                  'Fat',
-                                  style: textColor.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }
-                        },
-                      ),
-                      SizedBox(width: 10),
-                    ],
+                  LayoutBuilder(
+                    builder: (BuildContext context, BoxConstraints constraints) {
+                      // 3 circular indicators (2 * radius each) + 2 x 10px
+                      // spacers must fit within the available width.
+                      final double radius =
+                          ((constraints.maxWidth - 20) / 6).clamp(30.0, 80.0);
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Builder(
+                              builder: (BuildContext context) {
+                                if (carbsPercentage() > 1) {
+                                  return Column(
+                                    children: [
+                                      CircularPercentIndicator(
+                                        circularStrokeCap: CircularStrokeCap.round,
+                                        radius: radius,
+                                        lineWidth: 13.0,
+                                        percent: 1.0,
+                                        center: Text(
+                                          "${(carbsPercentage() * 100).toStringAsFixed(0)}%",
+                                          style: textColor.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        progressColor: Colors.red,
+                                      ),
+                                      Text(
+                                        'Carbs',
+                                        style: textColor.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                } else {
+                                  return Column(
+                                    children: [
+                                      CircularPercentIndicator(
+                                        circularStrokeCap: CircularStrokeCap.round,
+                                        radius: radius,
+                                        lineWidth: 13.0,
+                                        percent: carbsPercentage(),
+                                        center: Text(
+                                          "${(carbsPercentage() * 100).toStringAsFixed(0)}%",
+                                          style: textColor.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        progressColor: Colors.green,
+                                      ),
+                                      Text(
+                                        'Carbs',
+                                        style: textColor.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                          Expanded(
+                            child: Builder(
+                              builder: (BuildContext context) {
+                                if (proteinPercentage() > 1) {
+                                  return Column(
+                                    children: [
+                                      CircularPercentIndicator(
+                                        circularStrokeCap: CircularStrokeCap.round,
+                                        radius: radius,
+                                        lineWidth: 13.0,
+                                        percent: 1.0,
+                                        center: Text(
+                                          "${(proteinPercentage() * 100).toStringAsFixed(0)}%",
+                                          style: textColor.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        progressColor: Colors.green,
+                                      ),
+                                      Text(
+                                        'Protein',
+                                        style: textColor.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                } else {
+                                  return Column(
+                                    children: [
+                                      CircularPercentIndicator(
+                                        circularStrokeCap: CircularStrokeCap.round,
+                                        radius: radius,
+                                        lineWidth: 13.0,
+                                        percent: proteinPercentage(),
+                                        center: Text(
+                                          "${(proteinPercentage() * 100).toStringAsFixed(0)}%",
+                                          style: textColor.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        progressColor: Colors.green,
+                                      ),
+                                      Text(
+                                        'Protein',
+                                        style: textColor.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                          Expanded(
+                            child: Builder(
+                              builder: (BuildContext context) {
+                                if (fatPercentage() > 1) {
+                                  return Column(
+                                    children: [
+                                      CircularPercentIndicator(
+                                        circularStrokeCap: CircularStrokeCap.round,
+                                        radius: radius,
+                                        lineWidth: 13.0,
+                                        percent: 1.0,
+                                        center: Text(
+                                          "${(fatPercentage() * 100).toStringAsFixed(0)}%",
+                                          style: textColor.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        progressColor: Colors.red,
+                                      ),
+                                      Text(
+                                        'Fat',
+                                        style: textColor.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                } else {
+                                  return Column(
+                                    children: [
+                                      CircularPercentIndicator(
+                                        circularStrokeCap: CircularStrokeCap.round,
+                                        radius: radius,
+                                        lineWidth: 13.0,
+                                        percent: fatPercentage(),
+                                        center: Text(
+                                          "${(fatPercentage() * 100).toStringAsFixed(0)}%",
+                                          style: textColor.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        progressColor: Colors.green,
+                                      ),
+                                      Text(
+                                        'Fat',
+                                        style: textColor.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                        ],
+                      );
+                    },
                   ),
                   SizedBox(height: 6),
 
@@ -1114,35 +1109,31 @@ class _FoodOverviewState extends State<FoodOverview> {
   }
 
   Widget _nutrientsTotal() {
-    return StreamBuilder(
-      stream: dbUsersCollection
-          .doc(myUID(context))
-          .collection('foodEntries')
-          .where("dateAdded", isEqualTo: currentDate)
-          .snapshots(),
+    return StreamBuilder<FoodLogSummary>(
+      stream: _foodLog.daySummary(myUID(context), _selectedDate),
       builder: _buildNutrientsTotal,
     );
   }
 
   Widget _buildNutrientsTotal(
     BuildContext context,
-    AsyncSnapshot<QuerySnapshot> snapshot,
+    AsyncSnapshot<FoodLogSummary> snapshot,
   ) {
-    if (snapshot.data == null) return loadingWidget;
+    if (!snapshot.hasData) return loadingWidget;
 
-    final documents = snapshot.data!.docs;
-    final proteinSum = documents.fold<int>(0, (s, n) => s + (n['protein'] as num).toInt());
-    final dietaryFiberSum = documents.fold<int>(0, (s, n) => s + (n['dietaryFiber'] as num).toInt());
-    final potassiumSum = documents.fold<int>(0, (s, n) => s + (n['potassium'] as num).toInt());
-    final vitaminASum = documents.fold<int>(0, (s, n) => s + (n['vitaminA'] as num).toInt());
-    final vitaminCSum = documents.fold<int>(0, (s, n) => s + (n['vitaminC'] as num).toInt());
-    final vitaminDSum = documents.fold<int>(0, (s, n) => s + (n['vitaminD'] as num).toInt());
-    final calciumSum = documents.fold<int>(0, (s, n) => s + (n['calcium'] as num).toInt());
-    final ironSum = documents.fold<int>(0, (s, n) => s + (n['iron'] as num).toInt());
-    final saturatedFatSum = documents.fold<int>(0, (s, n) => s + (n['saturatedFat'] as num).toInt());
-    final sodiumSum = documents.fold<int>(0, (s, n) => s + (n['sodium'] as num).toInt());
-    final magnesiumSum = documents.fold<int>(0, (s, n) => s + (n['magnesium'] as num).toInt());
-    final zincSum = documents.fold<int>(0, (s, n) => s + (n['zinc'] as num).toInt());
+    final summary = snapshot.data!;
+    final proteinSum = summary.protein;
+    final dietaryFiberSum = summary.dietaryFiber;
+    final potassiumSum = summary.potassium;
+    final vitaminASum = summary.vitaminA;
+    final vitaminCSum = summary.vitaminC;
+    final vitaminDSum = summary.vitaminD;
+    final calciumSum = summary.calcium;
+    final ironSum = summary.iron;
+    final saturatedFatSum = summary.saturatedFat;
+    final sodiumSum = summary.sodium;
+    final magnesiumSum = summary.magnesium;
+    final zincSum = summary.zinc;
 
     // TODO: Adjust the icon indicators according to actual nutritional advice from official sources
     // TODO: Adjust the icon indicators to weekly stats (for example, if no zinc has been taken today but the weekly stat is good, then display the green icon)
@@ -1486,24 +1477,5 @@ class _FoodOverviewState extends State<FoodOverview> {
         ],
       ),
     );
-  }
-
-  void saveNestedData() {
-    dbUsersCollection.doc(myUID(context)).collection('foodEntries').add({
-      "foodId": '',
-      "foodName": "foodName",
-      "mealType": "dinner",
-      "protein": 0,
-      "dietaryFiber": 0,
-      "potassium": 0,
-      "vitaminA": 0,
-      "vitaminC": 0,
-      "calcium": 0,
-      "iron": 0,
-      "saturatedFat": 0,
-      "sodium": 0,
-      "sugars": 0,
-      "dateAdded": currentDate,
-    });
   }
 }

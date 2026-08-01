@@ -175,23 +175,25 @@ class _AddFoodState extends State<AddFood> {
             // print(saturatedFatController.text.replaceAll(',', '.'));
             try {
               if (_addFoodFormKey.currentState!.validate()) {
-              setState(() => loading = true);
-              saveFoodToShelf();
-              saveToFoodDatabase(context);
-              Navigator.of(context).pop();
-              CustomSnackBar(
-                  context, const Text('Food item added successfully'));
-            } else {
-              ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text('Please fill the required boxes')));
-            }
-              
+                setState(() => loading = true);
+                await saveFoodToShelf();
+                await saveToFoodDatabase(context);
+                if (!mounted) return;
+                Navigator.of(context).pop();
+                CustomSnackBar(
+                    context, const Text('Food item added successfully'));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please fill the required boxes')));
+              }
             } catch (e) {
-              print(e);
-              
+              if (mounted) {
+                setState(() => loading = false);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text('Could not save the food item. '
+                        'Please check your connection and try again.')));
+              }
             }
-
-            
           },
           child: Container(
             child: Center(
@@ -1181,9 +1183,9 @@ Widget addFoodForm() {
 
 
   // Saves manual food entry to the user's shelf collection "database/users/userID/foodShelf/"
-  void saveFoodToShelf() {
+  Future<void> saveFoodToShelf() async {
 
-    dbUsersCollection
+    await dbUsersCollection
       .doc(myUID(context))
       .collection('foodShelf')
       .doc(widget.foodIdValue)
@@ -1224,8 +1226,8 @@ Widget addFoodForm() {
   }
 
   // Saves manual food entry to the root database/foods collection
-  void saveToFoodDatabase(BuildContext context) {
-    dbFoodsCollection
+  Future<void> saveToFoodDatabase(BuildContext context) async {
+    await dbFoodsCollection
       .doc(widget.foodIdValue)
       .set({
       "foodId": widget.foodIdValue,

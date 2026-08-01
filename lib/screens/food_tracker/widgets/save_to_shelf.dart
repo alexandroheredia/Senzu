@@ -581,9 +581,9 @@ class _SaveToShelfState extends State<SaveToShelf> {
 );
   }
 
-  void saveFoodToShelf() {
+  Future<void> saveFoodToShelf() async {
 
-    dbUsersCollection
+    await dbUsersCollection
       .doc(myUID(context))
       .collection('foodShelf')
       .doc(widget.foodIdValue)
@@ -639,8 +639,18 @@ class _SaveToShelfState extends State<SaveToShelf> {
           child: MaterialButton(
             onPressed: () async {
               setState(() => loading = true);
-              saveFoodToShelf();
-              Navigator.of(context).pop();
+              try {
+                await saveFoodToShelf();
+                if (!mounted) return;
+                Navigator.of(context).pop();
+              } catch (e) {
+                if (mounted) {
+                  setState(() => loading = false);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text('Could not save to your shelf. '
+                          'Please check your connection and try again.')));
+                }
+              }
             },
             child: Container(
               child: Center(
