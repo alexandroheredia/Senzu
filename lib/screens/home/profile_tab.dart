@@ -1,0 +1,282 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:senzu_app/models/user.dart';
+import 'package:senzu_app/screens/nutrients_display/nutrients_display.dart';
+import 'package:senzu_app/screens/profile/goals.dart';
+import 'package:senzu_app/services/auth_service.dart';
+import 'package:senzu_app/services/user_repository.dart';
+import 'package:senzu_app/shared/auth_scope.dart';
+import 'package:senzu_app/shared/design/app_colors.dart';
+import 'package:senzu_app/shared/widgets/glass_card.dart';
+
+/// Profile tab: greeting, glass list rows for goals / nutrient guide /
+/// feedback, and sign out.
+class ProfileTab extends StatelessWidget {
+  const ProfileTab({super.key});
+
+  Future<void> _openFeedback(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      builder: (sheetContext) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: GlassCard(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Something not working?',
+                  style: Theme.of(sheetContext).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Let us know and we will fix it as soon as possible.',
+                  style: Theme.of(sheetContext).textTheme.bodyMedium?.copyWith(
+                    color: context.appColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const _FeedbackRow(
+                  icon: Icons.reddit,
+                  label: 'r/SenzuApp',
+                ),
+                const SizedBox(height: 8),
+                const _FeedbackRow(
+                  icon: Icons.mail_outline,
+                  label: 'nointrobusiness@gmail.com',
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmSignOut(BuildContext context) async {
+    final auth = context.read<AuthenticationService>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Sign out?'),
+        content: const Text('You can sign back in anytime.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Go back'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              'Sign out',
+              style: TextStyle(
+                color: context.appColors.danger,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed ?? false) {
+      if (context.mounted) await auth.signOut();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final uid = myUID(context);
+    if (uid.isEmpty) return const SizedBox.shrink();
+
+    return StreamBuilder<AppUser>(
+      stream: UserRepository(uid: uid).userData,
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+        final username = (user?.username ?? '').trim();
+        final greeting = username.isEmpty ? 'there' : username;
+        final goalText = user == null
+            ? ''
+            : 'Daily goal · ${user.dailyCaloriesGoal} kcal';
+
+        return ListView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: colors.energyGradient,
+                    boxShadow: colors.energyGlow(),
+                  ),
+                  child: Text(
+                    username.isEmpty
+                        ? 'S'
+                        : username[0].toUpperCase(),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: colors.bgBase,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hey, $greeting!',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                      if (goalText.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          goalText,
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            GlassCard(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  _ProfileRow(
+                    icon: Icons.track_changes,
+                    label: 'Nutrition goals',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => const NutritionGoals(),
+                      ),
+                    ),
+                  ),
+                  _divider(colors),
+                  _ProfileRow(
+                    icon: Icons.menu_book_outlined,
+                    label: 'Nutrient guide',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (context) => const NutrientsDisplay(),
+                      ),
+                    ),
+                  ),
+                  _divider(colors),
+                  _ProfileRow(
+                    icon: Icons.chat_bubble_outline,
+                    label: 'Feedback',
+                    onTap: () => _openFeedback(context),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            GlassCard(
+              padding: const EdgeInsets.all(8),
+              child: _ProfileRow(
+                icon: Icons.logout,
+                label: 'Sign out',
+                danger: true,
+                onTap: () => _confirmSignOut(context),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _divider(AppColors colors) => Divider(
+    height: 1,
+    indent: 64,
+    color: colors.glassBorder,
+  );
+}
+
+class _ProfileRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool danger;
+
+  const _ProfileRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.danger = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final color = danger ? colors.danger : colors.textPrimary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: danger
+                      ? colors.danger.withValues(alpha: 0.12)
+                      : colors.textPrimary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 18),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Icon(Icons.chevron_right, color: colors.textSecondary, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FeedbackRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _FeedbackRow({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return Row(
+      children: [
+        Icon(icon, color: colors.energyStart, size: 18),
+        const SizedBox(width: 12),
+        Text(label, style: Theme.of(context).textTheme.bodyMedium),
+      ],
+    );
+  }
+}

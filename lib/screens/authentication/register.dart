@@ -1,177 +1,118 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:senzu_app/services/auth_service.dart';
-import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/design/app_colors.dart';
+import 'package:senzu_app/shared/widgets/glass_input.dart';
+import 'package:senzu_app/shared/widgets/gradient_button.dart';
 
 class Register extends StatefulWidget {
-  final Function? toggleView;
-  const Register({super.key, this.toggleView});
+  const Register({super.key});
 
   @override
   State<Register> createState() => _RegisterState();
 }
 
 class _RegisterState extends State<Register> {
-  final AuthenticationService _auth = AuthenticationService(
-    FirebaseAuth.instance,
-  );
   final _formKey = GlobalKey<FormState>();
-  String error = '';
-  bool loading = false;
+  final _email = TextEditingController();
+  final _password = TextEditingController();
+  bool _obscure = true;
+  bool _loading = false;
+  String _error = '';
 
-  // text field state
-  String username = '';
-  String email = '';
-  String password = '';
+  @override
+  void dispose() {
+    _email.dispose();
+    _password.dispose();
+    super.dispose();
+  }
 
-  bool _obscureTextPassword = true;
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() {
+      _loading = true;
+      _error = '';
+    });
+    final auth = context.read<AuthenticationService>();
+    try {
+      await auth.registerWithEmailAndPassword(
+        _email.text.trim(),
+        _password.text,
+      );
+      // On success the auth stream switches to Home.
+    } on AuthException catch (e) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = e.message;
+        });
+      }
+    } on Object {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = 'There was an error creating your account. '
+              'Please try again.';
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 35.0),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: <Widget>[
-            TextFormField(
-              style: textColor,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                labelStyle: textColor,
-                focusColor: Colors.green,
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-                border: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-                focusedErrorBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-                disabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-                errorBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-                focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-              ),
-              validator: (val) =>
-                  val!.isEmpty ? 'Your email goes here UwU' : null,
-              onChanged: (val) {
-                setState(() => email = val);
-              },
-            ),
-            const SizedBox(height: 20.0),
-            TextFormField(
-              style: textColor,
-              obscureText: _obscureTextPassword,
-              decoration: InputDecoration(
-                suffixIcon: GestureDetector(
-                  onTap: _showPassword,
-                  child: FaIcon(
-                    _obscureTextPassword
-                        ? FontAwesomeIcons.eye
-                        : FontAwesomeIcons.eyeSlash,
-                    size: 15.0,
-                    color: Colors.white,
-                  ),
-                ),
-                labelText: 'Password',
-                labelStyle: textColor,
-                focusColor: Colors.white,
-                enabledBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-                border: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-                focusedErrorBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-                disabledBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-                errorBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-                focusedBorder: const UnderlineInputBorder(
-                  borderSide: BorderSide(color: Color(0xFF979797)),
-                ),
-              ),
-              validator: (val) => val!.length < 6
-                  ? 'Your password must be longer than 6 characters'
-                  : null,
-              onChanged: (val) {
-                setState(() => password = val);
-              },
-            ),
-            const SizedBox(height: 20.0),
-            ElevatedButton(
-              onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  setState(() => loading = true);
-                  try {
-                    await _auth.registerWithEmailAndPassword(email, password);
-                    // On success the auth stream switches to Home.
-                  } on AuthException catch (e) {
-                    setState(() {
-                      loading = false;
-                      error = e.message;
-                    });
-                  } on Object {
-                    setState(() {
-                      loading = false;
-                      error =
-                          'There was an error creating your account. Please try again.';
-                    });
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryButtonColor, // background
-                foregroundColor: Colors.white, // foreground
-              ),
-              child: SizedBox(
-                width: MediaQuery.of(context).size.width - 75,
-                height: 48,
-                child: Center(
-                  child: Builder(
-                    builder: (context) {
-                      return loading
-                          ? loadingWidget
-                          : const Text(
-                              'Sign Up',
-                              style: TextStyle(
-                                color: Color(0xFFFBFBFB),
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            );
-                    },
-                  ),
-                ),
+    final colors = context.appColors;
+
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          GlassInput(
+            controller: _email,
+            hint: 'Email',
+            leadingIcon: Icons.mail_outline,
+            keyboardType: TextInputType.emailAddress,
+            validator: (value) => (value == null || value.trim().isEmpty)
+                ? 'Enter your email'
+                : null,
+          ),
+          const SizedBox(height: 16),
+          GlassInput(
+            controller: _password,
+            hint: 'Password',
+            leadingIcon: Icons.lock_outline,
+            obscureText: _obscure,
+            suffix: IconButton(
+              onPressed: () => setState(() => _obscure = !_obscure),
+              icon: Icon(
+                _obscure
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
+                color: colors.textSecondary,
+                size: 20,
               ),
             ),
-            const SizedBox(height: 12.0),
+            validator: (value) => (value == null || value.length < 6)
+                ? 'Password must be at least 6 characters'
+                : null,
+          ),
+          const SizedBox(height: 24),
+          GradientButton(
+            label: 'Sign up',
+            icon: Icons.bolt,
+            loading: _loading,
+            onPressed: _submit,
+          ),
+          if (_error.isNotEmpty) ...[
+            const SizedBox(height: 14),
             Text(
-              error,
-              style: const TextStyle(color: Colors.red, fontSize: 14.0),
+              _error,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: colors.danger, fontSize: 14),
             ),
           ],
-        ),
+        ],
       ),
     );
-  }
-
-  void _showPassword() {
-    setState(() {
-      _obscureTextPassword = !_obscureTextPassword;
-    });
   }
 }

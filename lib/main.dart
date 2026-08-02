@@ -7,7 +7,7 @@ import 'package:senzu_app/services/auth_service.dart';
 import 'package:senzu_app/services/food_log_repository.dart';
 import 'package:senzu_app/services/meal_repository.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
-import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/design/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,28 +28,17 @@ class MyApp extends StatelessWidget {
         Provider<ShelfRepository>(create: (_) => ShelfRepository()),
         Provider<MealRepository>(create: (_) => MealRepository()),
         Provider<FoodLogRepository>(create: (_) => FoodLogRepository()),
-        StreamProvider(
+        StreamProvider<User?>(
           create: (context) =>
               context.read<AuthenticationService>().authStateChanges,
           initialData: null,
         ),
       ],
       child: MaterialApp(
+        title: 'Senzu',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.dark(),
         home: const Wrapper(),
-        theme: ThemeData(
-          brightness: Brightness.dark,
-          primaryColor: primaryButtonColor,
-          scaffoldBackgroundColor: primaryBackgroundColor,
-          colorScheme: const ColorScheme.dark(
-            primary: primaryButtonColor,
-            surface: Color(0xFF1e1f38),
-          ),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: primaryBackgroundColor,
-            elevation: 0,
-            centerTitle: true,
-          ),
-        ),
         localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
           DefaultMaterialLocalizations.delegate,
           DefaultWidgetsLocalizations.delegate,

@@ -6,307 +6,117 @@ import 'package:senzu_app/screens/nutrients_display/nutrient_pages/potassium.dar
 import 'package:senzu_app/screens/nutrients_display/nutrient_pages/protein.dart';
 import 'package:senzu_app/screens/nutrients_display/nutrient_pages/vitamin_a.dart';
 import 'package:senzu_app/screens/nutrients_display/nutrient_pages/vitamin_c.dart';
-import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/design/app_colors.dart';
+import 'package:senzu_app/shared/widgets/glass_row.dart';
 
+/// Nutrient guide: the top foods per nutrient, as glass rows.
 class NutrientsDisplay extends StatelessWidget {
   const NutrientsDisplay({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Nutrients List',
-          style: titleTextStyle,
-        ),
-        centerTitle: true,
-        backgroundColor: primaryBackgroundColor,
-        elevation: 0,
-      ),
-      body: const NutrientList(),
-      backgroundColor: primaryBackgroundColor,
+      appBar: AppBar(title: const Text('Nutrient guide')),
+      body: const _NutrientList(),
     );
   }
 }
 
-class NutrientList extends StatelessWidget {
-  const NutrientList({super.key});
+class _NutrientList extends StatelessWidget {
+  const _NutrientList();
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    final colors = context.appColors;
+
+    final items = <_GuideItem>[
+      _GuideItem('Fiber', Icons.grass, colors.carbs, const Fiber()),
+      _GuideItem(
+        'Protein',
+        Icons.fitness_center,
+        colors.protein,
+        const Protein(),
+      ),
+      _GuideItem(
+        'Potassium',
+        Icons.energy_savings_leaf,
+        colors.fat,
+        const Potassium(),
+      ),
+      _GuideItem(
+        'Vitamin A',
+        Icons.wb_sunny_outlined,
+        colors.energyStart,
+        const VitaminA(),
+      ),
+      _GuideItem(
+        'Vitamin C',
+        Icons.spa_outlined,
+        colors.energyEnd,
+        const VitaminC(),
+      ),
+      _GuideItem('Iron', Icons.science_outlined, colors.fat, const Iron()),
+      _GuideItem(
+        'Calcium',
+        Icons.egg_alt_outlined,
+        colors.protein,
+        const Calcium(),
+      ),
+    ];
+
+    return ListView.builder(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(8),
-      children: const <Widget>[
-        FiberCard(),
-        ProteinCard(),
-        PotassiumCard(),
-        VitaminACard(),
-        VitaminCCard(),
-        IronCard(),
-        CalciumCard(),
-      ],
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return GlassRow(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (context) => item.page),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: item.color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(item.icon, color: item.color, size: 20),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  item.label,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                'Top foods',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right,
+                color: colors.textSecondary,
+                size: 20,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-// TODO(alexandro): REMOVE ALL OF THESE... It's insane to have all these stateless widgets for this.
-class FiberCard extends StatelessWidget {
-  const FiberCard({super.key});
+class _GuideItem {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final Widget page;
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Card(
-        color: const Color(0xFF1e1f38),
-        child: InkWell(
-          splashColor: Colors.blue.withAlpha(30),
-          onTap: () async {
-            await Navigator.push<Object>(
-              context,
-              MaterialPageRoute<Object>(builder: (context) => const Fiber()),
-            );
-          },
-          child: const SizedBox(
-            width: 450,
-            height: 100,
-            child: Center(
-              child: Text(
-                'Fiber',
-                style: TextStyle(
-                  color: Color(0xFFE0E0E0),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 30.0,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Card widget that takes you to the top foods for Protein datatable
-class ProteinCard extends StatelessWidget {
-  const ProteinCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Card(
-        color: const Color(0xFF1e1f38),
-        child: InkWell(
-          splashColor: Colors.blue.withAlpha(30),
-          onTap: () async {
-            await Navigator.push<Object>(
-              context,
-              MaterialPageRoute<Object>(builder: (context) => const Protein()),
-            );
-          },
-          child: const SizedBox(
-            width: 450,
-            height: 100,
-            child: Center(
-              child: Text(
-                'Protein',
-                style: TextStyle(
-                  color: Color(0xFFE0E0E0),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 30.0,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Card widget that takes you to the top foods for Potassium datatable
-class PotassiumCard extends StatelessWidget {
-  const PotassiumCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Card(
-        color: const Color(0xFF1e1f38),
-        child: InkWell(
-          splashColor: Colors.blue.withAlpha(30),
-          onTap: () async {
-            await Navigator.push<Object>(
-              context,
-              MaterialPageRoute<Object>(
-                builder: (context) => const Potassium(),
-              ),
-            );
-          },
-          child: const SizedBox(
-            width: 450,
-            height: 100,
-            child: Center(
-              child: Text(
-                'Potassium',
-                style: TextStyle(
-                  color: Color(0xFFE0E0E0),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 30.0,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Card widget that takes you to the top foods for Vitamin A datatable
-class VitaminACard extends StatelessWidget {
-  const VitaminACard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Card(
-        color: const Color(0xFF1e1f38),
-        child: InkWell(
-          splashColor: Colors.blue.withAlpha(30),
-          onTap: () async {
-            await Navigator.push<Object>(
-              context,
-              MaterialPageRoute<Object>(builder: (context) => const VitaminA()),
-            );
-          },
-          child: const SizedBox(
-            width: 450,
-            height: 100,
-            child: Center(
-              child: Text(
-                'Vitamin A',
-                style: TextStyle(
-                  color: Color(0xFFE0E0E0),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 30.0,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Card widget that takes you to the top foods for Vitamin C datatable
-class VitaminCCard extends StatelessWidget {
-  const VitaminCCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Card(
-        color: const Color(0xFF1e1f38),
-        child: InkWell(
-          splashColor: Colors.blue.withAlpha(30),
-          onTap: () async {
-            await Navigator.push<Object>(
-              context,
-              MaterialPageRoute<Object>(builder: (context) => const VitaminC()),
-            );
-          },
-          child: const SizedBox(
-            width: 450,
-            height: 100,
-            child: Center(
-              child: Text(
-                'Vitamin C',
-                style: TextStyle(
-                  color: Color(0xFFE0E0E0),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 30.0,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Card widget that takes you to the top foods for Iron datatable
-class IronCard extends StatelessWidget {
-  const IronCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Card(
-        color: const Color(0xFF1e1f38),
-        child: InkWell(
-          splashColor: Colors.blue.withAlpha(30),
-          onTap: () async {
-            await Navigator.push<Object>(
-              context,
-              MaterialPageRoute<Object>(builder: (context) => const Iron()),
-            );
-          },
-          child: const SizedBox(
-            width: 450,
-            height: 100,
-            child: Center(
-              child: Text(
-                'Iron',
-                style: TextStyle(
-                  color: Color(0xFFE0E0E0),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 30.0,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Card widget that takes you to the top foods for Calcium datatable
-class CalciumCard extends StatelessWidget {
-  const CalciumCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Card(
-        color: const Color(0xFF1e1f38),
-        child: InkWell(
-          splashColor: Colors.blue.withAlpha(30),
-          onTap: () async {
-            await Navigator.push<Object>(
-              context,
-              MaterialPageRoute<Object>(builder: (context) => const Calcium()),
-            );
-          },
-          child: const SizedBox(
-            width: 450,
-            height: 100,
-            child: Center(
-              child: Text(
-                'Calcium',
-                style: TextStyle(
-                  color: Color(0xFFE0E0E0),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 30.0,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  const _GuideItem(this.label, this.icon, this.color, this.page);
 }

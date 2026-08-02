@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/models/shelf_food.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/services/food_log_repository.dart';
@@ -10,28 +10,28 @@ import 'package:senzu_app/services/meal_repository.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
-import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/design/app_colors.dart';
+import 'package:senzu_app/shared/widgets/glass_card.dart';
+import 'package:senzu_app/shared/widgets/glass_segmented.dart';
+import 'package:senzu_app/shared/widgets/gradient_button.dart';
 
+/// Food detail / portion entry: glass card with the food's name and macros,
+/// a glass pill quantity stepper, a meal picker (when logging to a day), and
+/// a gradient confirm button.
+///
+/// * [mealType] set → logs the food into that meal on [date].
+/// * [mealIdValue] set → adds the food as an item of that custom meal.
 class FoodDetails extends StatefulWidget {
-  /// The food being logged (name, brand, serving size and all nutrients).
   final ShelfFood food;
-  final DateTime? selectedDateSecondStep;
-  final String? breakfastMealAdd;
-  final String? lunchMealAdd;
-  final String? snacksMealAdd;
-  final String? dinnerMealAdd;
-
-  /// Non-null when opened from a meal builder (saves to meals/{mealId}).
+  final DateTime? date;
+  final MealType? mealType;
   final String? mealIdValue;
 
   const FoodDetails({
     super.key,
     required this.food,
-    this.selectedDateSecondStep,
-    this.breakfastMealAdd,
-    this.lunchMealAdd,
-    this.snacksMealAdd,
-    this.dinnerMealAdd,
+    this.date,
+    this.mealType,
     this.mealIdValue,
   });
 
@@ -40,811 +40,596 @@ class FoodDetails extends StatefulWidget {
 }
 
 class _FoodDetailsState extends State<FoodDetails> {
-  String selectedMealValue() {
-    for (final meal in [
-      widget.breakfastMealAdd,
-      widget.lunchMealAdd,
-      widget.snacksMealAdd,
-      widget.dinnerMealAdd,
-    ]) {
-      if (meal != null && meal.isNotEmpty) return meal;
-    }
-    return '';
+  late final bool _isMealItemMode;
+  late final bool _showMealPicker;
+  late MealType? _meal;
+  late int _portion;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isMealItemMode = widget.mealIdValue != null;
+    _meal = widget.mealType;
+    _showMealPicker = !_isMealItemMode && _meal == null;
+    _portion = widget.food.servingSize.round();
   }
 
-  final portionSizeController = TextEditingController();
+  double get _ratio => widget.food.servingSize == 0
+      ? 0
+      : _portion / widget.food.servingSize;
 
-  /// Parsed portion size; falls back to 0 when empty/invalid.
-  int get _portionSize => int.tryParse(portionSizeController.text) ?? 0;
+  int _scaled(double value) => (value * _ratio).round();
 
-  /// One vitamin/mineral row of the facts panel.
-  Widget _vitaminRow(String label, String percent) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: notBoldTextOnLabel),
-        Text(percent, style: notBoldTextOnLabel),
-      ],
-    );
-  }
-
-  /// Whether this screen is opened from a meal builder (has a mealId).
-  bool get _isMealContext => widget.mealIdValue != null;
-
-  Widget _bottomAction(IconData icon, Function callback) {
-    return Icon(icon, color: const Color(0xFF1e1f38));
-  }
+  int get _calories => _scaled(widget.food.calories);
 
   Future<void> _save() async {
-    if (_isMealContext) {
-      await _saveFoodItemToMeal();
-    } else {
-      updateTimesAddedCount();
-      await saveFoodToMeal();
+    setState(() => _saving = true);
+    try {
+      if (_isMealItemMode) {
+        await context.read<MealRepository>().addFoodItem(
+          myUID(context),
+          widget.mealIdValue!,
+          _mealItemData(),
+        );
+      } else {
+        unawaited(
+          context
+              .read<ShelfRepository>()
+              .incrementTimesAdded(myUID(context), widget.food.foodId),
+        );
+        await context.read<FoodLogRepository>().addEntry(
+          myUID(context),
+          _entryData(),
+        );
+      }
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Added ${widget.food.foodName}')),
+        );
+      }
+    } on Object {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not save. Check your connection and try again.',
+            ),
+          ),
+        );
+      }
     }
   }
 
-  int _caloriesIntake() {
-    final caloriesIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.calories;
-    return caloriesIntake.toInt();
+  Map<String, dynamic> _entryData() {
+    final date = startOfDay(widget.date ?? DateTime.now());
+    final meal = _meal;
+    return <String, dynamic>{
+      'foodId': widget.food.foodId,
+      'foodName': widget.food.foodName,
+      'brandName': widget.food.brandName,
+      'portionSize': _portion,
+      'servingSize': widget.food.servingSize,
+      'mealType': mealTypeToString(meal),
+      'calories': _calories,
+      'totalFat': _scaled(widget.food.totalFat),
+      'saturatedFat': _scaled(widget.food.saturatedFat),
+      'transFat': _scaled(widget.food.transFat),
+      'cholesterol': _scaled(widget.food.cholesterol),
+      'sodium': _scaled(widget.food.sodium),
+      'totalCarbohydrate': _scaled(widget.food.totalCarbohydrate),
+      'dietaryFiber': _scaled(widget.food.dietaryFiber),
+      'sugars': _scaled(widget.food.sugars),
+      'protein': _scaled(widget.food.protein),
+      'calcium': _scaled(widget.food.calcium),
+      'iron': _scaled(widget.food.iron),
+      'potassium': _scaled(widget.food.potassium),
+      'vitaminA': _scaled(widget.food.vitaminA),
+      'vitaminC': _scaled(widget.food.vitaminC),
+      'vitaminD': _scaled(widget.food.vitaminD),
+      'magnesium': _scaled(widget.food.magnesium),
+      'zinc': _scaled(widget.food.zinc),
+      'weekNo': getWeekNumber(date),
+      'month': cleanMonthFormat(date.toString()),
+      'year': cleanYearFormat(date.toString()),
+      'dateAdded': date,
+      'breakfastCalories': meal == MealType.breakfast ? _calories : 0,
+      'lunchCalories': meal == MealType.lunch ? _calories : 0,
+      'snacksCalories': meal == MealType.snacks ? _calories : 0,
+      'dinnerCalories': meal == MealType.dinner ? _calories : 0,
+    };
   }
 
-  int _totalFatIntake() {
-    final totalFatIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.totalFat;
-    return totalFatIntake.toInt();
-  }
-
-  int _saturatedFatIntake() {
-    final saturatedFatIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.saturatedFat;
-    return saturatedFatIntake.toInt();
-  }
-
-  int _transFatIntake() {
-    final transFatIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.transFat;
-    return transFatIntake.toInt();
-  }
-
-  int _cholesterolIntake() {
-    final cholesterolIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.cholesterol;
-    return cholesterolIntake.toInt();
-  }
-
-  int _sodiumIntake() {
-    final sodiumIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.sodium;
-    return sodiumIntake.toInt();
-  }
-
-  int _totalCarbohydrateIntake() {
-    final totalCarbohydrateIntake =
-        (_portionSize / widget.food.servingSize) *
-        widget.food.totalCarbohydrate;
-    return totalCarbohydrateIntake.toInt();
-  }
-
-  int _dietaryFiberIntake() {
-    final dietaryFiberIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.dietaryFiber;
-    return dietaryFiberIntake.toInt();
-  }
-
-  int _sugarsIntake() {
-    final sugarsIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.sugars;
-    return sugarsIntake.toInt();
-  }
-
-  int _proteinIntake() {
-    final proteinIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.protein;
-    return proteinIntake.toInt();
-  }
-
-  int _calciumIntake() {
-    final calciumIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.calcium;
-    return calciumIntake.toInt();
-  }
-
-  int _ironIntake() {
-    final ironIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.iron;
-    return ironIntake.toInt();
-  }
-
-  int _potassiumIntake() {
-    final potassiumIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.potassium;
-    return potassiumIntake.toInt();
-  }
-
-  int _vitaminAIntake() {
-    final vitaminAIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.vitaminA;
-    return vitaminAIntake.toInt();
-  }
-
-  int _vitaminCIntake() {
-    final vitaminCIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.vitaminC;
-    return vitaminCIntake.toInt();
-  }
-
-  int _vitaminDIntake() {
-    final vitaminDIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.vitaminD;
-    return vitaminDIntake.toInt();
-  }
-
-  int _magnesiumIntake() {
-    final magnesiumIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.magnesium;
-    return magnesiumIntake.toInt();
-  }
-
-  int _zincIntake() {
-    final zincIntake =
-        (_portionSize / widget.food.servingSize) * widget.food.zinc;
-    return zincIntake.toInt();
-  }
-
-  dynamic breakfastCalories() {
-    final breakfastCalories = _caloriesIntake();
-    return breakfastCalories;
-  }
-
-  dynamic lunchCalories() {
-    final lunchCalories = _caloriesIntake();
-    return lunchCalories;
-  }
-
-  dynamic snacksCalories() {
-    final snacksCalories = _caloriesIntake();
-    return snacksCalories;
-  }
-
-  dynamic dinnerCalories() {
-    final dinnerCalories = _caloriesIntake();
-    return dinnerCalories;
-  }
-
-  double totalFatPercentage() {
-    return (widget.food.totalFat / totalFatDailyValue) * 100;
-  }
-
-  double saturatedFatPercentage() {
-    return (widget.food.saturatedFat / saturatedFatDailyValue) * 100;
-  }
-
-  double cholesterolPercentage() {
-    return (widget.food.cholesterol / cholesterolDailyValue) * 100;
-  }
-
-  double sodiumPercentage() {
-    return (widget.food.sodium / sodiumDailyValue) * 100;
-  }
-
-  double totalCarbohydratePercentage() {
-    return (widget.food.totalCarbohydrate / totalCarbohydrateDailyValue) * 100;
-  }
-
-  double dietaryFiberPercentage() {
-    return (widget.food.dietaryFiber / dietaryFiberDailyValue) * 100;
-  }
-
-  double addedSugarsPercentage() {
-    return (widget.food.addedSugars / addedSugarsDailyValue) * 100;
-  }
-
-  double vitaminDPercentage() {
-    return (widget.food.vitaminD / vitaminDDailyValue) * 100;
-  }
-
-  double calciumPercentage() {
-    return (widget.food.calcium / calciumDailyValue) * 100;
-  }
-
-  double ironPercentage() {
-    return (widget.food.iron / ironDailyValue) * 100;
-  }
-
-  double potassiumPercentage() {
-    return (widget.food.potassium / potassiumDailyValue) * 100;
-  }
-
-  double vitaminCPercentage() {
-    return (widget.food.vitaminC / vitaminCDailyValue) * 100;
-  }
-
-  double vitaminAPercentage() {
-    return (widget.food.vitaminA / vitaminADailyValue) * 100;
-  }
-
-  double addedSugarsValue() => widget.food.addedSugars;
+  Map<String, dynamic> _mealItemData() => <String, dynamic>{
+    'foodId': widget.food.foodId,
+    'foodName': widget.food.foodName,
+    'brandName': widget.food.brandName,
+    'mealId': widget.mealIdValue,
+    'portionSize': _portion,
+    'servingSize': widget.food.servingSize,
+    'calories': _calories,
+    'totalFat': _scaled(widget.food.totalFat),
+    'saturatedFat': _scaled(widget.food.saturatedFat),
+    'transFat': _scaled(widget.food.transFat),
+    'cholesterol': _scaled(widget.food.cholesterol),
+    'sodium': _scaled(widget.food.sodium),
+    'totalCarbohydrate': _scaled(widget.food.totalCarbohydrate),
+    'dietaryFiber': _scaled(widget.food.dietaryFiber),
+    'sugars': _scaled(widget.food.sugars),
+    'protein': _scaled(widget.food.protein),
+    'calcium': _scaled(widget.food.calcium),
+    'iron': _scaled(widget.food.iron),
+    'potassium': _scaled(widget.food.potassium),
+    'vitaminA': _scaled(widget.food.vitaminA),
+    'vitaminC': _scaled(widget.food.vitaminC),
+  };
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onVerticalDragDown: (details) {
-        FocusScope.of(context).requestFocus(FocusNode());
-      },
-      child: Scaffold(
-        backgroundColor: primaryBackgroundColor,
-        appBar: AppBar(
-          leading: GestureDetector(
-            onTap: () {
-              Navigator.of(context).pop();
-            },
-            child: const Icon(Icons.chevron_left, size: 40),
-          ),
-          backgroundColor: primaryBackgroundColor,
-          centerTitle: true,
-          title: const Text('Nutrition Facts'),
-        ),
-        bottomNavigationBar: _isMealContext
-            ? null
-            : BottomAppBar(
-                color: const Color(0xFF1e1f38),
-                notchMargin: 8.0,
-                shape: const CircularNotchedRectangle(),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: <Widget>[
-                    _bottomAction(Icons.cleaning_services_outlined, () {}),
-                    const SizedBox(width: 150.0),
-                  ],
-                ),
-              ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        floatingActionButton: _isMealContext
-            ? null
-            : FloatingActionButton(
-                backgroundColor: primaryButtonColor,
-                child: const Icon(Icons.add),
-                onPressed: () async {
-                  final navigator = Navigator.of(context);
-                  final scaffoldMessenger = ScaffoldMessenger.of(context);
-                  try {
-                    await _save();
-                    if (!mounted) return;
-                    navigator.pop();
-                  } on Object {
-                    if (!mounted) return;
-                    scaffoldMessenger.showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Could not save the food entry. '
-                          'Please check your connection and try again.',
-                        ),
+    final colors = context.appColors;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_isMealItemMode ? 'Add to meal' : 'Food details'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            GlassCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    widget.food.foodName,
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.food.brandName,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.textSecondary,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
                       ),
-                    );
-                  }
-                },
-              ),
-        body: _isMealContext
-            ? Column(
-                children: <Widget>[
-                  Expanded(child: _foodDetailsBody()),
-                  _addMealFoodItemsButton(),
+                      decoration: colors.glassDecoration(radius: 14),
+                      child: Text(
+                        '${widget.food.calories.toStringAsFixed(0)} kcal · '
+                        'per ${widget.food.servingSize.toStringAsFixed(0)}g',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'PORTION',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                  const SizedBox(height: 10),
+                  _PortionStepper(
+                    value: _portion,
+                    onChange: (value) => setState(() => _portion = value),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'MACROS',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                  const SizedBox(height: 14),
+                  _MacroBar(
+                    label: 'Protein',
+                    color: colors.protein,
+                    grams: _scaled(widget.food.protein),
+                    fraction: _percent(
+                      _scaled(widget.food.protein),
+                      proteinDailyValue,
+                    ),
+                  ),
+                  _MacroBar(
+                    label: 'Carbs',
+                    color: colors.carbs,
+                    grams: _scaled(widget.food.totalCarbohydrate),
+                    fraction: _percent(
+                      _scaled(widget.food.totalCarbohydrate),
+                      totalCarbohydrateDailyValue,
+                    ),
+                  ),
+                  _MacroBar(
+                    label: 'Fat',
+                    color: colors.fat,
+                    grams: _scaled(widget.food.totalFat),
+                    fraction: _percent(
+                      _scaled(widget.food.totalFat),
+                      totalFatDailyValue,
+                    ),
+                  ),
+                  if (_showMealPicker) ...[
+                    const SizedBox(height: 24),
+                    Text('ADD TO', style: Theme.of(context).textTheme.labelSmall),
+                    const SizedBox(height: 10),
+                    GlassSegmentedControl<MealType>(
+                      segments: const [
+                        GlassSegment<MealType>(MealType.breakfast, 'Breakfast'),
+                        GlassSegment<MealType>(MealType.lunch, 'Lunch'),
+                        GlassSegment<MealType>(MealType.snacks, 'Snacks'),
+                        GlassSegment<MealType>(MealType.dinner, 'Dinner'),
+                      ],
+                      value: _meal,
+                      onChanged: (meal) => setState(() => _meal = meal),
+                    ),
+                  ],
+                  const SizedBox(height: 28),
+                  GradientButton(
+                    label: _isMealItemMode ? 'Add to meal' : 'Add to log',
+                    icon: Icons.add,
+                    loading: _saving,
+                    onPressed: (_isMealItemMode || _meal != null) ? _save : null,
+                  ),
+                  if (!_isMealItemMode && _meal == null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      'Pick a meal to log this food.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ],
                 ],
-              )
-            : _foodDetailsBody(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            _NutritionFacts(food: widget.food, ratio: _ratio),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _foodDetailsBody() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
+  double _percent(int intake, num daily) => daily <= 0
+      ? 0.0
+      : (intake / daily).clamp(0.0, 3.0);
+}
+
+/// Glass pill quantity stepper (− 10g / + 10g).
+class _PortionStepper extends StatelessWidget {
+  final int value;
+  final ValueChanged<int> onChange;
+
+  const _PortionStepper({required this.value, required this.onChange});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return Container(
+      height: 56,
+      decoration: colors.glassDecoration(),
+      child: Row(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              border: Border.all(color: foodDetailsBorderColor),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    widget.food.foodName,
-                    style: textColor.copyWith(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 32.0,
-                    ),
-                  ),
-                ),
-                Container(
-                  alignment: Alignment.centerLeft,
-                  margin: const EdgeInsets.only(top: 4.0, bottom: 4.0),
-                  child: Text(
-                    widget.food.brandName,
-                    style: textColor.copyWith(
-                      fontStyle: FontStyle.italic,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 18.0,
-                    ),
-                  ),
-                ),
-                thinDivider,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text(
-                      'Enter amount had:',
-                      style: textColor.copyWith(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 24,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 70,
-                      child: TextFormField(
-                        style: notBoldTextOnLabel,
-                        decoration: textInputDecoration.copyWith(
-                          hintText: 'g',
-                          hintStyle: textColor,
-                        ),
-                        controller: portionSizeController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.allow(RegExp('[0-9]')),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  margin: const EdgeInsets.only(bottom: 4.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Serving size',
-                        style: textColor.copyWith(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 24,
-                        ),
-                      ),
-                      Text(
-                        ' ',
-                        style: textColor.copyWith(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 24,
-                        ),
-                      ),
-                      Text(
-                        '(${widget.food.servingSize.toStringAsFixed(0)}g)',
-                        style: textColor.copyWith(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 24,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(
-                  height: 15,
-                  thickness: 14,
-                  color: foodDetailsBorderColor,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Calories',
-                      style: textColor.copyWith(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 40,
-                      ),
-                    ),
-                    Text(
-                      widget.food.calories.toStringAsFixed(0),
-                      style: textColor.copyWith(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 60,
-                      ),
-                    ),
-                  ],
-                ),
-                semiThickDivider,
-                Container(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    '% Daily Value*',
-                    style: textColor.copyWith(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16.0,
-                    ),
-                  ),
-                ),
-                thinDivider,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Row(
-                      children: [
-                        Text(
-                          'Total Fat ',
-                          style: textColor.copyWith(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 18,
-                          ),
-                        ),
-                        Text(
-                          '${widget.food.totalFat.toStringAsFixed(0)}g',
-                          style: notBoldTextOnLabel,
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '${totalFatPercentage().toStringAsFixed(0)}%',
-                      style: boldTextOnLabel,
-                    ),
-                  ],
-                ),
-                thinDivider,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Container(
-                      margin: const EdgeInsets.only(left: 16.0),
-                      child: Row(
-                        children: [
-                          const Text(
-                            'Saturated Fat ',
-                            style: notBoldTextOnLabel,
-                          ),
-                          Text(
-                            '${widget.food.saturatedFat.toStringAsFixed(0)}g',
-                            style: notBoldTextOnLabel,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      '${saturatedFatPercentage().toStringAsFixed(0)}%',
-                      style: boldTextOnLabel,
-                    ),
-                  ],
-                ),
-                thinDivider,
-                Container(
-                  margin: const EdgeInsets.only(left: 16.0),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Trans Fat ',
-                        style: textColor.copyWith(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                      Text(
-                        '${widget.food.transFat.toStringAsFixed(0)}g',
-                        style: notBoldTextOnLabel,
-                      ),
-                    ],
-                  ),
-                ),
-                thinDivider,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Row(
-                      children: [
-                        const Text('Cholesterol ', style: boldTextOnLabel),
-                        Text(
-                          '${widget.food.cholesterol.toStringAsFixed(0)}g',
-                          style: notBoldTextOnLabel,
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '${cholesterolPercentage().toStringAsFixed(0)}%',
-                      style: boldTextOnLabel,
-                    ),
-                  ],
-                ),
-                thinDivider,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Row(
-                      children: [
-                        const Text('Sodium ', style: boldTextOnLabel),
-                        Text(
-                          '${widget.food.sodium.toStringAsFixed(0)}g',
-                          style: notBoldTextOnLabel,
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '${sodiumPercentage().toStringAsFixed(0)}%',
-                      style: boldTextOnLabel,
-                    ),
-                  ],
-                ),
-                thinDivider,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Row(
-                      children: [
-                        const Text(
-                          'Total Carbohydrate ',
-                          style: boldTextOnLabel,
-                        ),
-                        Text(
-                          '${widget.food.totalCarbohydrate.toStringAsFixed(0)}g',
-                          style: notBoldTextOnLabel,
-                        ),
-                      ],
-                    ),
-                    Text(
-                      '${totalCarbohydratePercentage().toStringAsFixed(0)}%',
-                      style: boldTextOnLabel,
-                    ),
-                  ],
-                ),
-                thinDivider,
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Container(
-                      margin: const EdgeInsets.only(left: 16.0),
-                      child: Row(
-                        children: [
-                          const Text(
-                            'Dietary Fiber ',
-                            style: notBoldTextOnLabel,
-                          ),
-                          Text(
-                            '${widget.food.dietaryFiber.toStringAsFixed(0)}g',
-                            style: notBoldTextOnLabel,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      '${dietaryFiberPercentage().toStringAsFixed(0)}%',
-                      style: boldTextOnLabel,
-                    ),
-                  ],
-                ),
-                thinDivider,
-                Container(
-                  margin: const EdgeInsets.only(left: 16.0),
-                  child: Row(
-                    children: [
-                      const Text('Total Sugars ', style: notBoldTextOnLabel),
-                      Text(
-                        '${widget.food.sugars.toStringAsFixed(0)}g',
-                        style: notBoldTextOnLabel,
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(
-                  height: 8,
-                  thickness: 1,
-                  indent: 38,
-                  color: foodDetailsBorderColor,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Container(
-                      margin: const EdgeInsets.only(left: 35),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Includes ${addedSugarsValue().toStringAsFixed(0)}g Added Sugars',
-                            style: notBoldTextOnLabel,
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      '${addedSugarsPercentage().toStringAsFixed(0)}%',
-                      style: boldTextOnLabel,
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Text('Protein ', style: boldTextOnLabel),
-                    Text(
-                      '${widget.food.protein.toStringAsFixed(0)}g',
-                      style: notBoldTextOnLabel,
-                    ),
-                  ],
-                ),
-                const Divider(
-                  height: 20,
-                  thickness: 14,
-                  color: foodDetailsBorderColor,
-                ),
-                _vitaminRow(
-                  'Vitamin D ${widget.food.vitaminD.toStringAsFixed(0)}mcg',
-                  '${vitaminDPercentage().toStringAsFixed(0)}%',
-                ),
-                thinDivider,
-                _vitaminRow(
-                  'Calcium ${widget.food.calcium.toStringAsFixed(0)}mg',
-                  '${calciumPercentage().toStringAsFixed(0)}%',
-                ),
-                thinDivider,
-                _vitaminRow(
-                  'Iron ${widget.food.iron.toStringAsFixed(0)}mg',
-                  '${ironPercentage().toStringAsFixed(0)}%',
-                ),
-                thinDivider,
-                _vitaminRow(
-                  'Potassium ${widget.food.potassium.toStringAsFixed(0)}mg',
-                  '${potassiumPercentage().toStringAsFixed(0)}%',
-                ),
-                thinDivider,
-                _vitaminRow(
-                  'Vitamin C ${widget.food.vitaminC.toStringAsFixed(0)}mg',
-                  '${vitaminCPercentage().toStringAsFixed(0)}%',
-                ),
-                thinDivider,
-                _vitaminRow(
-                  'Vitamin A ${widget.food.vitaminA.toStringAsFixed(0)}mcg',
-                  '${vitaminAPercentage().toStringAsFixed(0)}%',
-                ),
-                const Divider(
-                  height: 10,
-                  thickness: 5,
-                  color: foodDetailsBorderColor,
-                ),
-                Container(
-                  alignment: Alignment.center,
-                  margin: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    '* The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.',
-                    style: textColor.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
+          _StepButton(
+            icon: Icons.remove,
+            onTap: value > 0 ? () => onChange(value - 10) : null,
+          ),
+          Expanded(
+            child: Text(
+              '$value g',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          Container(padding: const EdgeInsets.only(bottom: 20)),
+          _StepButton(icon: Icons.add, onTap: () => onChange(value + 10)),
         ],
       ),
     );
   }
+}
 
-  // Adds food items in meal to the food log
-  Widget _addMealFoodItemsButton() {
-    return Builder(
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            height: 50.0,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18.0),
-              color: primaryButtonColor,
+class _StepButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _StepButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return Padding(
+      padding: const EdgeInsets.all(6),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: SizedBox.square(
+            dimension: 44,
+            child: Icon(
+              icon,
+              size: 20,
+              color: onTap == null
+                  ? colors.textSecondary.withValues(alpha: 0.4)
+                  : colors.textPrimary,
             ),
-            child: MaterialButton(
-              onPressed: () async {
-                final navigator = Navigator.of(context);
-                final scaffoldMessenger = ScaffoldMessenger.of(context);
-                try {
-                  await _save();
-                  if (!mounted) return;
-                  navigator.pop();
-                } on Object {
-                  if (!mounted) return;
-                  scaffoldMessenger.showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Could not add the food to your meal. '
-                        'Please check your connection and try again.',
-                      ),
-                    ),
-                  );
-                }
-              },
-              child: const Text(
-                'ADD FOOD TO MEAL',
-                style: TextStyle(color: Colors.white, fontSize: 20.0),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One macro bar: label, colored track, gram count.
+class _MacroBar extends StatelessWidget {
+  final String label;
+  final Color color;
+  final int grams;
+
+  /// 0..1 fraction of the daily value.
+  final double fraction;
+
+  const _MacroBar({
+    required this.label,
+    required this.color,
+    required this.grams,
+    required this.fraction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(
+        children: [
+          SizedBox(width: 64, child: Text(label, style: Theme.of(context).textTheme.bodyMedium)),
+          Expanded(
+            child: Container(
+              height: 8,
+              decoration: BoxDecoration(
+                color: colors.textPrimary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: fraction.clamp(0.0, 1.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
               ),
             ),
           ),
-        );
-      },
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 44,
+            child: Text(
+              '$grams g',
+              textAlign: TextAlign.right,
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ),
+        ],
+      ),
     );
   }
+}
 
-  Future<void> _saveFoodItemToMeal() async {
-    await context.read<MealRepository>().addFoodItem(
-      myUID(context),
-      widget.mealIdValue!,
-      {
-        'foodId': widget.food.foodId,
-        'foodName': widget.food.foodName,
-        'brandName': widget.food.brandName,
-        'mealId': widget.mealIdValue,
-        'portionSize': _portionSize,
-        'servingSize': widget.food.servingSize,
-        'calories': _caloriesIntake(),
-        'totalFat': _totalFatIntake(),
-        'saturatedFat': _saturatedFatIntake(),
-        'transFat': _transFatIntake(),
-        'cholesterol': _cholesterolIntake(),
-        'sodium': _sodiumIntake(),
-        'totalCarbohydrate': _totalCarbohydrateIntake(),
-        'dietaryFiber': _dietaryFiberIntake(),
-        'sugars': _sugarsIntake(),
-        'protein': _proteinIntake(),
-        'calcium': _calciumIntake(),
-        'iron': _ironIntake(),
-        'potassium': _potassiumIntake(),
-        'vitaminA': _vitaminAIntake(),
-        'vitaminC': _vitaminCIntake(),
-      },
-    );
-  }
+/// Collapsible nutrition facts panel, scaled to the chosen portion.
+class _NutritionFacts extends StatefulWidget {
+  final ShelfFood food;
+  final double ratio;
 
-  Future<void> saveFoodToMeal() async {
-    await context.read<FoodLogRepository>().addEntry(myUID(context), {
-      'foodId': widget.food.foodId,
-      'foodName': widget.food.foodName,
-      'brandName': widget.food.brandName,
-      'portionSize': _portionSize,
-      'servingSize': widget.food.servingSize,
-      'mealType': selectedMealValue(),
-      'calories': _caloriesIntake(),
-      'totalFat': _totalFatIntake(),
-      'saturatedFat': _saturatedFatIntake(),
-      'transFat': _transFatIntake(),
-      'cholesterol': _cholesterolIntake(),
-      'sodium': _sodiumIntake(),
-      'totalCarbohydrate': _totalCarbohydrateIntake(),
-      'dietaryFiber': _dietaryFiberIntake(),
-      'sugars': _sugarsIntake(),
-      'protein': _proteinIntake(),
-      'calcium': _calciumIntake(),
-      'iron': _ironIntake(),
-      'potassium': _potassiumIntake(),
-      'vitaminA': _vitaminAIntake(),
-      'vitaminC': _vitaminCIntake(),
-      'vitaminD': _vitaminDIntake(),
-      'magnesium': _magnesiumIntake(),
-      'zinc': _zincIntake(),
-      'weekNo': getWeekNumber(widget.selectedDateSecondStep!),
-      'month': cleanMonthFormat(widget.selectedDateSecondStep.toString()),
-      'year': cleanYearFormat(widget.selectedDateSecondStep.toString()),
-      'dateAdded': widget.selectedDateSecondStep,
-      'breakfastCalories': breakfastCalories(),
-      'lunchCalories': lunchCalories(),
-      'snacksCalories': snacksCalories(),
-      'dinnerCalories': dinnerCalories(),
-    });
-  }
+  const _NutritionFacts({required this.food, required this.ratio});
 
-  void updateTimesAddedCount() {
-    unawaited(
-      context.read<ShelfRepository>().incrementTimesAdded(
-        myUID(context),
-        widget.food.foodId,
+  @override
+  State<_NutritionFacts> createState() => _NutritionFactsState();
+}
+
+class _NutritionFactsState extends State<_NutritionFacts> {
+  bool _expanded = false;
+
+  int _scaled(double value) => (value * widget.ratio).round();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final food = widget.food;
+
+    Widget row(
+      String label, {
+      required double value,
+      String? unit,
+      num? daily,
+      bool indent = false,
+    }) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          children: [
+            if (indent) const SizedBox(width: 18),
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            Text(
+              '${_scaled(value)}${unit ?? ''}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (daily != null) ...[
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 40,
+                child: Text(
+                  '${(daily <= 0 ? 0 : value / daily * 100).round()}%',
+                  textAlign: TextAlign.right,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(28),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Nutrition facts',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: MediaQuery.of(context).disableAnimations
+                        ? Duration.zero
+                        : const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.expand_more,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: Column(
+                children: [
+                  row(
+                    'Calories',
+                    value: food.calories,
+                    unit: ' kcal',
+                  ),
+                  Divider(height: 16, color: colors.glassBorder),
+                  row(
+                    'Total fat',
+                    value: food.totalFat,
+                    unit: 'g',
+                    daily: totalFatDailyValue,
+                  ),
+                  row(
+                    'Saturated fat',
+                    value: food.saturatedFat,
+                    unit: 'g',
+                    daily: saturatedFatDailyValue,
+                    indent: true,
+                  ),
+                  row(
+                    'Trans fat',
+                    value: food.transFat,
+                    unit: 'g',
+                    indent: true,
+                  ),
+                  row(
+                    'Cholesterol',
+                    value: food.cholesterol,
+                    unit: 'mg',
+                    daily: cholesterolDailyValue,
+                  ),
+                  row(
+                    'Sodium',
+                    value: food.sodium,
+                    unit: 'mg',
+                    daily: sodiumDailyValue,
+                  ),
+                  Divider(height: 16, color: colors.glassBorder),
+                  row(
+                    'Total carbohydrate',
+                    value: food.totalCarbohydrate,
+                    unit: 'g',
+                    daily: totalCarbohydrateDailyValue,
+                  ),
+                  row(
+                    'Dietary fiber',
+                    value: food.dietaryFiber,
+                    unit: 'g',
+                    daily: dietaryFiberDailyValue,
+                    indent: true,
+                  ),
+                  row('Total sugars', value: food.sugars, unit: 'g', indent: true),
+                  row(
+                    'Added sugars',
+                    value: food.addedSugars,
+                    unit: 'g',
+                    daily: addedSugarsDailyValue,
+                    indent: true,
+                  ),
+                  row('Protein', value: food.protein, unit: 'g'),
+                  Divider(height: 16, color: colors.glassBorder),
+                  row(
+                    'Vitamin D',
+                    value: food.vitaminD,
+                    unit: 'mcg',
+                    daily: vitaminDDailyValue,
+                  ),
+                  row(
+                    'Calcium',
+                    value: food.calcium,
+                    unit: 'mg',
+                    daily: calciumDailyValue,
+                  ),
+                  row('Iron', value: food.iron, unit: 'mg', daily: ironDailyValue),
+                  row(
+                    'Potassium',
+                    value: food.potassium,
+                    unit: 'mg',
+                    daily: potassiumDailyValue,
+                  ),
+                  row(
+                    'Vitamin C',
+                    value: food.vitaminC,
+                    unit: 'mg',
+                    daily: vitaminCDailyValue,
+                  ),
+                  row(
+                    'Vitamin A',
+                    value: food.vitaminA,
+                    unit: 'mcg',
+                    daily: vitaminADailyValue,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '* The % Daily Value (DV) tells you how much a nutrient in a '
+                    'serving of food contributes to a daily diet. 2,000 calories a '
+                    'day is used for general nutrition advice.',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

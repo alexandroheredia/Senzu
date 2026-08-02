@@ -1,33 +1,33 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/models/meal.dart';
-import 'package:senzu_app/models/shelf_food.dart';
-import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_details.dart';
+import 'package:senzu_app/screens/food_tracker/ui/log_food.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/services/meal_repository.dart';
-import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
-import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/design/app_colors.dart';
+import 'package:senzu_app/shared/widgets/empty_state.dart';
+import 'package:senzu_app/shared/widgets/glass_row.dart';
+import 'package:senzu_app/shared/widgets/glass_segmented.dart';
+import 'package:senzu_app/shared/widgets/gradient_button.dart';
 
+/// Custom meal builder: edit the meal's food items, then log the whole meal
+/// to a chosen day and meal in one tap.
 class MealDetails extends StatefulWidget {
-  final String? mealNameValue;
-  final String? mealIdValue;
-  final String? breakfastMealAdd;
-  final String? lunchMealAdd;
-  final String? snacksMealAdd;
-  final String? dinnerMealAdd;
-  final DateTime? selectedDateSecondStep;
+  final String mealName;
+  final String mealId;
+  final DateTime? date;
+  final MealType? initialMeal;
 
   const MealDetails({
     super.key,
-    this.mealNameValue,
-    this.mealIdValue,
-    this.breakfastMealAdd,
-    this.lunchMealAdd,
-    this.snacksMealAdd,
-    this.dinnerMealAdd,
-    this.selectedDateSecondStep,
+    required this.mealName,
+    required this.mealId,
+    this.date,
+    this.initialMeal,
   });
 
   @override
@@ -35,462 +35,238 @@ class MealDetails extends StatefulWidget {
 }
 
 class _MealDetailsState extends State<MealDetails> {
-  bool isFoodAdded = false;
-
-  bool loading = false;
-
   late final MealRepository _meals;
-  late final ShelfRepository _shelf;
+  late MealType? _meal;
+  bool _saving = false;
 
   @override
   void initState() {
     super.initState();
     _meals = context.read<MealRepository>();
-    _shelf = context.read<ShelfRepository>();
+    _meal = widget.initialMeal;
   }
 
-  String selectedMealValue() {
-    for (final meal in [
-      widget.breakfastMealAdd,
-      widget.lunchMealAdd,
-      widget.snacksMealAdd,
-      widget.dinnerMealAdd,
-    ]) {
-      if (meal != null && meal.isNotEmpty) return meal;
+  void _openLogFood() {
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (context) => LogFood(
+            date: widget.date ?? todayMidnight(),
+            mealIdValue: widget.mealId,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(MealFoodItem item) async {
+    final uid = myUID(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Remove "${item.foodName}"?'),
+        content: const Text('It will be removed from this meal.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              'Remove',
+              style: TextStyle(
+                color: context.appColors.danger,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed ?? false) {
+      await _meals.deleteFoodItem(uid, widget.mealId, item.id);
     }
-    return '';
+  }
+
+  Future<void> _logMeal() async {
+    setState(() => _saving = true);
+    final uid = myUID(context);
+    final date = startOfDay(widget.date ?? DateTime.now());
+    try {
+      await _meals.updateFoodItemsForDate(uid, widget.mealId, {
+        'mealType': mealTypeToString(_meal),
+        'weekNo': getWeekNumber(date),
+        'month': cleanMonthFormat(date.toString()),
+        'year': cleanYearFormat(date.toString()),
+        'dateAdded': date,
+      });
+      await _meals.copyMealToFoodEntries(uid, widget.mealId);
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Added ${widget.mealName} to ${_meal!.label}'),
+          ),
+        );
+      }
+    } on Object {
+      if (mounted) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not add the meal. Check your connection and try again.',
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
+
     return Scaffold(
-      backgroundColor: primaryBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: primaryBackgroundColor,
-        title: const Text(
-          'Meal Details',
-          style: titleTextStyle,
-        ),
-        centerTitle: true,
-      ),
-      body: _mealDetailsBody(),
-    );
-  }
-
-  Widget _mealDetailsBody() {
-    return Column(
-      children: <Widget>[
-        mealDetailsHeader(),
-        addFoodItemToMealButton(),
-        _mealFoodItemsList(),
-        _addMealFoodItemsButton(),
-        const SizedBox(
-          height: 20,
-        ),
-      ],
-    );
-  }
-
-  Widget mealDetailsHeader() {
-    return Column(
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 30, 0, 0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                '🍽 ',
-                style: textColor.copyWith(fontSize: 25),
-              ),
-              Text(
-                '${widget.mealNameValue}',
-                style: textColor.copyWith(fontSize: 25),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(
-          height: 20,
-          width: 10,
-        ),
-      ],
-    );
-  }
-
-  // Pops the foods in the user's food shelf so they can add it to the specified meal
-  Widget addFoodItemToMealButton() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.fromLTRB(0, 0, 10, 0),
-          child: Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            color: const Color(0xFF1e1f38),
-            child: InkWell(
-              splashColor: const Color(0xFF2b2c4a),
-              borderRadius: BorderRadius.circular(15.0),
-              onTap: _openFoodShelf,
-              child: Column(
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 5, 10, 5),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Text(
-                          'ADD TO MEAL ',
-                          style: textColor.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 22,
-                          ),
-                        ),
-                        const FaIcon(
-                          FontAwesomeIcons.plus,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                      ],
-                    ),
+      appBar: AppBar(title: Text(widget.mealName)),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: colors.textPrimary.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Adds food items in meal to the food log
-  Widget _addMealFoodItemsButton() {
-    return Builder(
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Container(
-            height: 50.0,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18.0),
-              color: primaryButtonColor,
-            ),
-            child: MaterialButton(
-              onPressed: () async {
-                final navigator = Navigator.of(context);
-                await updateFieldsOnFoodItems();
-                await documentsLoopFromFirestore();
-                if (!mounted) return;
-                navigator.pop();
-              },
-              child: const Text(
-                'ADD THIS MEAL',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20.0,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // Displays the list of food items in the meal from firestore
-  Widget _mealFoodItemsList() {
-    return Expanded(
-      child: StreamBuilder<List<MealFoodItem>>(
-        stream: _meals.foodItemsStream(myUID(context), widget.mealIdValue!),
-        builder: buildMealFoodItemsList,
-      ),
-    );
-  }
-
-  Widget buildMealFoodItemsList(
-    BuildContext context,
-    AsyncSnapshot<List<MealFoodItem>> snapshot,
-  ) {
-    if (snapshot.hasData) {
-      final items = snapshot.data!;
-      return ListView.builder(
-        physics: const BouncingScrollPhysics(),
-        // shrinkWrap: true,
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-
-          final foodName = item.foodName;
-          final calories = item.calories;
-          final portionSize = item.portionSize;
-
-          return GestureDetector(
-            key: Key(item.id),
-            onLongPress: () async {
-              try {
-                await showDialog<String>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Column(
-                      children: <Widget>[
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
-                          child: Text(
-                            'Removing from your dinner:',
-                            style: TextStyle(fontSize: 16),
-                            textAlign: TextAlign.start,
-                          ),
-                        ),
-                        Text(
-                          foodName,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontStyle: FontStyle.italic,
-                          ),
-                          textAlign: TextAlign.start,
-                        ),
-                      ],
-                    ),
-                    actions: <Widget>[
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent[400], // background
-                          foregroundColor: Colors.white, // foreground
-                        ),
-                        child: const Text('DELETE'),
-                        onPressed: () async {
-                          final navigator = Navigator.of(context);
-                          await _meals.deleteFoodItem(
-                            myUID(context),
-                            widget.mealIdValue!,
-                            item.id,
-                          );
-                          navigator.pop('ok');
-                        },
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                        ),
-                        onPressed: () => Navigator.pop(context, 'Cancel'),
-                        child: const Text(
-                          'Nope',
-                          style: TextStyle(
-                            fontSize: 15.0,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              } on Object {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Could not remove the food item. '
-                        'Please try again.',
-                      ),
-                    ),
-                  );
-                }
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.white70),
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(8.0),
+                  child: Icon(
+                    Icons.restaurant_outlined,
+                    color: colors.textPrimary,
+                    size: 24,
                   ),
                 ),
-                child: Column(
+                const SizedBox(width: 14),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ListTile(
-                      // tileColor: Color(0xFF1e1f38),
-                      title: Text(
-                        foodName,
-                        style: textColor.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      subtitle: Row(
-                        children: <Widget>[
-                          Text(
-                            '🔥 $calories kcal      🍽 ${portionSize}g',
-                            style: textColor.copyWith(fontSize: 14),
-                          ),
-                        ],
-                      ),
+                    Text(
+                      widget.mealName,
+                      style: Theme.of(context).textTheme.headlineLarge,
+                    ),
+                    Text(
+                      'Custom meal',
+                      style: Theme.of(context).textTheme.labelSmall,
                     ),
                   ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    } else if (snapshot.connectionState == ConnectionState.done &&
-        !snapshot.hasData) {
-      // Handle no data
-      return const Center(
-        child: Text('No food items in list'),
-      );
-    } else {
-      // Still loading
-      return loadingWidget;
-    }
-  }
-
-  // Opens a screen from the bottom up with the list of foods from the user's food shelf
-  Future<void> _openFoodShelf() {
-    return showModalBottomSheet<void>(
-      context: context,
-      builder: (context) {
-        return Container(
-          color: primaryBackgroundColor,
-          height: 600,
-          child: Center(
-            child: Column(
-              children: <Widget>[
-                _foodListFromFoodShelf(),
-                ElevatedButton(
-                  child: const Text('Close'),
-                  onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  // Shows list of foods in the user's food shelf
-  Widget _foodListFromFoodShelf() {
-    return Expanded(
-      child: StreamBuilder<List<ShelfFood>>(
-        stream: _shelf.shelfStream(myUID(context)),
-        builder: buildFoodShelfList,
-      ),
-    );
-  }
-
-  Widget buildFoodShelfList(
-    BuildContext context,
-    AsyncSnapshot<List<ShelfFood>> snapshot,
-  ) {
-    if (snapshot.hasData) {
-      final foods = snapshot.data!;
-      return ListView.builder(
-        physics: const BouncingScrollPhysics(),
-        // shrinkWrap: true,
-        itemCount: foods.length,
-        itemBuilder: (context, index) {
-          final food = foods[index];
-          final foodName = food.foodName;
-          final brandName = food.brandName;
-
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.white70),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(8.0),
-                ),
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    title: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        SizedBox(
-                          width: 260,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                foodName,
-                                overflow: TextOverflow.ellipsis,
-                                style: textColor.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+            child: GradientButton(
+              label: 'Add food',
+              icon: Icons.add,
+              onPressed: _openLogFood,
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<List<MealFoodItem>>(
+              stream: _meals.foodItemsStream(myUID(context), widget.mealId),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                final items = snapshot.data!;
+                if (items.isEmpty) {
+                  return const EmptyState(
+                    message: 'No foods in this meal yet. Add some.',
+                    icon: Icons.restaurant_outlined,
+                  );
+                }
+                return ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return GlassRow(
+                      key: ValueKey<String>(item.id),
+                      onLongPress: () => _confirmDelete(item),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.foodName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                 ),
-                              ),
-                              Text(
-                                brandName,
-                                style: textColor.copyWith(fontSize: 14),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(
-                          width: 40,
-                          child: RawMaterialButton(
-                            onPressed: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute<Object>(
-                                  builder: (context) => FoodDetails(
-                                    food: food,
-                                    mealIdValue: widget.mealIdValue,
-                                  ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${item.calories.toStringAsFixed(0)} kcal · '
+                                  '${item.portionSize.toStringAsFixed(0)}g',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelSmall,
                                 ),
-                              );
-                            },
-                            padding: const EdgeInsets.all(5.0),
-                            shape: const CircleBorder(),
-
-                            child: const Icon(
-                              Icons.add_circle_outline_rounded,
-                              color: Colors.white,
-                              size: 30.0,
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                          Text(
+                            '${item.calories.toStringAsFixed(0)} kcal',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
             ),
-          );
-        },
-      );
-    } else if (snapshot.connectionState == ConnectionState.done &&
-        !snapshot.hasData) {
-      // Handle no data
-      return const Center(
-        child: Text('No users found.'),
-      );
-    } else {
-      // Still loading
-      return loadingWidget;
-    }
-  }
-
-  Future<void> documentsLoopFromFirestore() {
-    return _meals.copyMealToFoodEntries(myUID(context), widget.mealIdValue!);
-  }
-
-  // This updates the fields in all documents from the foodItems collection.
-  // It's necessary so that the food items can be read by the .where() filter in lib/food_tracker/food_tracker.dart
-  Future<void> updateFieldsOnFoodItems() {
-    return _meals.updateFoodItemsForDate(myUID(context), widget.mealIdValue!, {
-      'mealType': selectedMealValue(),
-      'weekNo': getWeekNumber(widget.selectedDateSecondStep!),
-      'month': cleanMonthFormat(widget.selectedDateSecondStep.toString()),
-      'year': cleanYearFormat(widget.selectedDateSecondStep.toString()),
-      'dateAdded': widget.selectedDateSecondStep,
-    });
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('LOG TO', style: Theme.of(context).textTheme.labelSmall),
+                const SizedBox(height: 10),
+                GlassSegmentedControl<MealType>(
+                  segments: const [
+                    GlassSegment<MealType>(MealType.breakfast, 'Breakfast'),
+                    GlassSegment<MealType>(MealType.lunch, 'Lunch'),
+                    GlassSegment<MealType>(MealType.snacks, 'Snacks'),
+                    GlassSegment<MealType>(MealType.dinner, 'Dinner'),
+                  ],
+                  value: _meal,
+                  onChanged: (meal) => setState(() => _meal = meal),
+                ),
+                const SizedBox(height: 12),
+                GradientButton(
+                  label: 'Add this meal to log',
+                  icon: Icons.add,
+                  loading: _saving,
+                  onPressed: _meal == null ? null : _logMeal,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

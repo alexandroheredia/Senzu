@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
-import 'package:senzu_app/shared/theme.dart';
+import 'package:senzu_app/shared/design/app_colors.dart';
+import 'package:senzu_app/shared/widgets/glass_card.dart';
+import 'package:senzu_app/shared/widgets/gradient_button.dart';
 
 /// One label + numeric-input row of the add-food form.
 class _NutrientField extends StatelessWidget {
@@ -23,24 +25,33 @@ class _NutrientField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(4.0),
+      padding: const EdgeInsets.symmetric(vertical: 7),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Text(label, style: textColor.copyWith(fontSize: 18)),
+        children: [
+          Expanded(
+            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          ),
+          const SizedBox(width: 12),
           SizedBox(
-            width: 70,
+            width: 100,
             child: TextFormField(
-              style: textColor,
-              validator: validator,
-              decoration: textInputDecoration.copyWith(hintText: hint),
               controller: controller,
+              validator: validator,
+              textAlign: TextAlign.center,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp('[,.0-9]')),
               ],
+              decoration: InputDecoration(
+                hintText: hint,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 12,
+                ),
+              ),
             ),
           ),
         ],
@@ -185,7 +196,7 @@ class _AddFoodState extends State<AddFood> {
     super.dispose();
   }
 
-  bool loading = false;
+  bool _saving = false;
 
   /// Keys of the optional nutrient fields currently revealed.
   final Set<String> _visible = {};
@@ -195,75 +206,198 @@ class _AddFoodState extends State<AddFood> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onVerticalDragDown: (details) {
-        FocusScope.of(context).requestFocus(FocusNode());
-      },
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: primaryBackgroundColor,
-        appBar: AppBar(
-          backgroundColor: primaryBackgroundColor,
-          centerTitle: true,
-          title: const Text('Add To Your Shelf'),
-        ),
-        bottomNavigationBar: const BottomAppBar(
-          color: Color(0xFF1e1f38),
-          notchMargin: 8.0,
-          shape: CircularNotchedRectangle(),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[SizedBox(height: 40, width: 150.0)],
-          ),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        floatingActionButton: FloatingActionButton(
-          heroTag: 'add_food_button',
-          backgroundColor: primaryButtonColor,
-          onPressed: () async {
-            final navigator = Navigator.of(context);
-            final scaffoldMessenger = ScaffoldMessenger.of(context);
-            final shelf = context.read<ShelfRepository>();
-            try {
-              if (_addFoodFormKey.currentState!.validate()) {
-                setState(() => loading = true);
-                await saveFoodToShelf();
-                await shelf.addToCatalog(widget.foodIdValue!, _foodData());
-                if (!mounted) return;
-                navigator.pop();
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('Food item added successfully'),
-                  ),
-                );
-              } else {
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('Please fill the required boxes'),
-                  ),
-                );
-              }
-            } on Object {
-              if (mounted) {
-                setState(() => loading = false);
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'Could not save the food item. '
-                      'Please check your connection and try again.',
+        appBar: AppBar(title: const Text('Add to shelf')),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          child: Form(
+            key: _addFoodFormKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _section(
+                  title: 'Basics',
+                  fields: [
+                    _NutrientField(
+                      label: 'Food name',
+                      controller: foodNameController,
+                      hint: 'Name',
+                      validator: _required,
                     ),
+                    _NutrientField(
+                      label: 'Brand / category',
+                      controller: brandNameController,
+                      hint: 'Brand',
+                    ),
+                    _NutrientField(
+                      label: 'Amount per serving (g/mL)',
+                      controller: servingSizeController,
+                      hint: 'g/mL',
+                      validator: _required,
+                    ),
+                    _NutrientField(
+                      label: 'Calories (kcal)',
+                      controller: caloriesController,
+                      hint: 'kcal',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _section(
+                  title: 'Macros & more',
+                  fields: [
+                    _NutrientField(
+                      label: 'Total fat',
+                      controller: totalFatController,
+                      hint: 'g',
+                    ),
+                    _NutrientField(
+                      label: 'Saturated fat',
+                      controller: saturatedFatController,
+                      hint: 'g',
+                    ),
+                    _NutrientField(
+                      label: 'Trans fat',
+                      controller: transFatController,
+                      hint: 'g',
+                    ),
+                    _NutrientField(
+                      label: 'Cholesterol',
+                      controller: cholesterolController,
+                      hint: 'mg',
+                    ),
+                    _NutrientField(
+                      label: 'Sodium / salt',
+                      controller: sodiumController,
+                      hint: 'mg',
+                    ),
+                    _NutrientField(
+                      label: 'Total carbohydrate',
+                      controller: totalCarbohydrateController,
+                      hint: 'g',
+                    ),
+                    _NutrientField(
+                      label: 'Dietary fiber',
+                      controller: dietaryFiberController,
+                      hint: 'g',
+                    ),
+                    _NutrientField(
+                      label: 'Sugars',
+                      controller: sugarsController,
+                      hint: 'g',
+                    ),
+                    _NutrientField(
+                      label: 'Added sugars',
+                      controller: addedSugarsController,
+                      hint: 'g',
+                    ),
+                    _NutrientField(
+                      label: 'Protein',
+                      controller: proteinController,
+                      hint: 'g',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _section(
+                  title: 'Vitamins & minerals (% DV)',
+                  fields: [
+                    _NutrientField(
+                      label: 'Calcium (100% = 800mg)*',
+                      controller: calciumController,
+                      hint: '%',
+                    ),
+                    _NutrientField(
+                      label: 'Iron (100% = 9mg)*',
+                      controller: ironController,
+                      hint: '%',
+                    ),
+                    _NutrientField(
+                      label: 'Potassium (100% = 3500mg)',
+                      controller: potassiumController,
+                      hint: '%',
+                    ),
+                    _NutrientField(
+                      label: 'Vitamin A (100% = 900mcg)*',
+                      controller: vitaminAController,
+                      hint: '%',
+                    ),
+                    _NutrientField(
+                      label: 'Vitamin C (100% = 75mg)*',
+                      controller: vitaminCController,
+                      hint: '%',
+                    ),
+                    for (final nutrient in _optionalNutrients)
+                      if (_visible.contains(nutrient.key))
+                        _NutrientField(
+                          label: nutrient.label,
+                          controller: nutrient.controller,
+                          hint: '%',
+                        ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'ADDITIONAL FIELDS',
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+                const SizedBox(height: 8),
+                GlassCard(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    children: [
+                      for (final nutrient in _optionalNutrients)
+                        _OptionalField(
+                          label: nutrient.label.split(' (')[0],
+                          value: _visible.contains(nutrient.key),
+                          onChanged: (show) => setState(() {
+                            if (show) {
+                              _visible.add(nutrient.key);
+                            } else {
+                              _visible.remove(nutrient.key);
+                            }
+                          }),
+                        ),
+                    ],
                   ),
-                );
-              }
-            }
-          },
-          child: Center(
-            child: Builder(
-              builder: (context) {
-                return loading ? loadingWidget : const Icon(Icons.add);
-              },
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  '* The % Daily Value (DV) tells you how much a nutrient in a '
+                  'serving of food contributes to a daily diet. 2,000 calories a '
+                  'day is used for general nutrition advice.',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontSize: 10,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                GradientButton(
+                  label: 'Save to shelf',
+                  icon: Icons.check,
+                  loading: _saving,
+                  onPressed: _save,
+                ),
+              ],
             ),
           ),
         ),
-        body: addFoodForm(),
+      ),
+    );
+  }
+
+  Widget _section({
+    required String title,
+    required List<Widget> fields,
+  }) {
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.headlineMedium),
+          const SizedBox(height: 16),
+          ...fields,
+        ],
       ),
     );
   }
@@ -271,176 +405,38 @@ class _AddFoodState extends State<AddFood> {
   String? _required(String? value) =>
       (value == null || value.isEmpty) ? 'Required' : null;
 
-  Widget addFoodForm() {
-    return SingleChildScrollView(
-      child: Form(
-        key: _addFoodFormKey,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: <Widget>[
-              _NutrientField(
-                label: 'Food Name',
-                controller: foodNameController,
-                hint: 'Food Name',
-                validator: _required,
-              ),
-              _NutrientField(
-                label: 'Brand / Category',
-                controller: brandNameController,
-                hint: 'Brand / Category',
-              ),
-              _NutrientField(
-                label: 'Amount per serving (g/mL)',
-                controller: servingSizeController,
-                hint: 'g/mL',
-                validator: _required,
-              ),
-              _NutrientField(
-                label: 'Calories (kcal)',
-                controller: caloriesController,
-                hint: 'kcal',
-              ),
-              _NutrientField(
-                label: 'Total Fat',
-                controller: totalFatController,
-                hint: 'g',
-              ),
-              _NutrientField(
-                label: 'Saturated Fat',
-                controller: saturatedFatController,
-                hint: 'g',
-              ),
-              _NutrientField(
-                label: 'Trans Fat',
-                controller: transFatController,
-                hint: 'g',
-              ),
-              _NutrientField(
-                label: 'Cholesterol',
-                controller: cholesterolController,
-                hint: 'mg',
-              ),
-              _NutrientField(
-                label: 'Sodium/Salt',
-                controller: sodiumController,
-                hint: 'mg',
-              ),
-              _NutrientField(
-                label: 'Total Carbohydrate',
-                controller: totalCarbohydrateController,
-                hint: 'g',
-              ),
-              _NutrientField(
-                label: 'Dietary Fiber',
-                controller: dietaryFiberController,
-                hint: 'g',
-              ),
-              _NutrientField(
-                label: 'Sugars',
-                controller: sugarsController,
-                hint: 'g',
-              ),
-              _NutrientField(
-                label: 'Added sugars',
-                controller: addedSugarsController,
-                hint: 'g',
-              ),
-              _NutrientField(
-                label: 'Protein',
-                controller: proteinController,
-                hint: 'g',
-              ),
-              _NutrientField(
-                label: 'Calcium (100% = 800mg)*',
-                controller: calciumController,
-                hint: '%',
-              ),
-              _NutrientField(
-                label: 'Iron (100% = 9mg)*',
-                controller: ironController,
-                hint: '%',
-              ),
-              _NutrientField(
-                label: 'Potassium (100% = 3500mg)',
-                controller: potassiumController,
-                hint: '%',
-              ),
-              _NutrientField(
-                label: 'Vitamin A (100% = 900mcg)*',
-                controller: vitaminAController,
-                hint: '%',
-              ),
-              _NutrientField(
-                label: 'Vitamin C (100% = 75mg)*',
-                controller: vitaminCController,
-                hint: '%',
-              ),
-              for (final nutrient in _optionalNutrients)
-                if (_visible.contains(nutrient.key))
-                  _NutrientField(
-                    label: nutrient.label,
-                    controller: nutrient.controller,
-                    hint: '%',
-                  ),
-              const SizedBox(height: 10),
-              const Divider(
-                thickness: 1,
-                indent: 5,
-                endIndent: 5,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Text(
-                    'Additional fields',
-                    style: textColor.copyWith(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              for (final nutrient in _optionalNutrients)
-                Theme(
-                  data: ThemeData(unselectedWidgetColor: Colors.white),
-                  child: CheckboxListTile(
-                    title: Text(
-                      nutrient.label.split(' (')[0],
-                      style: textColor.copyWith(fontSize: 20),
-                    ),
-                    activeColor: primaryButtonColor,
-                    controlAffinity: ListTileControlAffinity.trailing,
-                    value: _visible.contains(nutrient.key),
-                    onChanged: (show) {
-                      setState(() {
-                        if (show ?? false) {
-                          _visible.add(nutrient.key);
-                        } else {
-                          _visible.remove(nutrient.key);
-                        }
-                      });
-                    },
-                  ),
-                ),
-              const SizedBox(height: 25),
-              SizedBox(
-                height: 60,
-                width: 320,
-                child: Text(
-                  '* The % Daily Value (DV) tells you how much a nutrient in a serving of food contributes to a daily diet. 2,000 calories a day is used for general nutrition advice.',
-                  style: textColor.copyWith(fontSize: 13),
-                  textAlign: TextAlign.justify,
-                ),
-              ),
-              const SizedBox(height: 25),
-            ],
+  Future<void> _save() async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (!(_addFoodFormKey.currentState?.validate() ?? false)) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Please fill the required boxes')),
+      );
+      return;
+    }
+    setState(() => _saving = true);
+    final navigator = Navigator.of(context);
+    final shelf = context.read<ShelfRepository>();
+    try {
+      await saveFoodToShelf();
+      await shelf.addToCatalog(widget.foodIdValue!, _foodData());
+      if (!mounted) return;
+      navigator.pop();
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Food added to your shelf')),
+      );
+    } on Object {
+      if (mounted) {
+        setState(() => _saving = false);
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not save the food item. '
+              'Check your connection and try again.',
+            ),
           ),
-        ),
-      ),
-    );
+        );
+      }
+    }
   }
 
   /// Parses a controller value to a double; 0 when empty/invalid.
@@ -496,8 +492,7 @@ class _AddFoodState extends State<AddFood> {
     };
   }
 
-  // Saves manual food entry to the user's shelf collection
-  // "database/users/userID/foodShelf/"
+  // Saves manual food entry to the user's shelf collection.
   Future<void> saveFoodToShelf() async {
     await context.read<ShelfRepository>().addFood(
       myUID(context),
@@ -506,11 +501,53 @@ class _AddFoodState extends State<AddFood> {
     );
   }
 
-  // Saves manual food entry to the root database/foods collection
+  // Saves manual food entry to the root database/foods collection.
   Future<void> saveToFoodDatabase(BuildContext context) async {
     await context.read<ShelfRepository>().addToCatalog(
       widget.foodIdValue!,
       _foodData(),
+    );
+  }
+}
+
+class _OptionalField extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _OptionalField({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return InkWell(
+      onTap: () => onChanged(!value),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            Checkbox(
+              value: value,
+              onChanged: (checked) => onChanged(checked ?? false),
+              activeColor: colors.energyStart,
+              checkColor: colors.bgBase,
+              side: BorderSide(color: colors.textSecondary.withValues(alpha: 0.5)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
