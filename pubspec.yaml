@@ -39,6 +39,10 @@ dependencies:
 
   #U
   url_launcher: ^6.3.2
+  mobile_scanner: ^7.4.0
+  google_generative_ai: ^0.4.7
+  image_picker: ^1.2.3
+  flutter_dotenv: ^6.0.1
 
 flutter_icons:
   image_path: "assets/app_launcher_icon/ios_app_icon/senzu_app_icon.png"
@@ -67,3 +71,4 @@ flutter:
     - assets/login_screen/
     - assets/app_launcher_icon/
     - assets/app_launcher_icon/ios_app_icon/senzu_app_icon.png
+    - .env

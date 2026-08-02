@@ -83,8 +83,7 @@ class _NavButton extends StatelessWidget {
 
     final icon = selected
         ? ShaderMask(
-            shaderCallback: (rect) =>
-                colors.energyGradient.createShader(rect),
+            shaderCallback: (rect) => colors.energyGradient.createShader(rect),
             child: Icon(item.icon, color: Colors.white, size: 24),
           )
         : Icon(item.icon, color: colors.textSecondary, size: 24);

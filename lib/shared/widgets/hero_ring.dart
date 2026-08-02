@@ -48,9 +48,7 @@ class _HeroRingState extends State<HeroRing>
   void didUpdateWidget(HeroRing oldWidget) {
     super.didUpdateWidget(oldWidget);
     final goalMet = widget.goal > 0 && widget.intake >= widget.goal;
-    if (goalMet &&
-        !_goalMetWas &&
-        !MediaQuery.of(context).disableAnimations) {
+    if (goalMet && !_goalMetWas && !MediaQuery.of(context).disableAnimations) {
       unawaited(_pulse.forward(from: 0));
     }
     _goalMetWas = goalMet;
@@ -71,8 +69,9 @@ class _HeroRingState extends State<HeroRing>
         ? 1.0
         : 1 + 0.15 * math.sin(math.pi * _pulse.value);
 
-    final fillDuration =
-        reduceMotion ? Duration.zero : const Duration(milliseconds: 900);
+    final fillDuration = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 900);
     final fillCurve = reduceMotion ? Curves.linear : Curves.easeOutCubic;
 
     return AnimatedBuilder(
@@ -164,6 +163,5 @@ class _RingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RingPainter oldDelegate) =>
-      oldDelegate.progress != progress ||
-      oldDelegate.colors != colors;
+      oldDelegate.progress != progress || oldDelegate.colors != colors;
 }

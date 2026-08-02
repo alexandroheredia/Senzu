@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:senzu_app/models/food_draft.dart';
+import 'package:senzu_app/screens/food_tracker/barcode/barcode_scanner_screen.dart';
+import 'package:senzu_app/screens/food_tracker/barcode/nutrition_label_capture_screen.dart';
+import 'package:senzu_app/services/food_catalog_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
@@ -70,7 +75,10 @@ class _OptionalNutrient {
 class AddFood extends StatefulWidget {
   final String? foodIdValue;
 
-  const AddFood({super.key, this.foodIdValue});
+  /// Pre-filled values (e.g. from a barcode lookup or AI label extraction).
+  final FoodDraft? initial;
+
+  const AddFood({super.key, this.foodIdValue, this.initial});
 
   @override
   State<AddFood> createState() => _AddFoodState();
@@ -155,6 +163,59 @@ class _AddFoodState extends State<AddFood> {
     ),
   ];
 
+  /// Barcode preserved from [AddFood.initial] so a scanned food keeps its
+  /// code when the user edits and saves it.
+  String _barcode = '';
+
+  @override
+  void initState() {
+    super.initState();
+    final draft = widget.initial;
+    if (draft != null) _fillFromDraft(draft);
+  }
+
+  /// Fills the form from a draft (barcode lookup, AI label, or manual).
+  void _fillFromDraft(FoodDraft draft) {
+    _barcode = draft.barcode;
+    foodNameController.text = draft.foodName;
+    brandNameController.text = draft.brandName;
+    servingSizeController.text = _fmt(draft.servingSize);
+    caloriesController.text = _fmt(draft.calories);
+    totalFatController.text = _fmt(draft.totalFat);
+    saturatedFatController.text = _fmt(draft.saturatedFat);
+    transFatController.text = _fmt(draft.transFat);
+    cholesterolController.text = _fmt(draft.cholesterol);
+    sodiumController.text = _fmt(draft.sodium);
+    totalCarbohydrateController.text = _fmt(draft.totalCarbohydrate);
+    dietaryFiberController.text = _fmt(draft.dietaryFiber);
+    sugarsController.text = _fmt(draft.sugars);
+    addedSugarsController.text = _fmt(draft.addedSugars);
+    proteinController.text = _fmt(draft.protein);
+    vitaminDController.text = _fmt(draft.vitaminD);
+    calciumController.text = _fmt(draft.calcium);
+    ironController.text = _fmt(draft.iron);
+    potassiumController.text = _fmt(draft.potassium);
+    vitaminAController.text = _fmt(draft.vitaminA);
+    vitaminCController.text = _fmt(draft.vitaminC);
+    vitaminB6Controller.text = _fmt(draft.vitaminB6);
+    folateController.text = _fmt(draft.folate);
+    thiaminController.text = _fmt(draft.thiamin);
+    magnesiumController.text = _fmt(draft.magnesium);
+    zincController.text = _fmt(draft.zinc);
+    phosphorusController.text = _fmt(draft.phosphorus);
+    riboflavinController.text = _fmt(draft.riboflavin);
+    niacinController.text = _fmt(draft.niacin);
+    pantothenicAcidController.text = _fmt(draft.pantothenicAcid);
+    vitaminEController.text = _fmt(draft.vitaminE);
+  }
+
+  /// Formats a nutrient amount for a text field; 0 becomes an empty input.
+  static String _fmt(double value) {
+    if (value == 0) return '';
+    final text = value.toString();
+    return text.endsWith('.0') ? text.substring(0, text.length - 2) : text;
+  }
+
   @override
   void dispose() {
     for (final c in [
@@ -201,6 +262,49 @@ class _AddFoodState extends State<AddFood> {
 
   final _addFoodFormKey = GlobalKey<FormState>();
 
+  /// Opens the barcode scanner and applies the resolved food, or opens the
+  /// manual form with just the barcode when the code is unknown.
+  Future<void> _openBarcodeScanner() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final draft = await Navigator.of(context).push<FoodDraft>(
+      MaterialPageRoute<FoodDraft>(
+        builder: (context) => const BarcodeScannerScreen(),
+      ),
+    );
+    if (draft == null || !mounted) return;
+    _fillFromDraft(draft);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          draft.foodName.isEmpty
+              ? 'Barcode ${draft.barcode} — fill in the details.'
+              : 'Loaded ${draft.foodName}. Review and save.',
+        ),
+      ),
+    );
+  }
+
+  /// Captures a nutrition label and applies the AI-extracted values.
+  Future<void> _openLabelCapture() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final draft = await Navigator.of(context).push<FoodDraft>(
+      MaterialPageRoute<FoodDraft>(
+        builder: (context) => const NutritionLabelCaptureScreen(),
+      ),
+    );
+    if (draft == null || !mounted) return;
+    _fillFromDraft(draft);
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          draft.foodName.isEmpty
+              ? 'Label read — fill in the missing details.'
+              : 'Filled in ${draft.foodName}. Review and save.',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -214,6 +318,26 @@ class _AddFoodState extends State<AddFood> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _openBarcodeScanner,
+                        icon: const Icon(Icons.qr_code_scanner),
+                        label: const Text('Scan barcode'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _openLabelCapture,
+                        icon: const Icon(Icons.auto_awesome),
+                        label: const Text('Scan label'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
                 _section(
                   title: 'Basics',
                   fields: [
@@ -414,9 +538,17 @@ class _AddFoodState extends State<AddFood> {
     setState(() => _saving = true);
     final navigator = Navigator.of(context);
     final shelf = context.repos.shelf;
+    final catalog = ProviderScope.containerOf(context, listen: false).read(
+      foodCatalogRepositoryProvider,
+    );
     try {
-      await saveFoodToShelf();
-      await shelf.addToCatalog(widget.foodIdValue!, _foodData());
+      final draft = _buildDraft();
+      await shelf.addFood(widget.foodIdValue!, draft.toShelfMap());
+      // Persist barcode foods into the shared catalog so future scans match
+      // locally before hitting the external API.
+      if (draft.barcode.isNotEmpty) {
+        await catalog.upsert(draft);
+      }
       if (!mounted) return;
       navigator.pop();
       messenger.showSnackBar(
@@ -448,61 +580,46 @@ class _AddFoodState extends State<AddFood> {
     return _parse(c) / 100 * dailyValue;
   }
 
-  /// The food document shared by the shelf and global-food collections.
-  Map<String, dynamic> _foodData() {
+  /// Builds the draft from the current form state.
+  FoodDraft _buildDraft() {
     double raw(TextEditingController c) => _parse(c);
     double pct(TextEditingController c, num daily) => _percent(c, daily);
-    return {
-      'foodId': widget.foodIdValue,
-      'foodName': foodNameController.text,
-      'brandName': brandNameController.text,
-      'servingSize': raw(servingSizeController),
-      'calories': raw(caloriesController),
-      'totalFat': raw(totalFatController),
-      'saturatedFat': raw(saturatedFatController),
-      'transFat': raw(transFatController),
-      'cholesterol': raw(cholesterolController),
-      'sodium': raw(sodiumController),
-      'totalCarbohydrate': raw(totalCarbohydrateController),
-      'dietaryFiber': raw(dietaryFiberController),
-      'sugars': raw(sugarsController),
-      'addedSugars': raw(addedSugarsController),
-      'protein': raw(proteinController),
-      'vitaminD': pct(vitaminDController, vitaminDDailyValue),
-      'calcium': pct(calciumController, calciumDailyValue),
-      'iron': pct(ironController, ironDailyValue),
-      'potassium': pct(potassiumController, potassiumDailyValue),
-      'vitaminA': pct(vitaminAController, vitaminADailyValue),
-      'vitaminC': pct(vitaminCController, vitaminCDailyValue),
-      'vitaminB6': pct(vitaminB6Controller, vitaminB6DailyValue),
-      'folate': pct(folateController, folateDailyValue),
-      'thiamin': pct(thiaminController, thiaminDailyValue),
-      'magnesium': pct(magnesiumController, magnesiumDailyValue),
-      'zinc': pct(zincController, zincDailyValue),
-      'phosphorus': pct(phosphorusController, phosphorusDailyValue),
-      'riboflavin': pct(riboflavinController, riboflavinDailyValue),
-      'niacin': pct(niacinController, niacinDailyValue),
-      'pantothenicAcid': pct(
+    return FoodDraft(
+      foodId: widget.foodIdValue ?? '',
+      barcode: _barcode,
+      foodName: foodNameController.text,
+      brandName: brandNameController.text,
+      servingSize: raw(servingSizeController),
+      calories: raw(caloriesController),
+      totalFat: raw(totalFatController),
+      saturatedFat: raw(saturatedFatController),
+      transFat: raw(transFatController),
+      cholesterol: raw(cholesterolController),
+      sodium: raw(sodiumController),
+      totalCarbohydrate: raw(totalCarbohydrateController),
+      dietaryFiber: raw(dietaryFiberController),
+      sugars: raw(sugarsController),
+      addedSugars: raw(addedSugarsController),
+      protein: raw(proteinController),
+      vitaminD: pct(vitaminDController, vitaminDDailyValue),
+      calcium: pct(calciumController, calciumDailyValue),
+      iron: pct(ironController, ironDailyValue),
+      potassium: pct(potassiumController, potassiumDailyValue),
+      vitaminA: pct(vitaminAController, vitaminADailyValue),
+      vitaminC: pct(vitaminCController, vitaminCDailyValue),
+      vitaminB6: pct(vitaminB6Controller, vitaminB6DailyValue),
+      folate: pct(folateController, folateDailyValue),
+      thiamin: pct(thiaminController, thiaminDailyValue),
+      magnesium: pct(magnesiumController, magnesiumDailyValue),
+      zinc: pct(zincController, zincDailyValue),
+      phosphorus: pct(phosphorusController, phosphorusDailyValue),
+      riboflavin: pct(riboflavinController, riboflavinDailyValue),
+      niacin: pct(niacinController, niacinDailyValue),
+      pantothenicAcid: pct(
         pantothenicAcidController,
         pantothenicAcidDailyValue,
       ),
-      'vitaminE': pct(vitaminEController, vitaminEDailyValue),
-    };
-  }
-
-  // Saves manual food entry to the user's shelf collection.
-  Future<void> saveFoodToShelf() async {
-    await context.repos.shelf.addFood(
-      widget.foodIdValue!,
-      {..._foodData(), 'timesAdded': 0},
-    );
-  }
-
-  // Saves manual food entry to the root database/foods collection.
-  Future<void> saveToFoodDatabase(BuildContext context) async {
-    await context.repos.shelf.addToCatalog(
-      widget.foodIdValue!,
-      _foodData(),
+      vitaminE: pct(vitaminEController, vitaminEDailyValue),
     );
   }
 }

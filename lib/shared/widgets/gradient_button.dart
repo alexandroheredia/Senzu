@@ -56,11 +56,12 @@ class GradientButton extends StatelessWidget {
                         ],
                         Text(
                           label,
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: colors.bgBase,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.2,
-                          ),
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(
+                                color: colors.bgBase,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.2,
+                              ),
                         ),
                       ],
                     ),

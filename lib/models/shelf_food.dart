@@ -2,6 +2,7 @@
 class ShelfFood {
   final String id;
   final String foodId;
+  final String barcode;
   final String foodName;
   final String brandName;
   final double servingSize;
@@ -37,6 +38,7 @@ class ShelfFood {
   const ShelfFood({
     required this.id,
     this.foodId = '',
+    this.barcode = '',
     this.foodName = '',
     this.brandName = '',
     this.servingSize = 0,
@@ -74,6 +76,7 @@ class ShelfFood {
     return ShelfFood(
       id: id,
       foodId: _string(map['foodId']),
+      barcode: _string(map['barcode']),
       foodName: _string(map['foodName']),
       brandName: _string(map['brandName']),
       servingSize: _double(map['servingSize']),

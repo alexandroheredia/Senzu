@@ -23,9 +23,6 @@ class ShelfRepository {
   CollectionReference<Map<String, dynamic>> get _shelf =>
       _db.collection('users').doc(uid).collection('foodShelf');
 
-  CollectionReference<Map<String, dynamic>> get _catalog =>
-      _db.collection('foods');
-
   /// Live shelf sorted by food name.
   Stream<List<ShelfFood>> get shelfStream =>
       _shelf.orderBy('foodName').snapshots().map(_toFoods);
@@ -47,11 +44,6 @@ class ShelfRepository {
   /// Increments the `timesAdded` counter of a shelf food.
   Future<void> incrementTimesAdded(String foodId) {
     return _shelf.doc(foodId).update({'timesAdded': FieldValue.increment(1)});
-  }
-
-  /// Persists a food to the global catalog (`foods` collection).
-  Future<void> addToCatalog(String foodId, Map<String, dynamic> data) {
-    return _catalog.doc(foodId).set(data);
   }
 
   List<ShelfFood> _toFoods(QuerySnapshot<Map<String, dynamic>> snapshot) {
