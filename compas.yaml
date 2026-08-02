@@ -1,0 +1,26 @@
+repo:
+  path: .
+  include:
+    - "lib/**/*.dart"
+    - "test/**/*.dart"
+  exclude:
+    - "**/*.g.dart"
+    - "build/**"
+    - ".dart_tool/**"
+
+embedder:
+  provider: fastembed
+  model: nomic-ai/nomic-embed-text-v1.5
+
+store:
+  provider: edge
+  path: .compas/edge-shard
+  vector_name: default
+
+server:
+  host: 127.0.0.1
+  port: "3001"
+
+index:
+  chunk_by: function
+  watch: true

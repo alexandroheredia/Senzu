@@ -6,6 +6,19 @@ class UserRepository {
   final String uid;
   UserRepository({required this.uid});
 
+  /// Creates the user document with default profile values if it does not
+  /// exist yet. Idempotent: safe to call on every auth change.
+  Future<void> ensureExists() async {
+    final doc = dbUsersCollection.doc(uid);
+    final snapshot = await doc.get();
+    if (snapshot.exists) return;
+    await doc.set({
+      'sex': 'male',
+      'activityLevel': 'sedentary',
+      'dailyCaloriesGoal': 2400,
+    });
+  }
+
   Future<void> updateUserData(
     String sex,
     String activityLevel,

@@ -1,9 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/screens/food_tracker/ui/log_food.dart';
+import 'package:senzu_app/services/data_providers.dart';
 import 'package:senzu_app/services/food_log_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
@@ -13,7 +14,7 @@ import 'package:senzu_app/shared/widgets/gradient_button.dart';
 
 /// Per-meal logging screen: the meal's entries for the selected day, an
 /// "Add food" action that opens the search flow, and a Done button.
-class AddToMeal extends StatefulWidget {
+class AddToMeal extends ConsumerStatefulWidget {
   final DateTime selectedDateValue;
   final MealType mealType;
 
@@ -24,16 +25,16 @@ class AddToMeal extends StatefulWidget {
   });
 
   @override
-  State<AddToMeal> createState() => _AddToMealState();
+  ConsumerState<AddToMeal> createState() => _AddToMealState();
 }
 
-class _AddToMealState extends State<AddToMeal> {
+class _AddToMealState extends ConsumerState<AddToMeal> {
   late final FoodLogRepository _foodLog;
 
   @override
   void initState() {
     super.initState();
-    _foodLog = context.read<FoodLogRepository>();
+    _foodLog = context.repos.foodLog;
   }
 
   void _openLogFood() {
@@ -50,7 +51,6 @@ class _AddToMealState extends State<AddToMeal> {
   }
 
   Future<void> _confirmDelete(FoodEntry entry) async {
-    final uid = myUID(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -77,7 +77,7 @@ class _AddToMealState extends State<AddToMeal> {
       ),
     );
     if (confirmed ?? false) {
-      await _foodLog.deleteEntry(uid, entry.id);
+      await _foodLog.deleteEntry(entry.id);
     }
   }
 
@@ -140,7 +140,10 @@ class _AddToMealState extends State<AddToMeal> {
                       widget.mealType.label,
                       style: Theme.of(context).textTheme.headlineLarge,
                     ),
-                    Text(_dateLabel, style: Theme.of(context).textTheme.labelSmall),
+                    Text(
+                      _dateLabel,
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
                   ],
                 ),
               ],
@@ -155,71 +158,73 @@ class _AddToMealState extends State<AddToMeal> {
             ),
           ),
           Expanded(
-            child: StreamBuilder<List<FoodEntry>>(
-              stream: _foodLog.mealEntries(
-                myUID(context),
-                widget.mealType,
-                widget.selectedDateValue,
-              ),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final entries = snapshot.data!;
-                if (entries.isEmpty) {
-                  return const EmptyState(
-                    message: 'No meals logged yet. Add your first one.',
-                    icon: Icons.restaurant_outlined,
-                  );
-                }
-                return ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                  itemCount: entries.length,
-                  itemBuilder: (context, index) {
-                    final entry = entries[index];
-                    return GlassRow(
-                      key: ValueKey<String>(entry.id),
-                      onLongPress: () => _confirmDelete(entry),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  entry.foodName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyLarge
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
+            child: ref
+                .watch(
+                  mealEntriesProvider((
+                    meal: widget.mealType,
+                    date: widget.selectedDateValue,
+                  )),
+                )
+                .when(
+                  data: (entries) {
+                    if (entries.isEmpty) {
+                      return const EmptyState(
+                        message: 'No meals logged yet. Add your first one.',
+                        icon: Icons.restaurant_outlined,
+                      );
+                    }
+                    return ListView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      itemCount: entries.length,
+                      itemBuilder: (context, index) {
+                        final entry = entries[index];
+                        return GlassRow(
+                          key: ValueKey<String>(entry.id),
+                          onLongPress: () => _confirmDelete(entry),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      entry.foodName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${entry.calories} kcal · '
+                                      '${entry.portionSize.toStringAsFixed(0)}g',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelSmall,
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${entry.calories} kcal · '
-                                  '${entry.portionSize.toStringAsFixed(0)}g',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.labelSmall,
-                                ),
-                              ],
-                            ),
+                              ),
+                              Text(
+                                '${entry.calories} kcal',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
                           ),
-                          Text(
-                            '${entry.calories} kcal',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (_, _) =>
+                      const Center(child: CircularProgressIndicator()),
+                ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:senzu_app/models/meal.dart';
-import 'package:senzu_app/models/shelf_food.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/screens/food_tracker/ui/add_food.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_details.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/meal_details.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
+import 'package:senzu_app/services/data_providers.dart';
 import 'package:senzu_app/services/meal_repository.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
@@ -22,14 +21,14 @@ enum _ShelfSegment { food, meals, top }
 
 /// Shelf tab: your saved foods, custom meals, and most-added foods, with a
 /// glass search field up top.
-class ShelfTab extends StatefulWidget {
+class ShelfTab extends ConsumerStatefulWidget {
   const ShelfTab({super.key});
 
   @override
-  State<ShelfTab> createState() => _ShelfTabState();
+  ConsumerState<ShelfTab> createState() => _ShelfTabState();
 }
 
-class _ShelfTabState extends State<ShelfTab> {
+class _ShelfTabState extends ConsumerState<ShelfTab> {
   _ShelfSegment _segment = _ShelfSegment.food;
   final TextEditingController _search = TextEditingController();
   String _query = '';
@@ -39,8 +38,8 @@ class _ShelfTabState extends State<ShelfTab> {
   @override
   void initState() {
     super.initState();
-    _shelf = context.read<ShelfRepository>();
-    _meals = context.read<MealRepository>();
+    _shelf = context.repos.shelf;
+    _meals = context.repos.meals;
   }
 
   @override
@@ -97,7 +96,6 @@ class _ShelfTabState extends State<ShelfTab> {
                     final name = controller.text.trim();
                     if (name.isEmpty) return;
                     await _meals.createMeal(
-                      myUID(context),
                       generateRandomId(),
                       name,
                     );
@@ -203,71 +201,68 @@ class _ShelfTabState extends State<ShelfTab> {
   }
 
   Widget _foodList() {
-    return StreamBuilder<List<ShelfFood>>(
-      stream: _shelf.shelfStream(myUID(context)),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final foods = snapshot.data!;
-        final query = _query.toLowerCase();
-        final filtered = query.isEmpty
-            ? foods
-            : foods
-                  .where(
-                    (food) =>
-                        food.foodName.toLowerCase().contains(query) ||
-                        food.brandName.toLowerCase().contains(query),
-                  )
-                  .toList();
+    return ref
+        .watch(shelfStreamProvider)
+        .when(
+          data: (foods) {
+            final query = _query.toLowerCase();
+            final filtered = query.isEmpty
+                ? foods
+                : foods
+                      .where(
+                        (food) =>
+                            food.foodName.toLowerCase().contains(query) ||
+                            food.brandName.toLowerCase().contains(query),
+                      )
+                      .toList();
 
-        if (foods.isEmpty) {
-          return const EmptyState(
-            message: 'Your shelf is empty. '
-                'Tap + to add your first food.',
-            icon: Icons.kitchen_outlined,
-          );
-        }
-        if (filtered.isEmpty) {
-          return EmptyState(
-            message: 'No foods match "$_query".',
-            icon: Icons.search_off,
-          );
-        }
+            if (foods.isEmpty) {
+              return const EmptyState(
+                message:
+                    'Your shelf is empty. '
+                    'Tap + to add your first food.',
+                icon: Icons.kitchen_outlined,
+              );
+            }
+            if (filtered.isEmpty) {
+              return EmptyState(
+                message: 'No foods match "$_query".',
+                icon: Icons.search_off,
+              );
+            }
 
-        return ListView.builder(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: filtered.length,
-          itemBuilder: (context, index) {
-            final food = filtered[index];
-            return GlassRow(
-              key: ValueKey<String>(food.id),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (context) => FoodDetails(
-                    food: food,
-                    date: todayMidnight(),
+            return ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: filtered.length,
+              itemBuilder: (context, index) {
+                final food = filtered[index];
+                return GlassRow(
+                  key: ValueKey<String>(food.id),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => FoodDetails(
+                        food: food,
+                        date: todayMidnight(),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              onLongPress: () => _confirmDelete(
-                title: 'Remove "${food.foodName}" from your shelf?',
-                onConfirm: () => _shelf.deleteFood(
-                  myUID(context),
-                  food.foodId,
-                ),
-              ),
-              child: _FoodRowContent(
-                name: food.foodName,
-                subtitle: food.brandName,
-                trailing: '${food.calories.toStringAsFixed(0)} kcal',
-              ),
+                  onLongPress: () => _confirmDelete(
+                    title: 'Remove "${food.foodName}" from your shelf?',
+                    onConfirm: () => _shelf.deleteFood(food.foodId),
+                  ),
+                  child: _FoodRowContent(
+                    name: food.foodName,
+                    subtitle: food.brandName,
+                    trailing: '${food.calories.toStringAsFixed(0)} kcal',
+                  ),
+                );
+              },
             );
           },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, _) => const Center(child: CircularProgressIndicator()),
         );
-      },
-    );
   }
 
   Widget _mealsList() {
@@ -283,93 +278,95 @@ class _ShelfTabState extends State<ShelfTab> {
           ),
         ),
         Expanded(
-          child: StreamBuilder<List<Meal>>(
-            stream: _meals.mealsStream(myUID(context)),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              final meals = snapshot.data!;
-              if (meals.isEmpty) {
-                return const EmptyState(
-                  message: 'No custom meals yet. '
-                      'Build one to log it in one tap.',
-                  icon: Icons.restaurant_outlined,
-                );
-              }
-              return ListView.builder(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemCount: meals.length,
-                itemBuilder: (context, index) {
-                  final meal = meals[index];
-                  return GlassRow(
-                    key: ValueKey<String>(meal.id),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (context) => MealDetails(
-                          mealName: meal.mealName,
-                          mealId: meal.mealId,
-                          date: todayMidnight(),
+          child: ref
+              .watch(mealsStreamProvider)
+              .when(
+                data: (meals) {
+                  if (meals.isEmpty) {
+                    return const EmptyState(
+                      message:
+                          'No custom meals yet. '
+                          'Build one to log it in one tap.',
+                      icon: Icons.restaurant_outlined,
+                    );
+                  }
+                  return ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: meals.length,
+                    itemBuilder: (context, index) {
+                      final meal = meals[index];
+                      return GlassRow(
+                        key: ValueKey<String>(meal.id),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (context) => MealDetails(
+                              mealName: meal.mealName,
+                              mealId: meal.mealId,
+                              date: todayMidnight(),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    child: _FoodRowContent(
-                      name: meal.mealName,
-                      subtitle: 'Custom meal',
-                      trailing: null,
-                    ),
+                        child: _FoodRowContent(
+                          name: meal.mealName,
+                          subtitle: 'Custom meal',
+                          trailing: null,
+                        ),
+                      );
+                    },
                   );
                 },
-              );
-            },
-          ),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, _) =>
+                    const Center(child: CircularProgressIndicator()),
+              ),
         ),
       ],
     );
   }
 
   Widget _topFoodsList() {
-    return StreamBuilder<List<ShelfFood>>(
-      stream: _shelf.topFoodsStream(myUID(context)),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final foods = snapshot.data!;
-        if (foods.isEmpty) {
-          return const EmptyState(
-            message: 'Foods you log often will show up here.',
-            icon: Icons.emoji_events_outlined,
-          );
-        }
-        return ListView.builder(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          itemCount: foods.length,
-          itemBuilder: (context, index) {
-            final food = foods[index];
-            final rank = index + 1;
-            return GlassRow(
-              key: ValueKey<String>(food.id),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (context) => FoodDetails(
-                    food: food,
-                    date: todayMidnight(),
+    return ref
+        .watch(topFoodsStreamProvider)
+        .when(
+          data: (foods) {
+            if (foods.isEmpty) {
+              return const EmptyState(
+                message: 'Foods you log often will show up here.',
+                icon: Icons.emoji_events_outlined,
+              );
+            }
+            return ListView.builder(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: foods.length,
+              itemBuilder: (context, index) {
+                final food = foods[index];
+                final rank = index + 1;
+                return GlassRow(
+                  key: ValueKey<String>(food.id),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (context) => FoodDetails(
+                        food: food,
+                        date: todayMidnight(),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              child: _FoodRowContent(
-                name: food.foodName,
-                subtitle: food.brandName,
-                trailing: rank <= 3 ? '$rank · ${food.timesAdded}x' : '${food.timesAdded}x',
-              ),
+                  child: _FoodRowContent(
+                    name: food.foodName,
+                    subtitle: food.brandName,
+                    trailing: rank <= 3
+                        ? '$rank · ${food.timesAdded}x'
+                        : '${food.timesAdded}x',
+                  ),
+                );
+              },
             );
           },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, _) => const Center(child: CircularProgressIndicator()),
         );
-      },
-    );
   }
 }
 

@@ -1,13 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/models/shelf_food.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
-import 'package:senzu_app/services/food_log_repository.dart';
-import 'package:senzu_app/services/meal_repository.dart';
-import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
@@ -55,9 +51,8 @@ class _FoodDetailsState extends State<FoodDetails> {
     _portion = widget.food.servingSize.round();
   }
 
-  double get _ratio => widget.food.servingSize == 0
-      ? 0
-      : _portion / widget.food.servingSize;
+  double get _ratio =>
+      widget.food.servingSize == 0 ? 0 : _portion / widget.food.servingSize;
 
   int _scaled(double value) => (value * _ratio).round();
 
@@ -67,21 +62,15 @@ class _FoodDetailsState extends State<FoodDetails> {
     setState(() => _saving = true);
     try {
       if (_isMealItemMode) {
-        await context.read<MealRepository>().addFoodItem(
-          myUID(context),
+        await context.repos.meals.addFoodItem(
           widget.mealIdValue!,
           _mealItemData(),
         );
       } else {
         unawaited(
-          context
-              .read<ShelfRepository>()
-              .incrementTimesAdded(myUID(context), widget.food.foodId),
+          context.repos.shelf.incrementTimesAdded(widget.food.foodId),
         );
-        await context.read<FoodLogRepository>().addEntry(
-          myUID(context),
-          _entryData(),
-        );
+        await context.repos.foodLog.addEntry(_entryData());
       }
       if (mounted) {
         Navigator.of(context).pop();
@@ -256,7 +245,10 @@ class _FoodDetailsState extends State<FoodDetails> {
                   ),
                   if (_showMealPicker) ...[
                     const SizedBox(height: 24),
-                    Text('ADD TO', style: Theme.of(context).textTheme.labelSmall),
+                    Text(
+                      'ADD TO',
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
                     const SizedBox(height: 10),
                     GlassSegmentedControl<MealType>(
                       segments: const [
@@ -274,7 +266,9 @@ class _FoodDetailsState extends State<FoodDetails> {
                     label: _isMealItemMode ? 'Add to meal' : 'Add to log',
                     icon: Icons.add,
                     loading: _saving,
-                    onPressed: (_isMealItemMode || _meal != null) ? _save : null,
+                    onPressed: (_isMealItemMode || _meal != null)
+                        ? _save
+                        : null,
                   ),
                   if (!_isMealItemMode && _meal == null) ...[
                     const SizedBox(height: 10),
@@ -295,9 +289,8 @@ class _FoodDetailsState extends State<FoodDetails> {
     );
   }
 
-  double _percent(int intake, num daily) => daily <= 0
-      ? 0.0
-      : (intake / daily).clamp(0.0, 3.0);
+  double _percent(int intake, num daily) =>
+      daily <= 0 ? 0.0 : (intake / daily).clamp(0.0, 3.0);
 }
 
 /// Glass pill quantity stepper (− 10g / + 10g).
@@ -393,7 +386,10 @@ class _MacroBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 7),
       child: Row(
         children: [
-          SizedBox(width: 64, child: Text(label, style: Theme.of(context).textTheme.bodyMedium)),
+          SizedBox(
+            width: 64,
+            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+          ),
           Expanded(
             child: Container(
               height: 8,
@@ -576,7 +572,12 @@ class _NutritionFactsState extends State<_NutritionFacts> {
                     daily: dietaryFiberDailyValue,
                     indent: true,
                   ),
-                  row('Total sugars', value: food.sugars, unit: 'g', indent: true),
+                  row(
+                    'Total sugars',
+                    value: food.sugars,
+                    unit: 'g',
+                    indent: true,
+                  ),
                   row(
                     'Added sugars',
                     value: food.addedSugars,
@@ -598,7 +599,12 @@ class _NutritionFactsState extends State<_NutritionFacts> {
                     unit: 'mg',
                     daily: calciumDailyValue,
                   ),
-                  row('Iron', value: food.iron, unit: 'mg', daily: ironDailyValue),
+                  row(
+                    'Iron',
+                    value: food.iron,
+                    unit: 'mg',
+                    daily: ironDailyValue,
+                  ),
                   row(
                     'Potassium',
                     value: food.potassium,

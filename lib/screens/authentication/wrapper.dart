@@ -1,28 +1,26 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/screens/authentication/authenticate.dart';
 import 'package:senzu_app/screens/home/home_page.dart';
-import 'package:senzu_app/services/auth_service.dart';
+import 'package:senzu_app/services/auth_controller.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 
-class Wrapper extends StatelessWidget {
+/// Top-level auth gate: splash → login screen or the signed-in shell.
+///
+/// There is exactly ONE auth subscription in the app (owned by
+/// [AuthController]); this widget only reflects its state, so `Home` can
+/// never mount before a user is actually available.
+class Wrapper extends ConsumerWidget {
   const Wrapper({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Show a branded splash while the auth session is restoring, so the login
-    // screen does not flash on every cold start for signed-in users.
-    return StreamBuilder<User?>(
-      stream: context.read<AuthenticationService>().authStateChanges,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const _Splash();
-        }
-        final user = snapshot.data;
-        return user == null ? const Authenticate() : const Home();
-      },
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(authControllerProvider);
+    return switch (state.status) {
+      AuthStatus.unknown => const _Splash(),
+      AuthStatus.signedOut => const Authenticate(),
+      AuthStatus.signedIn => const Home(),
+    };
   }
 }
 

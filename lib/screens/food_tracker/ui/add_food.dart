@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
@@ -415,7 +413,7 @@ class _AddFoodState extends State<AddFood> {
     }
     setState(() => _saving = true);
     final navigator = Navigator.of(context);
-    final shelf = context.read<ShelfRepository>();
+    final shelf = context.repos.shelf;
     try {
       await saveFoodToShelf();
       await shelf.addToCatalog(widget.foodIdValue!, _foodData());
@@ -494,8 +492,7 @@ class _AddFoodState extends State<AddFood> {
 
   // Saves manual food entry to the user's shelf collection.
   Future<void> saveFoodToShelf() async {
-    await context.read<ShelfRepository>().addFood(
-      myUID(context),
+    await context.repos.shelf.addFood(
       widget.foodIdValue!,
       {..._foodData(), 'timesAdded': 0},
     );
@@ -503,7 +500,7 @@ class _AddFoodState extends State<AddFood> {
 
   // Saves manual food entry to the root database/foods collection.
   Future<void> saveToFoodDatabase(BuildContext context) async {
-    await context.read<ShelfRepository>().addToCatalog(
+    await context.repos.shelf.addToCatalog(
       widget.foodIdValue!,
       _foodData(),
     );
@@ -543,7 +540,9 @@ class _OptionalField extends StatelessWidget {
               onChanged: (checked) => onChanged(checked ?? false),
               activeColor: colors.energyStart,
               checkColor: colors.bgBase,
-              side: BorderSide(color: colors.textSecondary.withValues(alpha: 0.5)),
+              side: BorderSide(
+                color: colors.textSecondary.withValues(alpha: 0.5),
+              ),
             ),
           ],
         ),

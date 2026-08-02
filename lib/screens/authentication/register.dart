@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:senzu_app/services/auth_service.dart';
+import 'package:senzu_app/services/auth_controller.dart';
+import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 import 'package:senzu_app/shared/widgets/glass_input.dart';
 import 'package:senzu_app/shared/widgets/gradient_button.dart';
@@ -33,7 +33,7 @@ class _RegisterState extends State<Register> {
       _loading = true;
       _error = '';
     });
-    final auth = context.read<AuthenticationService>();
+    final auth = context.authController;
     try {
       await auth.registerWithEmailAndPassword(
         _email.text.trim(),
@@ -51,7 +51,8 @@ class _RegisterState extends State<Register> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = 'There was an error creating your account. '
+          _error =
+              'There was an error creating your account. '
               'Please try again.';
         });
       }

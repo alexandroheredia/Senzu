@@ -1,15 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/models/food_entry.dart';
-import 'package:senzu_app/models/user.dart';
 import 'package:senzu_app/screens/food_tracker/add_meal_widgets/add_to_meal.dart';
 import 'package:senzu_app/screens/food_tracker/ui/log_food.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
-import 'package:senzu_app/services/food_log_repository.dart';
-import 'package:senzu_app/services/user_repository.dart';
-import 'package:senzu_app/shared/auth_scope.dart';
+import 'package:senzu_app/services/data_providers.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 import 'package:senzu_app/shared/widgets/glass_card.dart';
@@ -20,22 +17,15 @@ import 'package:senzu_app/shared/widgets/macro_ring.dart';
 /// Today tab: date navigation, the hero calorie ring, the macro-ring glass
 /// card, and the day's meals. The floating add button logs straight into the
 /// selected day.
-class DashboardTab extends StatefulWidget {
+class DashboardTab extends ConsumerStatefulWidget {
   const DashboardTab({super.key});
 
   @override
-  State<DashboardTab> createState() => _DashboardTabState();
+  ConsumerState<DashboardTab> createState() => _DashboardTabState();
 }
 
-class _DashboardTabState extends State<DashboardTab> {
+class _DashboardTabState extends ConsumerState<DashboardTab> {
   DateTime _date = todayMidnight();
-  late final FoodLogRepository _foodLog;
-
-  @override
-  void initState() {
-    super.initState();
-    _foodLog = context.read<FoodLogRepository>();
-  }
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
@@ -75,8 +65,8 @@ class _DashboardTabState extends State<DashboardTab> {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final uid = myUID(context);
-    if (uid.isEmpty) return const SizedBox.shrink();
+    final goal = ref.watch(userDataProvider).value?.dailyCaloriesGoal ?? 2400;
+    final entriesAsync = ref.watch(dayEntriesProvider(_date));
 
     return Stack(
       children: [
@@ -90,88 +80,81 @@ class _DashboardTabState extends State<DashboardTab> {
               onShift: _shiftDate,
             ),
             const SizedBox(height: 28),
-            StreamBuilder<AppUser>(
-              stream: UserRepository(uid: uid).userData,
-              builder: (context, userSnapshot) {
-                final goal = userSnapshot.data?.dailyCaloriesGoal ?? 2400;
-                return StreamBuilder<List<FoodEntry>>(
-                  stream: _foodLog.dayEntries(uid, _date),
-                  builder: (context, entrySnapshot) {
-                    if (!entrySnapshot.hasData) {
-                      return const SizedBox(
-                        height: 420,
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    final entries = entrySnapshot.data!;
-                    final summary = FoodLogSummary.fromEntries(entries);
-                    final intake = summary.totalCalories;
-                    final remaining = goal - intake > 0 ? goal - intake : 0;
+            entriesAsync.when(
+              data: (entries) {
+                final summary = FoodLogSummary.fromEntries(entries);
+                final intake = summary.totalCalories;
+                final remaining = goal - intake > 0 ? goal - intake : 0;
 
-                    return Column(
-                      children: [
-                        HeroRing(
-                          progress: goal > 0 ? intake / goal : 0,
-                          remaining: remaining,
-                          intake: intake,
-                          goal: goal,
-                        ),
-                        const SizedBox(height: 28),
-                        GlassCard(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 24,
-                            horizontal: 12,
+                return Column(
+                  children: [
+                    HeroRing(
+                      progress: goal > 0 ? intake / goal : 0,
+                      remaining: remaining,
+                      intake: intake,
+                      goal: goal,
+                    ),
+                    const SizedBox(height: 28),
+                    GlassCard(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 24,
+                        horizontal: 12,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          MacroRing(
+                            color: colors.carbs,
+                            progress:
+                                summary.totalCarbohydrate /
+                                totalCarbohydrateDailyValue,
+                            percentLabel:
+                                '${(summary.totalCarbohydrate / totalCarbohydrateDailyValue * 100).round()}%',
+                            label: 'Carbs',
+                            amount: '${summary.totalCarbohydrate}g',
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              MacroRing(
-                                color: colors.carbs,
-                                progress:
-                                    summary.totalCarbohydrate /
-                                    totalCarbohydrateDailyValue,
-                                percentLabel:
-                                    '${(summary.totalCarbohydrate / totalCarbohydrateDailyValue * 100).round()}%',
-                                label: 'Carbs',
-                                amount: '${summary.totalCarbohydrate}g',
-                              ),
-                              MacroRing(
-                                color: colors.protein,
-                                progress:
-                                    summary.protein / proteinDailyValue,
-                                percentLabel:
-                                    '${(summary.protein / proteinDailyValue * 100).round()}%',
-                                label: 'Protein',
-                                amount: '${summary.protein}g',
-                              ),
-                              MacroRing(
-                                color: colors.fat,
-                                progress: summary.totalFat / totalFatDailyValue,
-                                percentLabel:
-                                    '${(summary.totalFat / totalFatDailyValue * 100).round()}%',
-                                label: 'Fat',
-                                amount: '${summary.totalFat}g',
-                              ),
-                            ],
+                          MacroRing(
+                            color: colors.protein,
+                            progress: summary.protein / proteinDailyValue,
+                            percentLabel:
+                                '${(summary.protein / proteinDailyValue * 100).round()}%',
+                            label: 'Protein',
+                            amount: '${summary.protein}g',
                           ),
-                        ),
-                        const SizedBox(height: 32),
-                        Text(
-                          'Meals',
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 14),
-                        for (final meal in MealType.values)
-                          _MealRow(
-                            mealType: meal,
-                            calories: mealCalories(entries, meal),
-                            onTap: () => _openMeal(meal),
+                          MacroRing(
+                            color: colors.fat,
+                            progress: summary.totalFat / totalFatDailyValue,
+                            percentLabel:
+                                '${(summary.totalFat / totalFatDailyValue * 100).round()}%',
+                            label: 'Fat',
+                            amount: '${summary.totalFat}g',
                           ),
-                      ],
-                    );
-                  },
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      'Meals',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: 14),
+                    for (final meal in MealType.values)
+                      _MealRow(
+                        mealType: meal,
+                        calories: mealCalories(entries, meal),
+                        onTap: () => _openMeal(meal),
+                      ),
+                  ],
                 );
               },
+              loading: () => const SizedBox(
+                height: 420,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (_, _) => const SizedBox(
+                height: 420,
+                child: Center(child: CircularProgressIndicator()),
+              ),
             ),
           ],
         ),
@@ -186,10 +169,9 @@ class _DashboardTabState extends State<DashboardTab> {
 }
 
 /// Sum of calories for one meal type across [entries].
-int mealCalories(List<FoodEntry> entries, MealType meal) =>
-    entries
-        .where((entry) => entry.mealType == meal)
-        .fold(0, (sum, entry) => sum + entry.calories);
+int mealCalories(List<FoodEntry> entries, MealType meal) => entries
+    .where((entry) => entry.mealType == meal)
+    .fold(0, (sum, entry) => sum + entry.calories);
 
 /// Glass date-navigation pill: back arrow, tappable date label, forward arrow
 /// (disabled once we reach today).

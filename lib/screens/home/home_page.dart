@@ -26,7 +26,13 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _index, children: _tabs),
+      // Absorb the status-bar/notch inset here so every tab's content starts
+      // below it. bottom stays open so the background runs full-bleed behind
+      // the floating nav pill.
+      body: SafeArea(
+        bottom: false,
+        child: IndexedStack(index: _index, children: _tabs),
+      ),
       bottomNavigationBar: GlassNavBar(
         currentIndex: _index,
         onSelected: (index) => setState(() => _index = index),

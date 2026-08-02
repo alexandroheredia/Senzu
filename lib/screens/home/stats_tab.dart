@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
-import 'package:senzu_app/services/food_log_repository.dart';
-import 'package:senzu_app/shared/auth_scope.dart';
+import 'package:senzu_app/services/data_providers.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 import 'package:senzu_app/shared/widgets/glass_card.dart';
@@ -13,30 +12,20 @@ enum _StatRange { week, month }
 
 /// Progress tab: glass segmented control for the time range, a weekly
 /// calorie bar chart in a glass card, and per-nutrient averages.
-class StatsTab extends StatefulWidget {
+class StatsTab extends ConsumerStatefulWidget {
   const StatsTab({super.key});
 
   @override
-  State<StatsTab> createState() => _StatsTabState();
+  ConsumerState<StatsTab> createState() => _StatsTabState();
 }
 
-class _StatsTabState extends State<StatsTab> {
+class _StatsTabState extends ConsumerState<StatsTab> {
   _StatRange _range = _StatRange.week;
-  late final FoodLogRepository _foodLog;
-
-  @override
-  void initState() {
-    super.initState();
-    _foodLog = context.read<FoodLogRepository>();
-  }
 
   int get _days => _range == _StatRange.week ? 7 : 30;
 
   @override
   Widget build(BuildContext context) {
-    final uid = myUID(context);
-    if (uid.isEmpty) return const SizedBox.shrink();
-
     return ListView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
@@ -52,34 +41,35 @@ class _StatsTabState extends State<StatsTab> {
           onChanged: (value) => setState(() => _range = value),
         ),
         const SizedBox(height: 16),
-        StreamBuilder<List<FoodEntry>>(
-          stream: _foodLog.entriesSince(
-            uid,
-            daysBefore(todayMidnight(), _days),
-          ),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const SizedBox(
+        ref
+            .watch(entriesSinceProvider(daysBefore(todayMidnight(), _days)))
+            .when(
+              data: (entries) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _CalorieChartCard(entries: entries, days: _days),
+                    const SizedBox(height: 28),
+                    Text(
+                      'Nutrient averages',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: 14),
+                    GlassCard(
+                      child: _NutrientAverages(entries: entries, days: _days),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const SizedBox(
                 height: 420,
                 child: Center(child: CircularProgressIndicator()),
-              );
-            }
-            final entries = snapshot.data!;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _CalorieChartCard(entries: entries, days: _days),
-                const SizedBox(height: 28),
-                Text(
-                  'Nutrient averages',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 14),
-                GlassCard(child: _NutrientAverages(entries: entries, days: _days)),
-              ],
-            );
-          },
-        ),
+              ),
+              error: (_, _) => const SizedBox(
+                height: 420,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
       ],
     );
   }
@@ -141,7 +131,10 @@ class _CalorieChartCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Calories', style: Theme.of(context).textTheme.headlineMedium),
+              Text(
+                'Calories',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
               Text(
                 '$average kcal/day',
                 style: Theme.of(context).textTheme.labelSmall,
@@ -161,9 +154,10 @@ class _CalorieChartCard extends StatelessWidget {
                       children: [
                         Text(
                           '${bucket.$2}',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            fontSize: 9,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                fontSize: 9,
+                              ),
                         ),
                         const SizedBox(height: 4),
                         AnimatedContainer(
@@ -171,8 +165,7 @@ class _CalorieChartCard extends StatelessWidget {
                               ? Duration.zero
                               : const Duration(milliseconds: 600),
                           curve: Curves.easeOutCubic,
-                          height:
-                              140 * (bucket.$2 / maxValue).clamp(0.03, 1.0),
+                          height: 140 * (bucket.$2 / maxValue).clamp(0.03, 1.0),
                           margin: const EdgeInsets.symmetric(horizontal: 6),
                           decoration: BoxDecoration(
                             gradient: colors.energyGradient,
@@ -184,9 +177,10 @@ class _CalorieChartCard extends StatelessWidget {
                         const SizedBox(height: 8),
                         Text(
                           bucket.$1,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            fontSize: 10,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                fontSize: 10,
+                              ),
                         ),
                       ],
                     ),
@@ -274,8 +268,8 @@ class _NutrientAverages extends StatelessWidget {
 
     Color satFatStatus(num value) =>
         value == 0 || value < saturatedFatDailyValue
-            ? colors.statusGood
-            : colors.statusHigh;
+        ? colors.statusGood
+        : colors.statusHigh;
 
     Color sodiumStatus(num value) {
       if (value == 0) return colors.statusLow;

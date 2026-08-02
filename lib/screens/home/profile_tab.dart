@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:senzu_app/models/user.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/screens/nutrients_display/nutrients_display.dart';
 import 'package:senzu_app/screens/profile/goals.dart';
-import 'package:senzu_app/services/auth_service.dart';
-import 'package:senzu_app/services/user_repository.dart';
+import 'package:senzu_app/services/data_providers.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 import 'package:senzu_app/shared/widgets/glass_card.dart';
 
 /// Profile tab: greeting, glass list rows for goals / nutrient guide /
 /// feedback, and sign out.
-class ProfileTab extends StatelessWidget {
+class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
 
   Future<void> _openFeedback(BuildContext context) {
@@ -55,7 +53,7 @@ class ProfileTab extends StatelessWidget {
   }
 
   Future<void> _confirmSignOut(BuildContext context) async {
-    final auth = context.read<AuthenticationService>();
+    final auth = context.authController;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -85,115 +83,105 @@ class ProfileTab extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.appColors;
-    final uid = myUID(context);
-    if (uid.isEmpty) return const SizedBox.shrink();
+    final user = ref.watch(userDataProvider).value;
+    final username = (user?.username ?? '').trim();
+    final greeting = username.isEmpty ? 'there' : username;
+    final goalText = user == null
+        ? ''
+        : 'Daily goal · ${user.dailyCaloriesGoal} kcal';
 
-    return StreamBuilder<AppUser>(
-      stream: UserRepository(uid: uid).userData,
-      builder: (context, snapshot) {
-        final user = snapshot.data;
-        final username = (user?.username ?? '').trim();
-        final greeting = username.isEmpty ? 'there' : username;
-        final goalText = user == null
-            ? ''
-            : 'Daily goal · ${user.dailyCaloriesGoal} kcal';
-
-        return ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: colors.energyGradient,
-                    boxShadow: colors.energyGlow(),
-                  ),
-                  child: Text(
-                    username.isEmpty
-                        ? 'S'
-                        : username[0].toUpperCase(),
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: colors.bgBase,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+            Container(
+              width: 56,
+              height: 56,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: colors.energyGradient,
+                boxShadow: colors.energyGlow(),
+              ),
+              child: Text(
+                username.isEmpty ? 'S' : username[0].toUpperCase(),
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: colors.bgBase,
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Hey, $greeting!',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.headlineLarge,
-                      ),
-                      if (goalText.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          goalText,
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
-            const SizedBox(height: 32),
-            GlassCard(
-              padding: const EdgeInsets.all(8),
+            const SizedBox(width: 16),
+            Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ProfileRow(
-                    icon: Icons.track_changes,
-                    label: 'Nutrition goals',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (context) => const NutritionGoals(),
-                      ),
+                  Text(
+                    'Hey, $greeting!',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
+                  if (goalText.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      goalText,
+                      style: Theme.of(context).textTheme.labelSmall,
                     ),
-                  ),
-                  _divider(colors),
-                  _ProfileRow(
-                    icon: Icons.menu_book_outlined,
-                    label: 'Nutrient guide',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (context) => const NutrientsDisplay(),
-                      ),
-                    ),
-                  ),
-                  _divider(colors),
-                  _ProfileRow(
-                    icon: Icons.chat_bubble_outline,
-                    label: 'Feedback',
-                    onTap: () => _openFeedback(context),
-                  ),
+                  ],
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            GlassCard(
-              padding: const EdgeInsets.all(8),
-              child: _ProfileRow(
-                icon: Icons.logout,
-                label: 'Sign out',
-                danger: true,
-                onTap: () => _confirmSignOut(context),
-              ),
-            ),
           ],
-        );
-      },
+        ),
+        const SizedBox(height: 32),
+        GlassCard(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            children: [
+              _ProfileRow(
+                icon: Icons.track_changes,
+                label: 'Nutrition goals',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const NutritionGoals(),
+                  ),
+                ),
+              ),
+              _divider(colors),
+              _ProfileRow(
+                icon: Icons.menu_book_outlined,
+                label: 'Nutrient guide',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const NutrientsDisplay(),
+                  ),
+                ),
+              ),
+              _divider(colors),
+              _ProfileRow(
+                icon: Icons.chat_bubble_outline,
+                label: 'Feedback',
+                onTap: () => _openFeedback(context),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        GlassCard(
+          padding: const EdgeInsets.all(8),
+          child: _ProfileRow(
+            icon: Icons.logout,
+            label: 'Sign out',
+            danger: true,
+            onTap: () => _confirmSignOut(context),
+          ),
+        ),
+      ],
     );
   }
 

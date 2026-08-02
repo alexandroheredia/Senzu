@@ -3,59 +3,69 @@ import 'package:senzu_app/models/food_entry.dart';
 
 /// Data access for the `users/{uid}/foodEntries` collection.
 ///
+/// Bound to a single authenticated user's [uid] at construction, so it can
+/// never be called with a missing uid. Obtain instances from
+/// `UserRepositories.foodLog` (only available below the auth gate).
+///
 /// Widgets should depend on this (or a service that wraps it) instead of
 /// querying Firestore inline.
 class FoodLogRepository {
+  FoodLogRepository({required this.uid, FirebaseFirestore? db})
+    : _db = db ?? FirebaseFirestore.instance {
+    if (uid.isEmpty) {
+      throw ArgumentError.value(uid, 'uid', 'must be a non-empty string');
+    }
+  }
+
+  /// The uid of the user this repository reads and writes.
+  final String uid;
+
   final FirebaseFirestore _db;
 
-  FoodLogRepository({FirebaseFirestore? db})
-    : _db = db ?? FirebaseFirestore.instance;
-
-  CollectionReference<Map<String, dynamic>> _entries(String uid) =>
+  CollectionReference<Map<String, dynamic>> get _entries =>
       _db.collection('users').doc(uid).collection('foodEntries');
 
-  /// Live summary of all entries logged on [date] for [uid].
-  Stream<FoodLogSummary> daySummary(String uid, DateTime date) {
-    return _entries(
-      uid,
-    ).where('dateAdded', isEqualTo: date).snapshots().map(_toSummary);
+  /// Live summary of all entries logged on [date].
+  Stream<FoodLogSummary> daySummary(DateTime date) {
+    return _entries
+        .where('dateAdded', isEqualTo: date)
+        .snapshots()
+        .map(_toSummary);
   }
 
-  /// Live list of entries logged on [date] for [uid].
-  Stream<List<FoodEntry>> dayEntries(String uid, DateTime date) {
-    return _entries(
-      uid,
-    ).where('dateAdded', isEqualTo: date).snapshots().map(_toEntries);
+  /// Live list of entries logged on [date].
+  Stream<List<FoodEntry>> dayEntries(DateTime date) {
+    return _entries
+        .where('dateAdded', isEqualTo: date)
+        .snapshots()
+        .map(_toEntries);
   }
 
-  /// Live list of entries added after [since] for [uid].
-  Stream<List<FoodEntry>> entriesSince(String uid, DateTime since) {
-    return _entries(
-      uid,
-    ).where('dateAdded', isGreaterThan: since).snapshots().map(_toEntries);
+  /// Live list of entries added after [since].
+  Stream<List<FoodEntry>> entriesSince(DateTime since) {
+    return _entries
+        .where('dateAdded', isGreaterThan: since)
+        .snapshots()
+        .map(_toEntries);
   }
 
-  /// Live list of entries for one meal on [date] for [uid].
-  Stream<List<FoodEntry>> mealEntries(
-    String uid,
-    MealType meal,
-    DateTime date,
-  ) {
-    return _entries(uid)
+  /// Live list of entries for one meal on [date].
+  Stream<List<FoodEntry>> mealEntries(MealType meal, DateTime date) {
+    return _entries
         .where('mealType', isEqualTo: mealTypeToString(meal))
         .where('dateAdded', isEqualTo: date)
         .snapshots()
         .map(_toEntries);
   }
 
-  /// Persists a new food entry for [uid].
-  Future<void> addEntry(String uid, Map<String, dynamic> data) {
-    return _entries(uid).add(data);
+  /// Persists a new food entry.
+  Future<void> addEntry(Map<String, dynamic> data) {
+    return _entries.add(data);
   }
 
   /// Deletes a food entry by id.
-  Future<void> deleteEntry(String uid, String entryId) {
-    return _entries(uid).doc(entryId).delete();
+  Future<void> deleteEntry(String entryId) {
+    return _entries.doc(entryId).delete();
   }
 
   List<FoodEntry> _toEntries(QuerySnapshot<Map<String, dynamic>> snapshot) {
