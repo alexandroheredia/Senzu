@@ -92,9 +92,8 @@ struct SenzuWidgetEntryView: View {
       }
       .padding(14)
     }
-    .containerBackground(for: .widget) {
-      Color(red: 0.043, green: 0.039, blue: 0.063)
-    }
+    // The ZStack above already paints the full background, so no
+    // `.containerBackground` (iOS 17+) is needed — this stays iOS 15-safe.
   }
 }
 
