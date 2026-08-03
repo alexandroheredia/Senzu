@@ -1,4 +1,5 @@
 import 'package:senzu_app/models/food_entry.dart';
+import 'package:senzu_app/models/recipe.dart';
 import 'package:senzu_app/models/shelf_food.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 
@@ -45,6 +46,43 @@ Map<String, dynamic> buildFoodEntry({
     'vitaminD': scaled(food.vitaminD),
     'magnesium': scaled(food.magnesium),
     'zinc': scaled(food.zinc),
+    'weekNo': getWeekNumber(normalizedDate),
+    'month': cleanMonthFormat(normalizedDate.toString()),
+    'year': cleanYearFormat(normalizedDate.toString()),
+    'dateAdded': normalizedDate,
+    'breakfastCalories': meal == MealType.breakfast ? calories : 0,
+    'lunchCalories': meal == MealType.lunch ? calories : 0,
+    'snacksCalories': meal == MealType.snacks ? calories : 0,
+    'dinnerCalories': meal == MealType.dinner ? calories : 0,
+  };
+}
+
+/// Builds the Firestore map for a [FoodEntry] from logging [servings]
+/// servings of a [recipe].
+///
+/// Recipes carry macro-level nutrition only (no micronutrients), so the
+/// entry includes calories + macros and leaves the rest at their defaults.
+/// The recipe's own id is used as the entry's `foodId` and the brand is
+/// "Recipe" so logged recipe servings read clearly in the day's log.
+Map<String, dynamic> buildRecipeEntry({
+  required Recipe recipe,
+  required DateTime date,
+  required MealType? meal,
+  required int servings,
+}) {
+  final normalizedDate = startOfDay(date);
+  final calories = recipe.caloriesPerServing * servings;
+  return <String, dynamic>{
+    'foodId': recipe.id,
+    'foodName': recipe.name,
+    'brandName': 'Recipe',
+    'portionSize': servings,
+    'servingSize': 1,
+    'mealType': mealTypeToString(meal),
+    'calories': calories,
+    'protein': recipe.proteinPerServing * servings,
+    'totalFat': recipe.fatPerServing * servings,
+    'totalCarbohydrate': recipe.carbsPerServing * servings,
     'weekNo': getWeekNumber(normalizedDate),
     'month': cleanMonthFormat(normalizedDate.toString()),
     'year': cleanYearFormat(normalizedDate.toString()),

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:senzu_app/models/recipe.dart';
+import 'package:senzu_app/models/shelf_food.dart';
 import 'package:senzu_app/screens/food_tracker/ui/add_food.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_details.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/meal_details.dart';
+import 'package:senzu_app/screens/food_tracker/ui/recipe_editor_screen.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/services/data_providers.dart';
+import 'package:senzu_app/services/entry_builder.dart';
 import 'package:senzu_app/services/meal_repository.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
@@ -17,7 +21,7 @@ import 'package:senzu_app/shared/widgets/glass_row.dart';
 import 'package:senzu_app/shared/widgets/glass_segmented.dart';
 import 'package:senzu_app/shared/widgets/gradient_button.dart';
 
-enum _ShelfSegment { food, meals, top }
+enum _ShelfSegment { food, meals, recipes, top }
 
 /// Shelf tab: your saved foods, custom meals, and most-added foods, with a
 /// glass search field up top.
@@ -114,6 +118,17 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
     controller.dispose();
   }
 
+  Future<void> _openEditFood(ShelfFood food) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => AddFood(
+          foodIdValue: food.foodId,
+          editingFood: food,
+        ),
+      ),
+    );
+  }
+
   Future<void> _confirmDelete({
     required String title,
     required VoidCallback onConfirm,
@@ -173,6 +188,10 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
                 segments: const [
                   GlassSegment<_ShelfSegment>(_ShelfSegment.food, 'Food'),
                   GlassSegment<_ShelfSegment>(_ShelfSegment.meals, 'Meals'),
+                  GlassSegment<_ShelfSegment>(
+                    _ShelfSegment.recipes,
+                    'Recipes',
+                  ),
                   GlassSegment<_ShelfSegment>(_ShelfSegment.top, 'Top'),
                 ],
                 value: _segment,
@@ -196,6 +215,7 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
     return switch (_segment) {
       _ShelfSegment.food => _foodList(),
       _ShelfSegment.meals => _mealsList(),
+      _ShelfSegment.recipes => _recipesList(),
       _ShelfSegment.top => _topFoodsList(),
     };
   }
@@ -237,6 +257,7 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
               itemCount: filtered.length,
               itemBuilder: (context, index) {
                 final food = filtered[index];
+                final colors = context.appColors;
                 return GlassRow(
                   key: ValueKey<String>(food.id),
                   onTap: () => Navigator.of(context).push(
@@ -251,10 +272,26 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
                     title: 'Remove "${food.foodName}" from your shelf?',
                     onConfirm: () => _shelf.deleteFood(food.foodId),
                   ),
-                  child: _FoodRowContent(
-                    name: food.foodName,
-                    subtitle: food.brandName,
-                    trailing: '${food.calories.toStringAsFixed(0)} kcal',
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _FoodRowContent(
+                          name: food.foodName,
+                          subtitle: food.brandName,
+                          trailing: '${food.calories.toStringAsFixed(0)} kcal',
+                          showChevron: false,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          size: 18,
+                          color: colors.textSecondary,
+                        ),
+                        tooltip: 'Edit food',
+                        onPressed: () => _openEditFood(food),
+                      ),
+                    ],
                   ),
                 );
               },
@@ -325,11 +362,147 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
     );
   }
 
+  /// Opens the recipe editor for a new recipe.
+  Future<void> _openNewRecipe() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => const RecipeEditorScreen(),
+      ),
+    );
+  }
+
+  /// Opens the recipe editor for an existing recipe.
+  Future<void> _openEditRecipe(Recipe recipe) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => RecipeEditorScreen(initial: recipe),
+      ),
+    );
+  }
+
+  /// One-tap log: adds one serving of the recipe to the food log as a plain
+  /// entry (no meal context from the shelf).
+  Future<void> _quickAddRecipe(Recipe recipe) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await context.repos.foodLog.addEntry(
+        buildRecipeEntry(
+          recipe: recipe,
+          date: todayMidnight(),
+          meal: null,
+          servings: 1,
+        ),
+      );
+      messenger.showSnackBar(
+        SnackBar(content: Text('Logged 1 serving of ${recipe.name}')),
+      );
+    } on Object {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Could not log. Check your connection.'),
+        ),
+      );
+    }
+  }
+
+  /// Recipes segment: create button + list with per-serving totals and a
+  /// one-tap log action.
+  Widget _recipesList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+          child: GradientButton(
+            label: 'New recipe',
+            icon: Icons.add,
+            onPressed: _openNewRecipe,
+          ),
+        ),
+        Expanded(
+          child: ref
+              .watch(recipesStreamProvider)
+              .when(
+                data: (recipes) {
+                  if (recipes.isEmpty) {
+                    return const EmptyState(
+                      message:
+                          'No recipes yet. '
+                          'Build one from your shelf foods.',
+                      icon: Icons.menu_book_outlined,
+                    );
+                  }
+                  return ListView.builder(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: recipes.length,
+                    itemBuilder: (context, index) {
+                      final recipe = recipes[index];
+                      return GlassRow(
+                        key: ValueKey<String>(recipe.id),
+                        onTap: () => _openEditRecipe(recipe),
+                        onLongPress: () => _confirmDelete(
+                          title: 'Delete "${recipe.name}"?',
+                          onConfirm: () => context.repos.recipes.delete(
+                            recipe.id,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    recipe.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${recipe.servings} servings · '
+                                    '${recipe.caloriesPerServing} kcal/serving',
+                                    style: Theme.of(context).textTheme.labelSmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _QuickLogButton(
+                              onPressed: () => _quickAddRecipe(recipe),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.chevron_right,
+                              color: context.appColors.textSecondary,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (_, _) =>
+                    const Center(child: CircularProgressIndicator()),
+              ),
+        ),
+      ],
+    );
+  }
+
   Widget _topFoodsList() {
     return ref
         .watch(topFoodsStreamProvider)
-        .when(
-          data: (foods) {
+        .when(          data: (foods) {
             if (foods.isEmpty) {
               return const EmptyState(
                 message: 'Foods you log often will show up here.',
@@ -370,16 +543,45 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
   }
 }
 
+/// One-tap "log a serving" button on recipe rows.
+class _QuickLogButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _QuickLogButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(Icons.add_circle, size: 26, color: colors.energyEnd),
+        ),
+      ),
+    );
+  }
+}
+
 /// Shared row content for shelf lists.
 class _FoodRowContent extends StatelessWidget {
   final String name;
   final String subtitle;
   final String? trailing;
 
+  /// Whether to render the trailing chevron (hidden when an edit action
+  /// replaces it).
+  final bool showChevron;
+
   const _FoodRowContent({
     required this.name,
     required this.subtitle,
     required this.trailing,
+    this.showChevron = true,
   });
 
   @override
@@ -414,8 +616,7 @@ class _FoodRowContent extends StatelessWidget {
           const SizedBox(width: 12),
           Text(trailing!, style: Theme.of(context).textTheme.labelSmall),
         ],
-        const SizedBox(width: 4),
-        Icon(Icons.chevron_right, color: colors.textSecondary, size: 20),
+        if (showChevron) ...[const SizedBox(width: 4), Icon(Icons.chevron_right, color: colors.textSecondary, size: 20)],
       ],
     );
   }

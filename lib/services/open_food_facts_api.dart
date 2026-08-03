@@ -40,6 +40,53 @@ class OpenFoodFactsApi {
     return draft.isEmpty ? null : draft;
   }
 
+  /// Searches the Open Food Facts database by product name.
+  ///
+  /// Returns up to [limit] results as drafts, in the app's food schema.
+  /// Results without a product name are dropped (sparse or placeholder
+  /// entries). Best-effort: any failure (network, parsing) returns an empty
+  /// list so the caller can fall back to manual entry.
+  Future<List<FoodDraft>> searchByName(String query, {int limit = 20}) async {
+    if (query.trim().length < 3) return const [];
+    final uri = Uri.parse('$baseUrl/api/v2/search').replace(
+      queryParameters: {
+        'query': query.trim(),
+        'fields': _fields,
+        'page_size': '$limit',
+      },
+    );
+
+    final http.Response response;
+    try {
+      response = await _client.get(uri);
+    } on Object {
+      return const [];
+    }
+    if (response.statusCode != 200) return const [];
+
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } on Object {
+      return const [];
+    }
+    if (decoded is! Map<String, dynamic>) return const [];
+
+    final products = decoded['products'];
+    if (products is! List) return const [];
+
+    final drafts = <FoodDraft>[];
+    for (final item in products) {
+      if (item is! Map<String, dynamic>) continue;
+      final code = item['code']?.toString() ?? '';
+      final draft = openFoodFactsDraftFromJson({'product': item}, barcode: code);
+      // Keep anything with a name; nutrition may be partial, which the user
+      // can fill in when logging.
+      if (draft.foodName.trim().isNotEmpty) drafts.add(draft);
+    }
+    return drafts;
+  }
+
   void dispose() => _client.close();
 }
 

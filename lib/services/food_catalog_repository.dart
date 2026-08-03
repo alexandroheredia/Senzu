@@ -38,6 +38,29 @@ class FoodCatalogRepository {
     return ShelfFood.fromMap(doc.id, doc.data() ?? const {});
   }
 
+  /// Searches the global catalog by food-name prefix (Firestore range
+  /// query). Results are then filtered case-insensitively client-side.
+  Future<List<ShelfFood>> searchByName(String query, {int limit = 20}) async {
+    final q = query.trim();
+    if (q.length < 3) return const [];
+    final snapshot = await _catalog
+        .where('foodName', isGreaterThanOrEqualTo: q)
+        .where('foodName', isLessThan: '$q\uf8ff')
+        .limit(limit * 2)
+        .get();
+
+    final lower = q.toLowerCase();
+    final results = <ShelfFood>[];
+    for (final doc in snapshot.docs) {
+      final food = ShelfFood.fromMap(doc.id, doc.data());
+      if (food.foodName.toLowerCase().contains(lower)) {
+        results.add(food);
+        if (results.length >= limit) break;
+      }
+    }
+    return results;
+  }
+
   /// Persists (or merges) a food into the catalog. Idempotent.
   Future<void> upsert(FoodDraft draft) {
     if (draft.foodId.isEmpty) {

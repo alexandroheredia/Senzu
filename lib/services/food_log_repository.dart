@@ -63,6 +63,11 @@ class FoodLogRepository {
     return _entries.add(data);
   }
 
+  /// Updates an existing food entry (e.g. portion or meal changed).
+  Future<void> updateEntry(String entryId, Map<String, dynamic> data) {
+    return _entries.doc(entryId).update(data);
+  }
+
   /// Deletes a food entry by id.
   Future<void> deleteEntry(String entryId) {
     return _entries.doc(entryId).delete();

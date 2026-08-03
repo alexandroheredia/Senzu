@@ -17,7 +17,10 @@ class GlassInput extends StatelessWidget {
   final VoidCallback? onTap;
   final List<TextInputFormatter>? inputFormatters;
   final String? initialValue;
-  final Widget? label;
+
+  /// Optional caption shown above the field.
+  final String? label;
+
   final bool autofocus;
 
   const GlassInput({
@@ -42,15 +45,7 @@ class GlassInput extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
 
-    final decoration = InputDecoration(
-      hintText: hint,
-      prefixIcon: leadingIcon == null
-          ? null
-          : Icon(leadingIcon, color: colors.textSecondary, size: 20),
-      suffixIcon: suffix,
-    );
-
-    return TextFormField(
+    final field = TextFormField(
       controller: controller,
       initialValue: initialValue,
       autofocus: autofocus,
@@ -62,7 +57,25 @@ class GlassInput extends StatelessWidget {
       onTap: onTap,
       inputFormatters: inputFormatters,
       style: Theme.of(context).textTheme.bodyLarge,
-      decoration: decoration,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: leadingIcon == null
+            ? null
+            : Icon(leadingIcon, color: colors.textSecondary, size: 20),
+        suffixIcon: suffix,
+      ),
+    );
+
+    if (label == null) return field;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 6),
+          child: Text(label!, style: Theme.of(context).textTheme.labelSmall),
+        ),
+        field,
+      ],
     );
   }
 }

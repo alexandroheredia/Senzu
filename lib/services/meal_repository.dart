@@ -64,6 +64,15 @@ class MealRepository {
     return _foodItems(mealId).doc(itemId).delete();
   }
 
+  /// Updates a food item (e.g. portion size changed).
+  Future<void> updateFoodItem(
+    String mealId,
+    String itemId,
+    Map<String, dynamic> data,
+  ) {
+    return _foodItems(mealId).doc(itemId).update(data);
+  }
+
   /// Copies every food item of a meal into the user's food log.
   Future<void> copyMealToFoodEntries(String mealId) async {
     final snapshot = await _foodItems(mealId).get();

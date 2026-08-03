@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/services/auth_controller.dart';
 import 'package:senzu_app/services/food_log_repository.dart';
 import 'package:senzu_app/services/meal_repository.dart';
+import 'package:senzu_app/services/recipe_repository.dart';
 import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/services/user_repository.dart';
+import 'package:senzu_app/services/weight_repository.dart';
 
 /// The signed-in user's data scope, or null while unknown/signed out.
 ///
@@ -39,4 +41,6 @@ class UserRepositories {
   late final MealRepository meals = MealRepository(uid: uid, db: _db);
   late final FoodLogRepository foodLog = FoodLogRepository(uid: uid, db: _db);
   late final UserRepository user = UserRepository(uid: uid);
+  late final WeightRepository weight = WeightRepository(uid: uid, db: _db);
+  late final RecipeRepository recipes = RecipeRepository(uid: uid, db: _db);
 }

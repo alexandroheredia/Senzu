@@ -48,6 +48,11 @@ String? mealTypeToString(MealType? meal) {
 /// Typed representation of a single document in `users/{uid}/foodEntries`.
 class FoodEntry {
   final String id;
+
+  /// The shelf/catalog food this entry was logged from (empty for legacy
+  /// entries that predate the field).
+  final String foodId;
+
   final DateTime dateAdded;
   final MealType? mealType;
   final String foodName;
@@ -77,6 +82,7 @@ class FoodEntry {
   const FoodEntry({
     required this.id,
     required this.dateAdded,
+    this.foodId = '',
     this.mealType,
     this.foodName = '',
     this.brandName = '',
@@ -107,6 +113,7 @@ class FoodEntry {
     return FoodEntry(
       id: id,
       dateAdded: _date(map['dateAdded']),
+      foodId: _string(map['foodId']),
       mealType: mealTypeFromString(map['mealType']),
       foodName: _string(map['foodName']),
       brandName: _string(map['brandName']),

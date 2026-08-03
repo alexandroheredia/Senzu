@@ -17,18 +17,22 @@ import 'package:senzu_app/shared/widgets/gradient_button.dart';
 ///
 /// * [mealType] set → logs the food into that meal on [date].
 /// * [mealIdValue] set → adds the food as an item of that custom meal.
+/// * [editingEntry] set → edits that logged entry instead (portion, meal,
+///   or delete) via `FoodLogRepository.updateEntry`.
 class FoodDetails extends StatefulWidget {
-  final ShelfFood food;
+  final ShelfFood? food;
   final DateTime? date;
   final MealType? mealType;
   final String? mealIdValue;
+  final FoodEntry? editingEntry;
 
   const FoodDetails({
     super.key,
-    required this.food,
+    this.food,
     this.date,
     this.mealType,
     this.mealIdValue,
+    this.editingEntry,
   });
 
   @override
@@ -37,7 +41,13 @@ class FoodDetails extends StatefulWidget {
 
 class _FoodDetailsState extends State<FoodDetails> {
   late final bool _isMealItemMode;
-  late final bool _showMealPicker;
+  late final bool _isEditing;
+
+  /// The food the UI renders: the shelf food, or a reverse-scaled view of
+  /// the entry being edited.
+  late final ShelfFood _food;
+
+  late bool _showMealPicker;
   late MealType? _meal;
   late int _portion;
   bool _saving = false;
@@ -45,35 +55,55 @@ class _FoodDetailsState extends State<FoodDetails> {
   @override
   void initState() {
     super.initState();
+    assert(
+      widget.food != null || widget.editingEntry != null,
+      'FoodDetails needs a food or an editingEntry',
+    );
     _isMealItemMode = widget.mealIdValue != null;
-    _meal = widget.mealType;
-    _showMealPicker = !_isMealItemMode && _meal == null;
-    _portion = widget.food.servingSize.round();
+    _isEditing = widget.editingEntry != null;
+    _food = _isEditing
+        ? ShelfFood.fromFoodEntry(widget.editingEntry!)
+        : widget.food!;
+    _meal = _isEditing ? widget.editingEntry!.mealType : widget.mealType;
+    // In edit mode always show the meal picker so the entry can be moved.
+    _showMealPicker = !_isMealItemMode && (_isEditing || _meal == null);
+    _portion = _isEditing
+        ? widget.editingEntry!.portionSize.round()
+        : _food.servingSize.round();
   }
 
   double get _ratio =>
-      widget.food.servingSize == 0 ? 0 : _portion / widget.food.servingSize;
+      _food.servingSize == 0 ? 0 : _portion / _food.servingSize;
 
   int _scaled(double value) => (value * _ratio).round();
 
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      if (_isMealItemMode) {
+      if (_isEditing) {
+        await context.repos.foodLog.updateEntry(
+          widget.editingEntry!.id,
+          _entryData(),
+        );
+      } else if (_isMealItemMode) {
         await context.repos.meals.addFoodItem(
           widget.mealIdValue!,
           _mealItemData(),
         );
       } else {
-        unawaited(
-          context.repos.shelf.incrementTimesAdded(widget.food.foodId),
-        );
+        unawaited(context.repos.shelf.incrementTimesAdded(_food.foodId));
         await context.repos.foodLog.addEntry(_entryData());
       }
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Added ${widget.food.foodName}')),
+          SnackBar(
+            content: Text(
+              _isEditing
+                  ? 'Updated ${_food.foodName}'
+                  : 'Added ${_food.foodName}',
+            ),
+          ),
         );
       }
     } on Object {
@@ -90,15 +120,48 @@ class _FoodDetailsState extends State<FoodDetails> {
     }
   }
 
+  Future<void> _deleteEntry() async {
+    final foodLog = context.repos.foodLog;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Delete "${_food.foodName}"?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Keep'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(
+              'Delete',
+              style: TextStyle(
+                color: context.appColors.danger,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed ?? false) {
+      await foodLog.deleteEntry(widget.editingEntry!.id);
+      if (mounted) Navigator.of(context).pop();
+    }
+  }
+
   Map<String, dynamic> _entryData() => buildFoodEntry(
-    food: widget.food,
-    date: widget.date ?? DateTime.now(),
+    food: _food,
+    date: _isEditing
+        ? widget.editingEntry!.dateAdded
+        : (widget.date ?? DateTime.now()),
     meal: _meal,
     portion: _portion,
   );
 
   Map<String, dynamic> _mealItemData() => buildMealItem(
-    food: widget.food,
+    food: _food,
     mealId: widget.mealIdValue!,
     portion: _portion,
   );
@@ -109,7 +172,11 @@ class _FoodDetailsState extends State<FoodDetails> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isMealItemMode ? 'Add to meal' : 'Food details'),
+        title: Text(
+          _isEditing
+              ? 'Edit entry'
+              : (_isMealItemMode ? 'Add to meal' : 'Food details'),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
@@ -121,12 +188,12 @@ class _FoodDetailsState extends State<FoodDetails> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    widget.food.foodName,
+                    _food.foodName,
                     style: Theme.of(context).textTheme.headlineLarge,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    widget.food.brandName,
+                    _food.brandName,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: colors.textSecondary,
                       fontStyle: FontStyle.italic,
@@ -142,8 +209,8 @@ class _FoodDetailsState extends State<FoodDetails> {
                       ),
                       decoration: colors.glassDecoration(radius: 14),
                       child: Text(
-                        '${widget.food.calories.toStringAsFixed(0)} kcal · '
-                        'per ${widget.food.servingSize.toStringAsFixed(0)}g',
+                        '${_food.calories.toStringAsFixed(0)} kcal · '
+                        'per ${_food.servingSize.toStringAsFixed(0)}g',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
@@ -167,29 +234,23 @@ class _FoodDetailsState extends State<FoodDetails> {
                   _MacroBar(
                     label: 'Protein',
                     color: colors.protein,
-                    grams: _scaled(widget.food.protein),
-                    fraction: _percent(
-                      _scaled(widget.food.protein),
-                      proteinDailyValue,
-                    ),
+                    grams: _scaled(_food.protein),
+                    fraction: _percent(_scaled(_food.protein), proteinDailyValue),
                   ),
                   _MacroBar(
                     label: 'Carbs',
                     color: colors.carbs,
-                    grams: _scaled(widget.food.totalCarbohydrate),
+                    grams: _scaled(_food.totalCarbohydrate),
                     fraction: _percent(
-                      _scaled(widget.food.totalCarbohydrate),
+                      _scaled(_food.totalCarbohydrate),
                       totalCarbohydrateDailyValue,
                     ),
                   ),
                   _MacroBar(
                     label: 'Fat',
                     color: colors.fat,
-                    grams: _scaled(widget.food.totalFat),
-                    fraction: _percent(
-                      _scaled(widget.food.totalFat),
-                      totalFatDailyValue,
-                    ),
+                    grams: _scaled(_food.totalFat),
+                    fraction: _percent(_scaled(_food.totalFat), totalFatDailyValue),
                   ),
                   if (_showMealPicker) ...[
                     const SizedBox(height: 24),
@@ -211,14 +272,16 @@ class _FoodDetailsState extends State<FoodDetails> {
                   ],
                   const SizedBox(height: 28),
                   GradientButton(
-                    label: _isMealItemMode ? 'Add to meal' : 'Add to log',
-                    icon: Icons.add,
+                    label: _isEditing
+                        ? 'Update entry'
+                        : (_isMealItemMode ? 'Add to meal' : 'Add to log'),
+                    icon: Icons.check,
                     loading: _saving,
-                    onPressed: (_isMealItemMode || _meal != null)
+                    onPressed: (_isEditing || _isMealItemMode || _meal != null)
                         ? _save
                         : null,
                   ),
-                  if (!_isMealItemMode && _meal == null) ...[
+                  if (!_isEditing && !_isMealItemMode && _meal == null) ...[
                     const SizedBox(height: 10),
                     Text(
                       'Pick a meal to log this food.',
@@ -226,11 +289,12 @@ class _FoodDetailsState extends State<FoodDetails> {
                       style: Theme.of(context).textTheme.labelSmall,
                     ),
                   ],
+                  if (_isEditing) ...[const SizedBox(height: 8), _DeleteEntryButton(onPressed: _deleteEntry)],
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            _NutritionFacts(food: widget.food, ratio: _ratio),
+            _NutritionFacts(food: _food, ratio: _ratio),
           ],
         ),
       ),
@@ -239,6 +303,27 @@ class _FoodDetailsState extends State<FoodDetails> {
 
   double _percent(int intake, num daily) =>
       daily <= 0 ? 0.0 : (intake / daily).clamp(0.0, 3.0);
+}
+
+/// Danger-styled delete action shown in edit mode.
+class _DeleteEntryButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _DeleteEntryButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return TextButton.icon(
+      onPressed: onPressed,
+      icon: Icon(Icons.delete_outline, color: colors.danger, size: 18),
+      label: Text(
+        'Delete entry',
+        style: TextStyle(color: colors.danger),
+      ),
+    );
+  }
 }
 
 /// Glass pill quantity stepper (− 10g / + 10g).

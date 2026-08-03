@@ -174,6 +174,76 @@ class AuthController extends Notifier<AuthState> {
     await _auth.signOut();
   }
 
+  // --- Account management ----------------------------------------------------
+
+  /// The current user's email, or null while signed out.
+  String? get email => _auth.currentUser?.email;
+
+  /// Whether the current user's email has been verified.
+  bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
+
+  /// Sends a password-reset email to [email]. Works whether or not an
+  /// account exists (Firebase does not reveal account existence).
+  Future<void> sendPasswordReset(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_friendlyMessage(e.code));
+    } on Object {
+      throw const AuthException('Could not send the reset email. Try again.');
+    }
+  }
+
+  /// Changes the current user's password.
+  Future<void> changePassword(String newPassword) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const AuthException('You need to be signed in.');
+    }
+    try {
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_friendlyMessage(e.code));
+    } on Object {
+      throw const AuthException('Could not change the password. Try again.');
+    }
+  }
+
+  /// Sends an email-verification message to the current user.
+  Future<void> sendEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const AuthException('You need to be signed in.');
+    }
+    try {
+      await user.sendEmailVerification();
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_friendlyMessage(e.code));
+    } on Object {
+      throw const AuthException(
+        'Could not send the verification email. Try again.',
+      );
+    }
+  }
+
+  /// Deletes the user's account: wipes all Firestore data first (while the
+  /// uid is still available), then deletes the Firebase Auth account.
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw const AuthException('You need to be signed in.');
+    }
+    final uid = user.uid;
+    try {
+      await UserRepository(uid: uid).deleteAllUserData();
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_friendlyMessage(e.code));
+    } on Object {
+      throw const AuthException('Could not delete the account. Try again.');
+    }
+  }
+
   String _friendlyMessage(String code) {
     switch (code) {
       case 'user-not-found':
@@ -188,6 +258,8 @@ class AuthController extends Notifier<AuthState> {
         return 'Your password must be at least 6 characters.';
       case 'network-request-failed':
         return 'Network error. Check your connection and try again.';
+      case 'requires-recent-login':
+        return 'Please sign in again before making this change.';
       default:
         return 'Something went wrong. Please try again.';
     }

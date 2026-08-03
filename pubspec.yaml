@@ -44,6 +44,10 @@ dependencies:
   image_picker: ^1.2.3
   flutter_dotenv: ^6.0.1
   image_cropper: ^12.2.1
+  flutter_local_notifications: ^19.2.0
+  timezone: ^0.10.1
+  home_widget: ^0.9.3
+  health: ^13.3.1
 
 flutter_icons:
   image_path: "assets/app_launcher_icon/ios_app_icon/senzu_app_icon.png"

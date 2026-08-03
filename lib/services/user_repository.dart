@@ -38,6 +38,75 @@ class UserRepository {
     });
   }
 
+  /// Writes the profile fields collected by onboarding / edit-profile.
+  ///
+  /// Merges into the existing document so unrelated fields (e.g. the daily
+  /// goal or macro targets) are preserved.
+  Future<void> updateProfile({
+    required String username,
+    required String sex,
+    required String activityLevel,
+    required double heightCm,
+    required double weightKg,
+    required int ageYears,
+  }) async {
+    return dbUsersCollection.doc(uid).set({
+      'username': username,
+      'sex': sex,
+      'activityLevel': activityLevel,
+      'heightCm': heightCm,
+      'weightKg': weightKg,
+      'ageYears': ageYears,
+    }, SetOptions(merge: true));
+  }
+
+  /// Marks the onboarding wizard as complete.
+  Future<void> completeOnboarding() async {
+    return dbUsersCollection.doc(uid).update({
+      'onboardingComplete': true,
+    });
+  }
+
+  /// Deletes every piece of this user's data: the profile document and all
+  /// subcollections (food entries, shelf, weight entries, meals + their
+  /// nested food items). Used by account deletion.
+  Future<void> deleteAllUserData() async {
+    final docRef = dbUsersCollection.doc(uid);
+
+    for (final sub in ['foodEntries', 'foodShelf', 'weightEntries']) {
+      final snapshot = await docRef.collection(sub).get();
+      for (final doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+    }
+
+    // Meals each have a nested foodItems subcollection.
+    final mealsSnapshot = await docRef.collection('meals').get();
+    for (final meal in mealsSnapshot.docs) {
+      final items = await meal.reference.collection('foodItems').get();
+      for (final item in items.docs) {
+        await item.reference.delete();
+      }
+      await meal.reference.delete();
+    }
+
+    await docRef.delete();
+  }
+
+  /// Sets the per-day macro targets (grams). Zero values are stored as-is so
+  /// callers can intentionally clear a target.
+  Future<void> updateMacroGoals({
+    required int proteinGoalG,
+    required int carbGoalG,
+    required int fatGoalG,
+  }) async {
+    return dbUsersCollection.doc(uid).update({
+      'proteinGoalG': proteinGoalG,
+      'carbGoalG': carbGoalG,
+      'fatGoalG': fatGoalG,
+    });
+  }
+
   // users list from snapshot
   List<AppUser> _usersListFromSnapshot(QuerySnapshot snapshot) {
     return snapshot.docs.map((doc) {

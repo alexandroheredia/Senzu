@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/models/meal.dart';
+import 'package:senzu_app/models/recipe.dart';
 import 'package:senzu_app/models/shelf_food.dart';
 import 'package:senzu_app/models/user.dart';
+import 'package:senzu_app/models/weight_entry.dart';
 import 'package:senzu_app/services/user_repositories.dart';
 
 /// Firestore-backed data providers derived from the signed-in user scope.
@@ -82,3 +84,19 @@ final mealEntriesProvider =
           ? const Stream<List<FoodEntry>>.empty()
           : repos.foodLog.mealEntries(key.meal, key.date);
     });
+
+/// Live list of the user's weight entries, oldest first.
+final weightEntriesProvider = StreamProvider<List<WeightEntry>>((ref) {
+  final repos = ref.watch(userRepositoriesProvider);
+  return repos == null
+      ? const Stream<List<WeightEntry>>.empty()
+      : repos.weight.weightStream();
+});
+
+/// Live list of the user's recipes sorted by name.
+final recipesStreamProvider = StreamProvider<List<Recipe>>((ref) {
+  final repos = ref.watch(userRepositoriesProvider);
+  return repos == null
+      ? const Stream<List<Recipe>>.empty()
+      : repos.recipes.recipesStream;
+});

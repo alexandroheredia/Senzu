@@ -1,3 +1,5 @@
+import 'package:senzu_app/models/food_entry.dart';
+
 /// Typed representation of a document in `users/{uid}/foodShelf`.
 class ShelfFood {
   final String id;
@@ -108,6 +110,41 @@ class ShelfFood {
       pantothenicAcid: _double(map['pantothenicAcid']),
       vitaminE: _double(map['vitaminE']),
       timesAdded: _int(map['timesAdded']),
+    );
+  }
+
+  /// Builds a display shelf-food from a logged [FoodEntry], reverse-scaling
+  /// the entry's intake values back to per-serving amounts.
+  ///
+  /// Used by the entry-edit screen so the macros/facts panels can render the
+  /// entry's data with the same widgets as a shelf food. Only the nutrients
+  /// the entry carries are populated; the rest default to zero.
+  factory ShelfFood.fromFoodEntry(FoodEntry entry) {
+    final ratio = entry.portionSize == 0
+        ? 0
+        : entry.servingSize / entry.portionSize;
+    double perServing(double value) => value * ratio;
+    return ShelfFood(
+      id: entry.foodId.isEmpty ? entry.id : entry.foodId,
+      foodId: entry.foodId,
+      foodName: entry.foodName,
+      brandName: entry.brandName,
+      servingSize: entry.servingSize,
+      calories: perServing(entry.calories.toDouble()),
+      totalFat: perServing(entry.totalFat.toDouble()),
+      saturatedFat: perServing(entry.saturatedFat.toDouble()),
+      sodium: perServing(entry.sodium.toDouble()),
+      totalCarbohydrate: perServing(entry.totalCarbohydrate.toDouble()),
+      dietaryFiber: perServing(entry.dietaryFiber.toDouble()),
+      protein: perServing(entry.protein.toDouble()),
+      vitaminD: perServing(entry.vitaminD.toDouble()),
+      calcium: perServing(entry.calcium.toDouble()),
+      iron: perServing(entry.iron.toDouble()),
+      potassium: perServing(entry.potassium.toDouble()),
+      vitaminA: perServing(entry.vitaminA.toDouble()),
+      vitaminC: perServing(entry.vitaminC.toDouble()),
+      magnesium: perServing(entry.magnesium.toDouble()),
+      zinc: perServing(entry.zinc.toDouble()),
     );
   }
 }

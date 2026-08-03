@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/models/food_entry.dart';
+import 'package:senzu_app/models/weight_entry.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/services/data_providers.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
@@ -45,10 +46,39 @@ class _StatsTabState extends ConsumerState<StatsTab> {
             .watch(entriesSinceProvider(daysBefore(todayMidnight(), _days)))
             .when(
               data: (entries) {
+                final summary = FoodLogSummary.fromEntries(entries);
+                final daysLogged = _daysLogged(entries);
+                final average = _days == 0
+                    ? 0
+                    : (summary.totalCalories / daysLogged).round();
+                final best = _bestDay(entries);
+
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    _SummaryCard(
+                      days: _days,
+                      average: average,
+                      daysLogged: daysLogged,
+                      best: best,
+                    ),
+                    const SizedBox(height: 16),
                     _CalorieChartCard(entries: entries, days: _days),
+                    const SizedBox(height: 28),
+                    Text(
+                      'Weight',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: 14),
+                    ref.watch(weightEntriesProvider).maybeWhen(
+                      data: (weights) => _WeightChartCard(
+                        entries: weights,
+                        days: _days,
+                      ),
+                      orElse: () => const GlassCard(
+                        child: Text('Log your weight from the Today tab.'),
+                      ),
+                    ),
                     const SizedBox(height: 28),
                     Text(
                       'Nutrient averages',
@@ -71,6 +101,40 @@ class _StatsTabState extends ConsumerState<StatsTab> {
               ),
             ),
       ],
+    );
+  }
+
+  /// Number of days in the range with at least one logged entry.
+  int _daysLogged(List<FoodEntry> entries) {
+    final days = entries.map((e) => startOfDay(e.dateAdded)).toSet();
+    return days.length;
+  }
+
+  /// The highest-calorie day in the range, as a label + value, or null when
+  /// there are no entries.
+  ({String label, int calories})? _bestDay(List<FoodEntry> entries) {
+    if (entries.isEmpty) return null;
+    final perDay = <DateTime, int>{};
+    for (final entry in entries) {
+      final day = startOfDay(entry.dateAdded);
+      perDay[day] = (perDay[day] ?? 0) + entry.calories;
+    }
+    final best = perDay.entries.reduce(
+      (a, b) => a.value >= b.value ? a : b,
+    );
+    final day = best.key;
+    const weekdays = <String>[
+      'Mon',
+      'Tue',
+      'Wed',
+      'Thu',
+      'Fri',
+      'Sat',
+      'Sun',
+    ];
+    return (
+      label: weekdays[day.weekday - 1],
+      calories: best.value,
     );
   }
 }
@@ -352,4 +416,236 @@ class _NutrientAverages extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Weekly/monthly digest card: average calories, days logged, best day.
+class _SummaryCard extends StatelessWidget {
+  final int days;
+  final int average;
+  final int daysLogged;
+  final ({String label, int calories})? best;
+
+  const _SummaryCard({
+    required this.days,
+    required this.average,
+    required this.daysLogged,
+    required this.best,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${days == 7 ? 'Week' : 'Month'} in review',
+            style: Theme.of(context).textTheme.headlineMedium,
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryStat(
+                  label: 'Avg calories',
+                  value: '$average',
+                  unit: 'kcal',
+                ),
+              ),
+              _vDivider(colors),
+              Expanded(
+                child: _SummaryStat(
+                  label: 'Days logged',
+                  value: '$daysLogged',
+                  unit: 'of $days',
+                ),
+              ),
+              _vDivider(colors),
+              Expanded(
+                child: _SummaryStat(
+                  label: 'Best day',
+                  value: best == null ? '—' : best!.label,
+                  unit: best == null ? '' : '${best!.calories} kcal',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _vDivider(AppColors colors) => Container(
+    width: 1,
+    height: 40,
+    color: colors.glassBorder,
+  );
+}
+
+class _SummaryStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final String unit;
+
+  const _SummaryStat({
+    required this.label,
+    required this.value,
+    required this.unit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return Column(
+      children: [
+        Text(
+          value,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            color: colors.energyEnd,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          unit,
+          style: Theme.of(context).textTheme.labelSmall,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            fontSize: 10,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Glass card with a weight line chart over the range.
+class _WeightChartCard extends StatelessWidget {
+  final List<WeightEntry> entries;
+  final int days;
+
+  const _WeightChartCard({required this.entries, required this.days});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    final cutoff = todayMidnight().subtract(Duration(days: days));
+    final recent = entries
+        .where((entry) => !entry.date.isBefore(cutoff))
+        .toList();
+
+    if (recent.isEmpty) {
+      return const GlassCard(
+        child: Text('No weight logged in this period yet.'),
+      );
+    }
+
+    final min = recent
+        .map((e) => e.weightKg)
+        .reduce((a, b) => a < b ? a : b);
+    final max = recent
+        .map((e) => e.weightKg)
+        .reduce((a, b) => a > b ? a : b);
+    final span = (max - min).abs() < 0.5 ? 1.0 : (max - min);
+    final latest = recent.last;
+
+    return GlassCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Weight',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              Text(
+                '${latest.weightKg.toStringAsFixed(1)} kg',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 120,
+            child: CustomPaint(
+              size: const Size(double.infinity, 120),
+              painter: _WeightLinePainter(
+                entries: recent,
+                min: min,
+                span: span,
+                color: colors.energyEnd,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Paints the weight trend line and point dots.
+class _WeightLinePainter extends CustomPainter {
+  final List<WeightEntry> entries;
+  final double min;
+  final double span;
+  final Color color;
+
+  _WeightLinePainter({
+    required this.entries,
+    required this.min,
+    required this.span,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (entries.isEmpty) return;
+    final dx = entries.length <= 1
+        ? 0.0
+        : size.width / (entries.length - 1);
+
+    Offset point(WeightEntry entry, int index) {
+      final y = size.height -
+          (entry.weightKg - min) / span * (size.height - 16) -
+          8;
+      return Offset(index * dx, y);
+    }
+
+    final path = Path();
+    for (var i = 0; i < entries.length; i++) {
+      final p = point(entries[i], i);
+      if (i == 0) {
+        path.moveTo(p.dx, p.dy);
+      } else {
+        path.lineTo(p.dx, p.dy);
+      }
+    }
+
+    final line = Paint()
+      ..color = color
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(path, line);
+
+    final dot = Paint()..color = color;
+    for (var i = 0; i < entries.length; i++) {
+      canvas.drawCircle(point(entries[i], i), 3, dot);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_WeightLinePainter oldDelegate) =>
+      oldDelegate.entries != entries ||
+      oldDelegate.min != min ||
+      oldDelegate.span != span ||
+      oldDelegate.color != color;
 }

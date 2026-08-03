@@ -36,6 +36,12 @@ class ShelfRepository {
     return _shelf.doc(foodId).set(data);
   }
 
+  /// Updates an existing shelf food. Missing fields (e.g. `timesAdded`) are
+  /// preserved because this uses `update()`.
+  Future<void> updateFood(String foodId, Map<String, dynamic> data) {
+    return _shelf.doc(foodId).update(data);
+  }
+
   /// Removes a food from the user's shelf.
   Future<void> deleteFood(String foodId) {
     return _shelf.doc(foodId).delete();

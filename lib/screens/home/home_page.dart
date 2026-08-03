@@ -1,19 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/screens/home/dashboard_tab.dart';
 import 'package:senzu_app/screens/home/profile_tab.dart';
 import 'package:senzu_app/screens/home/shelf_tab.dart';
 import 'package:senzu_app/screens/home/stats_tab.dart';
+import 'package:senzu_app/screens/onboarding/onboarding_screen.dart';
+import 'package:senzu_app/services/data_providers.dart';
 import 'package:senzu_app/shared/widgets/glass_nav_bar.dart';
 
 /// Post-auth shell: four tabs under a floating glass pill nav.
-class Home extends StatefulWidget {
+///
+/// Shows the first-run onboarding wizard until the user has completed it.
+class Home extends ConsumerWidget {
   const Home({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userAsync = ref.watch(userDataProvider);
+    return userAsync.when(
+      data: (user) =>
+          user.onboardingComplete ? const _HomeShell() : const OnboardingScreen(),
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      // If the profile can't load, still show the app rather than locking
+      // the user out; onboarding runs again when the doc is reachable.
+      error: (_, _) => const _HomeShell(),
+    );
+  }
 }
 
-class _HomeState extends State<Home> {
+class _HomeShell extends StatefulWidget {
+  const _HomeShell();
+
+  @override
+  State<_HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends State<_HomeShell> {
   int _index = 0;
 
   static const List<Widget> _tabs = <Widget>[

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -10,6 +11,12 @@ Future<void> main() async {
   // Load .env before anything reads a config value (e.g. GEMINI_API_KEY).
   await dotenv.load();
   await Firebase.initializeApp();
+  // Explicit offline support: Firestore caches reads locally so the app's
+  // streams keep working (with cached data) when the connection drops.
+  // The barcode/AI flows still need connectivity — call this out in docs.
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+  );
   runApp(const ProviderScope(child: MyApp()));
 }
 

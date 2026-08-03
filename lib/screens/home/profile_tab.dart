@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/screens/nutrients_display/nutrients_display.dart';
+import 'package:senzu_app/screens/profile/account_screen.dart';
+import 'package:senzu_app/screens/profile/edit_profile_screen.dart';
 import 'package:senzu_app/screens/profile/goals.dart';
+import 'package:senzu_app/screens/profile/reminders_screen.dart';
 import 'package:senzu_app/services/data_providers.dart';
+import 'package:senzu_app/services/streak_calculator.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 import 'package:senzu_app/shared/widgets/glass_card.dart';
@@ -92,6 +97,19 @@ class ProfileTab extends ConsumerWidget {
         ? ''
         : 'Daily goal · ${user.dailyCaloriesGoal} kcal';
 
+    // Streak from the last 120 days of food entries.
+    final entriesAsync = ref.watch(
+      entriesSinceProvider(
+        daysBefore(todayMidnight(), 120),
+      ),
+    );
+    final streak = entriesAsync.maybeWhen(
+      data: (entries) => currentStreak(
+        entries.map((entry) => entry.dateAdded).toSet(),
+      ),
+      orElse: () => 0,
+    );
+
     return ListView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
@@ -136,6 +154,10 @@ class ProfileTab extends ConsumerWidget {
                 ],
               ),
             ),
+            if (streak > 0) ...[
+              const SizedBox(width: 8),
+              _StreakBadge(streak: streak),
+            ],
           ],
         ),
         const SizedBox(height: 32),
@@ -143,6 +165,16 @@ class ProfileTab extends ConsumerWidget {
           padding: const EdgeInsets.all(8),
           child: Column(
             children: [
+              _ProfileRow(
+                icon: Icons.person_outline,
+                label: 'Edit profile',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const EditProfileScreen(),
+                  ),
+                ),
+              ),
+              _divider(colors),
               _ProfileRow(
                 icon: Icons.track_changes,
                 label: 'Nutrition goals',
@@ -164,9 +196,29 @@ class ProfileTab extends ConsumerWidget {
               ),
               _divider(colors),
               _ProfileRow(
+                icon: Icons.notifications_outlined,
+                label: 'Reminders',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const RemindersScreen(),
+                  ),
+                ),
+              ),
+              _divider(colors),
+              _ProfileRow(
                 icon: Icons.chat_bubble_outline,
                 label: 'Feedback',
                 onTap: () => _openFeedback(context),
+              ),
+              _divider(colors),
+              _ProfileRow(
+                icon: Icons.settings_outlined,
+                label: 'Account',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (context) => const AccountScreen(),
+                  ),
+                ),
               ),
             ],
           ),
@@ -190,6 +242,40 @@ class ProfileTab extends ConsumerWidget {
     indent: 64,
     color: colors.glassBorder,
   );
+}
+
+/// Flame badge showing the current logging streak.
+class _StreakBadge extends StatelessWidget {
+  final int streak;
+
+  const _StreakBadge({required this.streak});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.energyStart.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.local_fire_department, size: 16, color: colors.energyStart),
+          const SizedBox(width: 4),
+          Text(
+            '$streak',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: colors.energyStart,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ProfileRow extends StatelessWidget {

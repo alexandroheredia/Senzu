@@ -11,6 +11,8 @@ import 'package:senzu_app/screens/food_tracker/ui/add_food.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_details.dart';
 import 'package:senzu_app/services/data_providers.dart';
 import 'package:senzu_app/services/entry_builder.dart';
+import 'package:senzu_app/services/food_catalog_repository.dart';
+import 'package:senzu_app/services/open_food_facts_api.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 import 'package:senzu_app/shared/random_id.dart';
@@ -43,8 +45,16 @@ class _LogFoodState extends ConsumerState<LogFood> {
   final TextEditingController _search = TextEditingController();
   String _query = '';
 
+  /// Debounce timer for the external (catalog + Open Food Facts) search.
+  Timer? _debounce;
+
+  /// Foods found in the global catalog / Open Food Facts for the query.
+  List<ShelfFood> _externalResults = const [];
+  bool _searchingExternal = false;
+
   @override
   void dispose() {
+    _debounce?.cancel();
     _search.dispose();
     super.dispose();
   }
@@ -98,6 +108,52 @@ class _LogFoodState extends ConsumerState<LogFood> {
     );
   }
 
+  /// Debounced search entry: fires the external lookup 350ms after the user
+  /// stops typing, when the query is at least 3 characters.
+  void _onQueryChanged(String value) {
+    setState(() => _query = value.trim());
+    _debounce?.cancel();
+    if (_query.length < 3) {
+      setState(() => _externalResults = const []);
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 350), _searchExternal);
+  }
+
+  /// Searches the global catalog and Open Food Facts in parallel, then
+  /// merges and de-duplicates the results.
+  Future<void> _searchExternal() async {
+    setState(() => _searchingExternal = true);
+    try {
+      final catalog = ref.read(foodCatalogRepositoryProvider);
+      final api = ref.read(openFoodFactsApiProvider);
+      final catalogResults = await catalog.searchByName(_query);
+      final apiResults = await api.searchByName(_query);
+      if (!mounted) return;
+
+      final merged = <ShelfFood>[];
+      final seen = <String>{};
+      void add(ShelfFood food) {
+        if (seen.add(food.foodName.toLowerCase())) merged.add(food);
+      }
+
+      catalogResults.forEach(add);
+      // Open Food Facts results are drafts; give them an id so they can be
+      // logged like any shelf food.
+      for (final draft in apiResults) {
+        final resolved = draft.foodId.isEmpty
+            ? draft.withFoodId(generateRandomId())
+            : draft;
+        add(ShelfFood.fromMap(resolved.foodId, resolved.toShelfMap()));
+      }
+      setState(() => _externalResults = merged);
+    } on Object {
+      if (mounted) setState(() => _externalResults = const []);
+    } finally {
+      if (mounted) setState(() => _searchingExternal = false);
+    }
+  }
+
   /// One-tap log: adds the food at its serving size to the current meal
   /// (or to the custom meal), skipping the detail screen.
   Future<void> _quickAdd(ShelfFood food) async {
@@ -114,7 +170,13 @@ class _LogFoodState extends ConsumerState<LogFood> {
           ),
         );
       } else if (widget.mealType != null) {
-        unawaited(repos.shelf.incrementTimesAdded(food.foodId));
+        // Only bump times-added when the food actually lives on the shelf;
+        // external search results won't have a doc there yet.
+        try {
+          unawaited(repos.shelf.incrementTimesAdded(food.foodId));
+        } on Object {
+          // Not on the shelf — ignore.
+        }
         await repos.foodLog.addEntry(
           buildFoodEntry(
             food: food,
@@ -158,9 +220,14 @@ class _LogFoodState extends ConsumerState<LogFood> {
               controller: _search,
               hint: 'Search your foods',
               leadingIcon: Icons.search,
-              onChanged: (value) => setState(() => _query = value.trim()),
+              onChanged: _onQueryChanged,
             ),
           ),
+          if (_searchingExternal)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 2, 20, 0),
+              child: LinearProgressIndicator(minHeight: 2),
+            ),
           if (widget.mealType != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
@@ -182,16 +249,6 @@ class _LogFoodState extends ConsumerState<LogFood> {
                 .watch(shelfStreamProvider)
                 .when(
                   data: (foods) {
-                    if (foods.isEmpty) {
-                      return EmptyState(
-                        message:
-                            'Your shelf is empty. '
-                            'Add a food first, then log it.',
-                        actionLabel: 'Scan a barcode',
-                        onAction: _openBarcodeScanner,
-                      );
-                    }
-
                     final query = _query.toLowerCase();
                     final filtered = query.isEmpty
                         ? foods
@@ -207,72 +264,115 @@ class _LogFoodState extends ConsumerState<LogFood> {
                               )
                               .toList();
 
-                    if (filtered.isEmpty) {
+                    // External results are hidden when they duplicate foods
+                    // already on the user's shelf.
+                    final shelfNames = foods
+                        .map((food) => food.foodName.toLowerCase())
+                        .toSet();
+                    final external = _externalResults
+                        .where(
+                          (food) =>
+                              !shelfNames.contains(food.foodName.toLowerCase()),
+                        )
+                        .toList();
+
+                    final showLocal = filtered.isNotEmpty;
+                    final showExternal = external.isNotEmpty;
+
+                    if (foods.isEmpty && !showExternal) {
                       return EmptyState(
-                        message: 'No foods match "$_query".',
+                        message:
+                            'Your shelf is empty. '
+                            'Search above to find foods, or add one.',
+                        actionLabel: 'Scan a barcode',
+                        onAction: _openBarcodeScanner,
+                      );
+                    }
+                    if (!showLocal && !showExternal) {
+                      return EmptyState(
+                        message: _query.isEmpty
+                            ? 'Nothing here yet.'
+                            : 'No foods match "$_query".',
                         icon: Icons.search_off,
                       );
                     }
 
-                    return ListView.builder(
+                    return ListView(
                       physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        final food = filtered[index];
-                        return GlassRow(
-                          key: ValueKey<String>(food.id),
-                          onTap: () => _openFood(food),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      food.foodName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                      children: [
+                        if (showExternal) ...[
+                          const _SectionLabel('From food database'),
+                          for (final food in external)
+                            _ExternalRow(
+                              key: ValueKey<String>('${food.foodId}:${food.foodName}'),
+                              food: food,
+                              showQuickAdd: _hasMealContext,
+                              onTap: () => _openFood(food),
+                              onQuickAdd: () => _quickAdd(food),
+                            ),
+                          const SizedBox(height: 8),
+                        ],
+                        if (showLocal) ...[
+                          if (showExternal) const _SectionLabel('Your foods'),
+                          for (final food in filtered)
+                            GlassRow(
+                              key: ValueKey<String>(food.id),
+                              onTap: () => _openFood(food),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          food.foodName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyLarge
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          food.brandName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.labelSmall,
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      food.brandName,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.labelSmall,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    '${food.calories.toStringAsFixed(0)} kcal',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.labelSmall,
+                                  ),
+                                  if (_hasMealContext) ...[
+                                    const SizedBox(width: 4),
+                                    _QuickAddButton(
+                                      onPressed: () => _quickAdd(food),
                                     ),
-                                  ],
-                                ),
+                                  ] else
+                                    const SizedBox(width: 4),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    color: colors.textSecondary,
+                                    size: 20,
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 12),
-                              Text(
-                                '${food.calories.toStringAsFixed(0)} kcal',
-                                style: Theme.of(context).textTheme.labelSmall,
-                              ),
-                              if (_hasMealContext) ...[
-                                const SizedBox(width: 4),
-                                _QuickAddButton(
-                                  onPressed: () => _quickAdd(food),
-                                ),
-                              ] else
-                                const SizedBox(width: 4),
-                              Icon(
-                                Icons.chevron_right,
-                                color: colors.textSecondary,
-                                size: 20,
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                            ),
+                        ],
+                      ],
                     );
                   },
                   loading: () =>
@@ -369,6 +469,99 @@ class _QuickAddButton extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           child: Icon(Icons.add_circle, size: 26, color: colors.energyEnd),
         ),
+      ),
+    );
+  }
+}
+
+/// Small uppercase section header inside the search results list.
+class _SectionLabel extends StatelessWidget {
+  final String text;
+
+  const _SectionLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+      child: Text(text, style: Theme.of(context).textTheme.labelSmall),
+    );
+  }
+}
+
+/// A search result from the global catalog or Open Food Facts.
+class _ExternalRow extends StatelessWidget {
+  final ShelfFood food;
+  final bool showQuickAdd;
+  final VoidCallback onTap;
+  final VoidCallback onQuickAdd;
+
+  const _ExternalRow({
+    super.key,
+    required this.food,
+    required this.showQuickAdd,
+    required this.onTap,
+    required this.onQuickAdd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return GlassRow(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: colors.textPrimary.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(
+              Icons.public,
+              size: 16,
+              color: colors.energyStart,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  food.foodName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  food.brandName.isEmpty ? 'Food database' : food.brandName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          if (food.calories > 0) ...[
+            Text(
+              '${food.calories.toStringAsFixed(0)} kcal',
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+            const SizedBox(width: 4),
+          ],
+          if (showQuickAdd) ...[
+            const SizedBox(width: 4),
+            _QuickAddButton(onPressed: onQuickAdd),
+          ],
+          Icon(Icons.chevron_right, color: colors.textSecondary, size: 20),
+        ],
       ),
     );
   }

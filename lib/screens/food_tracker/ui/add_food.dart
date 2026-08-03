@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/models/food_draft.dart';
+import 'package:senzu_app/models/shelf_food.dart';
 import 'package:senzu_app/screens/food_tracker/barcode/barcode_scanner_screen.dart';
 import 'package:senzu_app/screens/food_tracker/barcode/nutrition_label_capture_screen.dart';
 import 'package:senzu_app/services/food_catalog_repository.dart';
@@ -10,6 +11,65 @@ import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 import 'package:senzu_app/shared/widgets/glass_card.dart';
 import 'package:senzu_app/shared/widgets/gradient_button.dart';
+
+/// Full-width text field for name/brand entry — the fields you actually
+/// type in, so they get the whole row instead of a tiny box.
+class _TextField extends StatelessWidget {
+  final String label;
+  final TextEditingController controller;
+  final String hint;
+  final String? Function(String?)? validator;
+  final TextInputAction textInputAction;
+  final List<String>? autofillHints;
+  final bool autofocus;
+
+  const _TextField({
+    required this.label,
+    required this.controller,
+    required this.hint,
+    this.validator,
+    this.textInputAction = TextInputAction.next,
+    this.autofillHints,
+    this.autofocus = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 6),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ),
+          TextFormField(
+            controller: controller,
+            validator: validator,
+            textInputAction: textInputAction,
+            autofillHints: autofillHints,
+            autofocus: autofocus,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// One label + numeric-input row of the add-food form.
 class _NutrientField extends StatelessWidget {
@@ -32,11 +92,14 @@ class _NutrientField extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
           const SizedBox(width: 12),
           SizedBox(
-            width: 100,
+            width: 110,
             child: TextFormField(
               controller: controller,
               validator: validator,
@@ -47,6 +110,10 @@ class _NutrientField extends StatelessWidget {
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp('[,.0-9]')),
               ],
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
               decoration: InputDecoration(
                 hintText: hint,
                 isDense: true,
@@ -78,7 +145,15 @@ class AddFood extends StatefulWidget {
   /// Pre-filled values (e.g. from a barcode lookup or AI label extraction).
   final FoodDraft? initial;
 
-  const AddFood({super.key, this.foodIdValue, this.initial});
+  /// When set, edits this shelf food instead of creating a new one.
+  final ShelfFood? editingFood;
+
+  const AddFood({
+    super.key,
+    this.foodIdValue,
+    this.initial,
+    this.editingFood,
+  });
 
   @override
   State<AddFood> createState() => _AddFoodState();
@@ -171,7 +246,11 @@ class _AddFoodState extends State<AddFood> {
   void initState() {
     super.initState();
     final draft = widget.initial;
-    if (draft != null) _fillFromDraft(draft);
+    if (draft != null) {
+      _fillFromDraft(draft);
+    } else if (widget.editingFood != null) {
+      _fillFromDraft(FoodDraft.fromShelfFood(widget.editingFood!));
+    }
   }
 
   /// Fills the form from a draft (barcode lookup, AI label, or manual).
@@ -310,7 +389,11 @@ class _AddFoodState extends State<AddFood> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        appBar: AppBar(title: const Text('Add to shelf')),
+        appBar: AppBar(
+          title: Text(
+            widget.editingFood != null ? 'Edit food' : 'Add to shelf',
+          ),
+        ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           child: Form(
@@ -321,36 +404,43 @@ class _AddFoodState extends State<AddFood> {
                 Row(
                   children: [
                     Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _openBarcodeScanner,
-                        icon: const Icon(Icons.qr_code_scanner),
-                        label: const Text('Scan barcode'),
+                      child: _ScanButton(
+                        icon: Icons.qr_code_scanner,
+                        label: 'Scan barcode',
+                        onTap: _openBarcodeScanner,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _openLabelCapture,
-                        icon: const Icon(Icons.auto_awesome),
-                        label: const Text('Scan label'),
+                      child: _ScanButton(
+                        icon: Icons.auto_awesome,
+                        label: 'Scan label',
+                        onTap: _openLabelCapture,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 _section(
                   title: 'Basics',
                   fields: [
-                    _NutrientField(
+                    _TextField(
                       label: 'Food name',
                       controller: foodNameController,
-                      hint: 'Name',
+                      hint: 'e.g. Greek Yogurt',
                       validator: _required,
+                      autofillHints: const [AutofillHints.name],
+                      // Start typing immediately when the form is empty;
+                      // skip when a scan or edit pre-filled it so you can
+                      // review.
+                      autofocus: widget.initial == null &&
+                          widget.editingFood == null,
                     ),
-                    _NutrientField(
+                    _TextField(
                       label: 'Brand / category',
                       controller: brandNameController,
-                      hint: 'Brand',
+                      hint: 'e.g. Fage',
+                      textInputAction: TextInputAction.done,
                     ),
                     _NutrientField(
                       label: 'Amount per serving (g/mL)',
@@ -459,30 +549,23 @@ class _AddFoodState extends State<AddFood> {
                         ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  'ADDITIONAL FIELDS',
-                  style: Theme.of(context).textTheme.labelSmall,
-                ),
-                const SizedBox(height: 8),
-                GlassCard(
-                  padding: const EdgeInsets.all(8),
-                  child: Column(
-                    children: [
-                      for (final nutrient in _optionalNutrients)
-                        _OptionalField(
-                          label: nutrient.label.split(' (')[0],
-                          value: _visible.contains(nutrient.key),
-                          onChanged: (show) => setState(() {
-                            if (show) {
-                              _visible.add(nutrient.key);
-                            } else {
-                              _visible.remove(nutrient.key);
-                            }
-                          }),
-                        ),
-                    ],
-                  ),
+                const SizedBox(height: 16),
+                _section(
+                  title: 'Additional nutrients',
+                  fields: [
+                    for (final nutrient in _optionalNutrients)
+                      _OptionalField(
+                        label: nutrient.label.split(' (')[0],
+                        value: _visible.contains(nutrient.key),
+                        onChanged: (show) => setState(() {
+                          if (show) {
+                            _visible.add(nutrient.key);
+                          } else {
+                            _visible.remove(nutrient.key);
+                          }
+                        }),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -495,7 +578,9 @@ class _AddFoodState extends State<AddFood> {
                 ),
                 const SizedBox(height: 24),
                 GradientButton(
-                  label: 'Save to shelf',
+                  label: widget.editingFood != null
+                      ? 'Save changes'
+                      : 'Save to shelf',
                   icon: Icons.check,
                   loading: _saving,
                   onPressed: _save,
@@ -543,7 +628,11 @@ class _AddFoodState extends State<AddFood> {
     );
     try {
       final draft = _buildDraft();
-      await shelf.addFood(widget.foodIdValue!, draft.toShelfMap());
+      if (widget.editingFood != null) {
+        await shelf.updateFood(widget.editingFood!.foodId, draft.toShelfMap());
+      } else {
+        await shelf.addFood(widget.foodIdValue!, draft.toShelfMap());
+      }
       // Persist barcode foods into the shared catalog so future scans match
       // locally before hitting the external API.
       if (draft.barcode.isNotEmpty) {
@@ -552,7 +641,13 @@ class _AddFoodState extends State<AddFood> {
       if (!mounted) return;
       navigator.pop();
       messenger.showSnackBar(
-        const SnackBar(content: Text('Food added to your shelf')),
+        SnackBar(
+          content: Text(
+            widget.editingFood != null
+                ? 'Food updated'
+                : 'Food added to your shelf',
+          ),
+        ),
       );
     } on Object {
       if (mounted) {
@@ -620,6 +715,52 @@ class _AddFoodState extends State<AddFood> {
         pantothenicAcidDailyValue,
       ),
       vitaminE: pct(vitaminEController, vitaminEDailyValue),
+    );
+  }
+}
+
+/// Glass pill action for the scan shortcuts.
+class _ScanButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ScanButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return Material(
+      color: colors.glassFill,
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: colors.energyEnd, size: 18),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

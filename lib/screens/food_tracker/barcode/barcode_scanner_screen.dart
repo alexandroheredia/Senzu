@@ -42,29 +42,30 @@ class _ScanLineState extends State<_ScanLine>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, _) {
-        // Sweeps the line up and down inside the 200px-high band.
-        final position = 20 + _controller.value * 160;
         // Glow fade in and out with the sweep.
         final opacity = 0.55 + 0.45 * (_controller.value * 2 - 1).abs();
         final shadowBlur = 6.0 + 10.0 * (1 - (_controller.value * 2 - 1).abs());
 
         return Opacity(
           opacity: opacity,
-          child: Container(
-            height: 3,
-            margin: EdgeInsets.only(top: position),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Colors.redAccent, Colors.white, Colors.redAccent],
-              ),
-              borderRadius: BorderRadius.circular(2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.redAccent.withValues(alpha: 0.8),
-                  blurRadius: shadowBlur,
-                  spreadRadius: 2,
+          child: Align(
+            alignment: Alignment(0, -1 + _controller.value * 2),
+            child: Container(
+              width: 240,
+              height: 2,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Colors.redAccent, Colors.white, Colors.redAccent],
                 ),
-              ],
+                borderRadius: BorderRadius.circular(1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.redAccent.withValues(alpha: 0.8),
+                    blurRadius: shadowBlur,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
             ),
           ),
         );

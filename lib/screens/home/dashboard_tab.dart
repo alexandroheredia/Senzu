@@ -3,13 +3,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/models/food_entry.dart';
+import 'package:senzu_app/models/weight_entry.dart';
+import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_details.dart';
 import 'package:senzu_app/screens/food_tracker/ui/log_food.dart';
 import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
 import 'package:senzu_app/services/data_providers.dart';
+import 'package:senzu_app/services/health_kit_service.dart';
+import 'package:senzu_app/services/widget_data_service.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 import 'package:senzu_app/shared/widgets/glass_card.dart';
+import 'package:senzu_app/shared/widgets/glass_input.dart';
+import 'package:senzu_app/shared/widgets/gradient_button.dart';
 import 'package:senzu_app/shared/widgets/hero_ring.dart';
 import 'package:senzu_app/shared/widgets/macro_ring.dart';
 
@@ -35,15 +41,14 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
       context: context,
       initialDate: _date,
       firstDate: DateTime(2015),
-      lastDate: DateTime.now(),
+      // No upper cap: users can plan ahead and log future meals.
+      lastDate: DateTime(2100),
     );
     if (picked != null) setState(() => _date = startOfDay(picked));
   }
 
   void _shiftDate(int days) {
-    final next = _date.add(Duration(days: days));
-    if (next.isAfter(todayMidnight())) return;
-    setState(() => _date = next);
+    setState(() => _date = _date.add(Duration(days: days)));
   }
 
   void _openLogFood(MealType meal) {
@@ -51,6 +56,16 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
       Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (context) => LogFood(date: _date, mealType: meal),
+        ),
+      ),
+    );
+  }
+
+  void _openEditEntry(FoodEntry entry) {
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (context) => FoodDetails(editingEntry: entry),
         ),
       ),
     );
@@ -99,10 +114,144 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
     }
   }
 
+  /// Opens the weight-log sheet for today.
+  Future<void> _logWeight() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final weight = context.repos.weight;
+    final latest = ref.read(weightEntriesProvider).value;
+    final lastWeight = (latest == null || latest.isEmpty)
+        ? 0.0
+        : latest.last.weightKg;
+    final controller = TextEditingController(
+      text: lastWeight > 0 ? lastWeight.toStringAsFixed(1) : '',
+    );
+
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            20,
+            20,
+            MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Log weight',
+                style: Theme.of(sheetContext).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 16),
+              GlassInput(
+                controller: controller,
+                hint: 'kg',
+                label: 'Weight today',
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 16),
+              GradientButton(
+                label: 'Save',
+                icon: Icons.check,
+                onPressed: () {
+                  final value = double.tryParse(controller.text.trim());
+                  if (value == null || value <= 0) return;
+                  Navigator.pop(sheetContext, true);
+                  unawaited(weight.setWeight(todayMidnight(), value));
+                },
+              ),
+              const SizedBox(height: 8),
+              OutlineGlassButton(
+                label: 'Import from Health',
+                icon: Icons.favorite_outline,
+                onPressed: () async {
+                  final imported = await _importFromHealth();
+                  if (imported && sheetContext.mounted) {
+                    Navigator.pop(sheetContext, true);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    controller.dispose();
+    if (saved == true && mounted) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Weight logged')),
+      );
+    }
+  }
+
+  /// Requests HealthKit weight access and imports the last 90 days of
+  /// samples into the weight log. Returns true when anything was imported.
+  Future<bool> _importFromHealth() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final service = ref.read(healthKitServiceProvider);
+    final weight = context.repos.weight;
+    if (!service.isSupported) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('HealthKit is available on iOS only')),
+      );
+      return false;
+    }
+    final granted = await service.requestWeightPermission();
+    if (!granted) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Health access was not granted')),
+      );
+      return false;
+    }
+    final samples = await service.fetchWeights(
+      since: todayMidnight().subtract(const Duration(days: 90)),
+    );
+    if (samples.isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('No weight samples found in Health')),
+      );
+      return false;
+    }
+    for (final sample in samples) {
+      await weight.setWeight(sample.date, sample.kg);
+    }
+    messenger.showSnackBar(
+      SnackBar(content: Text('Imported ${samples.length} weight entries')),
+    );
+    return true;
+  }
+
+  /// Pushes today's calorie snapshot to the home-screen widget. Only fires
+  /// when viewing today; never blocks the UI.
+  void _syncWidget(List<FoodEntry> entries, {required int goal}) {
+    if (_date != todayMidnight()) return;
+    final intake = FoodLogSummary.fromEntries(entries).totalCalories;
+    final service = ref.read(widgetDataServiceProvider);
+    unawaited(service.pushCalories(consumed: intake, goal: goal));
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final goal = ref.watch(userDataProvider).value?.dailyCaloriesGoal ?? 2400;
+    final user = ref.watch(userDataProvider).value;
+    final goal = user?.dailyCaloriesGoal ?? 2400;
+    // Macro rings fill toward the user's targets, falling back to the FDA
+    // reference values until goals are set.
+    final carbGoal = (user?.carbGoalG ?? 0) > 0
+        ? user!.carbGoalG
+        : totalCarbohydrateDailyValue;
+    final proteinGoal = (user?.proteinGoalG ?? 0) > 0
+        ? user!.proteinGoalG
+        : proteinDailyValue;
+    final fatGoal = (user?.fatGoalG ?? 0) > 0
+        ? user!.fatGoalG
+        : totalFatDailyValue;
     final entriesAsync = ref.watch(dayEntriesProvider(_date));
 
     return Stack(
@@ -119,6 +268,8 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
             const SizedBox(height: 28),
             entriesAsync.when(
               data: (entries) {
+                // Keep the home-screen widget in sync with today's snapshot.
+                _syncWidget(entries, goal: goal);
                 final summary = FoodLogSummary.fromEntries(entries);
                 final intake = summary.totalCalories;
                 final remaining = goal - intake > 0 ? goal - intake : 0;
@@ -143,31 +294,46 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                           MacroRing(
                             color: colors.carbs,
                             progress:
-                                summary.totalCarbohydrate /
-                                totalCarbohydrateDailyValue,
+                                summary.totalCarbohydrate / carbGoal,
                             percentLabel:
-                                '${(summary.totalCarbohydrate / totalCarbohydrateDailyValue * 100).round()}%',
+                                '${(summary.totalCarbohydrate / carbGoal * 100).round()}%',
                             label: 'Carbs',
                             amount: '${summary.totalCarbohydrate}g',
                           ),
                           MacroRing(
                             color: colors.protein,
-                            progress: summary.protein / proteinDailyValue,
+                            progress: summary.protein / proteinGoal,
                             percentLabel:
-                                '${(summary.protein / proteinDailyValue * 100).round()}%',
+                                '${(summary.protein / proteinGoal * 100).round()}%',
                             label: 'Protein',
                             amount: '${summary.protein}g',
                           ),
                           MacroRing(
                             color: colors.fat,
-                            progress: summary.totalFat / totalFatDailyValue,
+                            progress: summary.totalFat / fatGoal,
                             percentLabel:
-                                '${(summary.totalFat / totalFatDailyValue * 100).round()}%',
+                                '${(summary.totalFat / fatGoal * 100).round()}%',
                             label: 'Fat',
                             amount: '${summary.totalFat}g',
                           ),
                         ],
                       ),
+                    ),
+                    const SizedBox(height: 32),
+                    ref.watch(weightEntriesProvider).maybeWhen(
+                      data: (weights) => _WeightTile(
+                        entries: weights,
+                        onLog: _logWeight,
+                      ),
+                      orElse: () => const SizedBox.shrink(),
+                    ),
+                    const SizedBox(height: 32),
+                    ref.watch(weightEntriesProvider).maybeWhen(
+                      data: (weights) => _WeightTile(
+                        entries: weights,
+                        onLog: _logWeight,
+                      ),
+                      orElse: () => const SizedBox.shrink(),
                     ),
                     const SizedBox(height: 32),
                     for (final meal in MealType.values)
@@ -178,6 +344,7 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                             .toList(),
                         onAdd: () => _openLogFood(meal),
                         onDelete: (entry) => _confirmDelete(entry, meal),
+                        onEdit: _openEditEntry,
                       ),
                     // Legacy entries without a meal type still need a home.
                     if (entries.any((entry) => entry.mealType == null))
@@ -191,6 +358,7 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                         onAdd: () => _openLogFood(MealType.dinner),
                         onDelete: (entry) =>
                             _confirmDelete(entry, MealType.dinner),
+                        onEdit: _openEditEntry,
                       ),
                   ],
                 );
@@ -230,9 +398,9 @@ class _DateNav extends StatelessWidget {
   });
 
   String _label() {
-    final difference = DateTime.now().difference(date);
-    if (difference.inDays <= 0) return 'Today';
-    if (difference.inDays == 1) return 'Yesterday';
+    final today = todayMidnight();
+    if (date == today) return 'Today';
+    if (date == today.subtract(const Duration(days: 1))) return 'Yesterday';
     const months = <String>[
       'Jan',
       'Feb',
@@ -247,13 +415,27 @@ class _DateNav extends StatelessWidget {
       'Nov',
       'Dec',
     ];
+    if (date.isAfter(today)) {
+      // Planned future day: "Tue 5 Aug".
+      const weekdays = <String>[
+        'Mon',
+        'Tue',
+        'Wed',
+        'Thu',
+        'Fri',
+        'Sat',
+        'Sun',
+      ];
+      return '${weekdays[date.weekday - 1]} ${date.day} '
+          '${months[date.month - 1]}';
+    }
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final atToday = !date.isBefore(todayMidnight());
+    final atToday = date.isAtSameMomentAs(todayMidnight());
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
@@ -296,6 +478,115 @@ class _DateNav extends StatelessWidget {
   }
 }
 
+/// Glass weight tile: latest weight + delta vs. the previous entry, with a
+/// tap to log today's weight.
+class _WeightTile extends StatelessWidget {
+  final List<WeightEntry> entries;
+  final VoidCallback onLog;
+
+  const _WeightTile({required this.entries, required this.onLog});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    final latest = entries.isEmpty ? null : entries.last;
+    final previous = entries.length >= 2 ? entries[entries.length - 2] : null;
+    final delta = (latest != null && previous != null)
+        ? latest.weightKg - previous.weightKg
+        : 0.0;
+
+    return Material(
+      color: Colors.transparent,
+      child: Ink(
+        decoration: colors.glassDecoration(),
+        child: InkWell(
+          onTap: onLog,
+          borderRadius: BorderRadius.circular(28),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: colors.textPrimary.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(
+                    Icons.monitor_weight_outlined,
+                    color: colors.textPrimary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Weight',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        latest == null
+                            ? 'Log your weight'
+                            : '${latest.weightKg.toStringAsFixed(1)} kg',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ],
+                  ),
+                ),
+                if (latest != null) ...[
+                  _DeltaChip(delta: delta),
+                  const SizedBox(width: 8),
+                ],
+                Icon(Icons.chevron_right, color: colors.textSecondary, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Small green/red delta chip showing weight change since the last entry.
+class _DeltaChip extends StatelessWidget {
+  final double delta;
+
+  const _DeltaChip({required this.delta});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final down = delta < 0;
+    final color = down ? colors.statusGood : colors.statusHigh;
+    final text = delta == 0
+        ? '±0.0'
+        : '${down ? '' : '+'}${delta.toStringAsFixed(1)}';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
 /// Collapsible glass card for one meal: header shows the total calories and
 /// toggles the logged-food list underneath.
 class _MealSection extends StatefulWidget {
@@ -303,6 +594,7 @@ class _MealSection extends StatefulWidget {
   final List<FoodEntry> entries;
   final VoidCallback onAdd;
   final ValueChanged<FoodEntry> onDelete;
+  final ValueChanged<FoodEntry> onEdit;
 
   /// Optional overrides for the catch-all "Other" section.
   final String? title;
@@ -313,6 +605,7 @@ class _MealSection extends StatefulWidget {
     required this.entries,
     required this.onAdd,
     required this.onDelete,
+    required this.onEdit,
     this.title,
     this.icon,
   });
@@ -456,6 +749,7 @@ class _MealSectionState extends State<_MealSection> {
                         entries: widget.entries,
                         mealType: widget.mealType,
                         onDelete: widget.onDelete,
+                        onEdit: widget.onEdit,
                         onAdd: widget.onAdd,
                       )
                     : const SizedBox.shrink(),
@@ -474,12 +768,14 @@ class _MealItemsList extends StatelessWidget {
   final List<FoodEntry> entries;
   final MealType mealType;
   final ValueChanged<FoodEntry> onDelete;
+  final ValueChanged<FoodEntry> onEdit;
   final VoidCallback onAdd;
 
   const _MealItemsList({
     required this.entries,
     required this.mealType,
     required this.onDelete,
+    required this.onEdit,
     required this.onAdd,
   });
 
@@ -525,6 +821,7 @@ class _MealItemsList extends StatelessWidget {
             _EntryTile(
               key: ValueKey<String>(entry.id),
               entry: entry,
+              onTap: () => onEdit(entry),
               onDelete: () => onDelete(entry),
             ),
         ],
@@ -536,15 +833,22 @@ class _MealItemsList extends StatelessWidget {
 /// One logged-food row inside a meal section.
 class _EntryTile extends StatelessWidget {
   final FoodEntry entry;
+  final VoidCallback onTap;
   final VoidCallback onDelete;
 
-  const _EntryTile({super.key, required this.entry, required this.onDelete});
+  const _EntryTile({
+    super.key,
+    required this.entry,
+    required this.onTap,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
 
     return InkWell(
+      onTap: onTap,
       onLongPress: onDelete,
       borderRadius: BorderRadius.circular(14),
       child: Padding(
