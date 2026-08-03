@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/models/shelf_food.dart';
-import 'package:senzu_app/screens/food_tracker/widgets/date_calculator.dart';
+import 'package:senzu_app/services/entry_builder.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
@@ -56,8 +56,6 @@ class _FoodDetailsState extends State<FoodDetails> {
 
   int _scaled(double value) => (value * _ratio).round();
 
-  int get _calories => _scaled(widget.food.calories);
-
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
@@ -92,68 +90,18 @@ class _FoodDetailsState extends State<FoodDetails> {
     }
   }
 
-  Map<String, dynamic> _entryData() {
-    final date = startOfDay(widget.date ?? DateTime.now());
-    final meal = _meal;
-    return <String, dynamic>{
-      'foodId': widget.food.foodId,
-      'foodName': widget.food.foodName,
-      'brandName': widget.food.brandName,
-      'portionSize': _portion,
-      'servingSize': widget.food.servingSize,
-      'mealType': mealTypeToString(meal),
-      'calories': _calories,
-      'totalFat': _scaled(widget.food.totalFat),
-      'saturatedFat': _scaled(widget.food.saturatedFat),
-      'transFat': _scaled(widget.food.transFat),
-      'cholesterol': _scaled(widget.food.cholesterol),
-      'sodium': _scaled(widget.food.sodium),
-      'totalCarbohydrate': _scaled(widget.food.totalCarbohydrate),
-      'dietaryFiber': _scaled(widget.food.dietaryFiber),
-      'sugars': _scaled(widget.food.sugars),
-      'protein': _scaled(widget.food.protein),
-      'calcium': _scaled(widget.food.calcium),
-      'iron': _scaled(widget.food.iron),
-      'potassium': _scaled(widget.food.potassium),
-      'vitaminA': _scaled(widget.food.vitaminA),
-      'vitaminC': _scaled(widget.food.vitaminC),
-      'vitaminD': _scaled(widget.food.vitaminD),
-      'magnesium': _scaled(widget.food.magnesium),
-      'zinc': _scaled(widget.food.zinc),
-      'weekNo': getWeekNumber(date),
-      'month': cleanMonthFormat(date.toString()),
-      'year': cleanYearFormat(date.toString()),
-      'dateAdded': date,
-      'breakfastCalories': meal == MealType.breakfast ? _calories : 0,
-      'lunchCalories': meal == MealType.lunch ? _calories : 0,
-      'snacksCalories': meal == MealType.snacks ? _calories : 0,
-      'dinnerCalories': meal == MealType.dinner ? _calories : 0,
-    };
-  }
+  Map<String, dynamic> _entryData() => buildFoodEntry(
+    food: widget.food,
+    date: widget.date ?? DateTime.now(),
+    meal: _meal,
+    portion: _portion,
+  );
 
-  Map<String, dynamic> _mealItemData() => <String, dynamic>{
-    'foodId': widget.food.foodId,
-    'foodName': widget.food.foodName,
-    'brandName': widget.food.brandName,
-    'mealId': widget.mealIdValue,
-    'portionSize': _portion,
-    'servingSize': widget.food.servingSize,
-    'calories': _calories,
-    'totalFat': _scaled(widget.food.totalFat),
-    'saturatedFat': _scaled(widget.food.saturatedFat),
-    'transFat': _scaled(widget.food.transFat),
-    'cholesterol': _scaled(widget.food.cholesterol),
-    'sodium': _scaled(widget.food.sodium),
-    'totalCarbohydrate': _scaled(widget.food.totalCarbohydrate),
-    'dietaryFiber': _scaled(widget.food.dietaryFiber),
-    'sugars': _scaled(widget.food.sugars),
-    'protein': _scaled(widget.food.protein),
-    'calcium': _scaled(widget.food.calcium),
-    'iron': _scaled(widget.food.iron),
-    'potassium': _scaled(widget.food.potassium),
-    'vitaminA': _scaled(widget.food.vitaminA),
-    'vitaminC': _scaled(widget.food.vitaminC),
-  };
+  Map<String, dynamic> _mealItemData() => buildMealItem(
+    food: widget.food,
+    mealId: widget.mealIdValue!,
+    portion: _portion,
+  );
 
   @override
   Widget build(BuildContext context) {

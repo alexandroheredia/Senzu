@@ -2,23 +2,27 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:senzu_app/models/food_draft.dart';
 import 'package:senzu_app/models/food_entry.dart';
 import 'package:senzu_app/models/shelf_food.dart';
+import 'package:senzu_app/screens/food_tracker/barcode/barcode_scanner_screen.dart';
+import 'package:senzu_app/screens/food_tracker/barcode/nutrition_label_capture_screen.dart';
 import 'package:senzu_app/screens/food_tracker/ui/add_food.dart';
 import 'package:senzu_app/screens/food_tracker/ui/food_shelf/food_details.dart';
 import 'package:senzu_app/services/data_providers.dart';
+import 'package:senzu_app/services/entry_builder.dart';
+import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 import 'package:senzu_app/shared/random_id.dart';
 import 'package:senzu_app/shared/widgets/empty_state.dart';
 import 'package:senzu_app/shared/widgets/glass_input.dart';
 import 'package:senzu_app/shared/widgets/glass_row.dart';
 
-/// Log-food flow: a glass search field over the user's shelf foods.
+/// Log-food flow: search the shelf, quick-add frequent foods, or add a brand
+/// new food via barcode / label capture.
 ///
-/// * [mealType] set → opened from a meal (AddToMeal): foods are logged into
-///   that meal for [date].
-/// * [mealIdValue] set → opened from a custom meal (MealDetails): foods are
-///   added as items of that meal instead of the daily log.
+/// * [mealType] set → foods are logged into that meal for [date].
+/// * [mealIdValue] set → foods are added as items of that custom meal.
 class LogFood extends ConsumerStatefulWidget {
   final DateTime date;
   final MealType? mealType;
@@ -45,12 +49,38 @@ class _LogFoodState extends ConsumerState<LogFood> {
     super.dispose();
   }
 
-  Future<void> _openAddFood() async {
+  bool get _hasMealContext =>
+      widget.mealType != null || widget.mealIdValue != null;
+
+  Future<void> _openAddFood({FoodDraft? draft}) async {
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (context) => AddFood(foodIdValue: generateRandomId()),
+        builder: (context) => AddFood(
+          foodIdValue: generateRandomId(),
+          initial: draft,
+        ),
       ),
     );
+  }
+
+  Future<void> _openBarcodeScanner() async {
+    final draft = await Navigator.of(context).push<FoodDraft>(
+      MaterialPageRoute<FoodDraft>(
+        builder: (context) => const BarcodeScannerScreen(),
+      ),
+    );
+    if (draft == null || !mounted) return;
+    await _openAddFood(draft: draft);
+  }
+
+  Future<void> _openLabelCapture() async {
+    final draft = await Navigator.of(context).push<FoodDraft>(
+      MaterialPageRoute<FoodDraft>(
+        builder: (context) => const NutritionLabelCaptureScreen(),
+      ),
+    );
+    if (draft == null || !mounted) return;
+    await _openAddFood(draft: draft);
   }
 
   void _openFood(ShelfFood food) {
@@ -68,6 +98,49 @@ class _LogFoodState extends ConsumerState<LogFood> {
     );
   }
 
+  /// One-tap log: adds the food at its serving size to the current meal
+  /// (or to the custom meal), skipping the detail screen.
+  Future<void> _quickAdd(ShelfFood food) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final repos = context.repos;
+    try {
+      if (widget.mealIdValue != null) {
+        await repos.meals.addFoodItem(
+          widget.mealIdValue!,
+          buildMealItem(
+            food: food,
+            mealId: widget.mealIdValue!,
+            portion: food.servingSize.round(),
+          ),
+        );
+      } else if (widget.mealType != null) {
+        unawaited(repos.shelf.incrementTimesAdded(food.foodId));
+        await repos.foodLog.addEntry(
+          buildFoodEntry(
+            food: food,
+            date: widget.date,
+            meal: widget.mealType,
+            portion: food.servingSize.round(),
+          ),
+        );
+      } else {
+        _openFood(food);
+        return;
+      }
+      messenger.showSnackBar(
+        SnackBar(content: Text('Added ${food.foodName}')),
+      );
+    } on Object {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not add. Check your connection and try again.',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
@@ -80,7 +153,7 @@ class _LogFoodState extends ConsumerState<LogFood> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
             child: GlassInput(
               controller: _search,
               hint: 'Search your foods',
@@ -90,7 +163,7 @@ class _LogFoodState extends ConsumerState<LogFood> {
           ),
           if (widget.mealType != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
               child: Text(
                 'Logging to ${widget.mealType!.label}',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -98,6 +171,12 @@ class _LogFoodState extends ConsumerState<LogFood> {
                 ),
               ),
             ),
+          _QuickActions(
+            onScanBarcode: _openBarcodeScanner,
+            onScanLabel: _openLabelCapture,
+            onAddManually: _openAddFood,
+          ),
+          _FrequentFoods(onQuickAdd: _quickAdd),
           Expanded(
             child: ref
                 .watch(shelfStreamProvider)
@@ -108,8 +187,8 @@ class _LogFoodState extends ConsumerState<LogFood> {
                         message:
                             'Your shelf is empty. '
                             'Add a food first, then log it.',
-                        actionLabel: 'Add a food',
-                        onAction: _openAddFood,
+                        actionLabel: 'Scan a barcode',
+                        onAction: _openBarcodeScanner,
                       );
                     }
 
@@ -178,7 +257,13 @@ class _LogFoodState extends ConsumerState<LogFood> {
                                 '${food.calories.toStringAsFixed(0)} kcal',
                                 style: Theme.of(context).textTheme.labelSmall,
                               ),
-                              const SizedBox(width: 4),
+                              if (_hasMealContext) ...[
+                                const SizedBox(width: 4),
+                                _QuickAddButton(
+                                  onPressed: () => _quickAdd(food),
+                                ),
+                              ] else
+                                const SizedBox(width: 4),
                               Icon(
                                 Icons.chevron_right,
                                 color: colors.textSecondary,
@@ -198,6 +283,171 @@ class _LogFoodState extends ConsumerState<LogFood> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Row of quick actions: scan a barcode, capture a label, add manually.
+class _QuickActions extends StatelessWidget {
+  final VoidCallback onScanBarcode;
+  final VoidCallback onScanLabel;
+  final VoidCallback onAddManually;
+
+  const _QuickActions({
+    required this.onScanBarcode,
+    required this.onScanLabel,
+    required this.onAddManually,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    Widget pill(IconData icon, String label, VoidCallback onTap) {
+      return Expanded(
+        child: Material(
+          color: colors.glassFill,
+          borderRadius: BorderRadius.circular(24),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(24),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: colors.energyEnd, size: 18),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      label,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      child: Row(
+        children: [
+          pill(Icons.qr_code_scanner, 'Scan', onScanBarcode),
+          const SizedBox(width: 10),
+          pill(Icons.auto_awesome, 'Label', onScanLabel),
+          const SizedBox(width: 10),
+          pill(Icons.edit_outlined, 'Manual', onAddManually),
+        ],
+      ),
+    );
+  }
+}
+
+/// One-tap add button shown on shelf rows.
+class _QuickAddButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _QuickAddButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Icon(Icons.add_circle, size: 26, color: colors.energyEnd),
+        ),
+      ),
+    );
+  }
+}
+
+/// Horizontal strip of the user's most-logged foods for one-tap logging.
+class _FrequentFoods extends ConsumerWidget {
+  final ValueChanged<ShelfFood> onQuickAdd;
+
+  const _FrequentFoods({required this.onQuickAdd});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.appColors;
+    final topAsync = ref.watch(topFoodsStreamProvider);
+
+    return topAsync.when(
+      data: (foods) {
+        final frequent = foods.take(6).toList();
+        if (frequent.isEmpty) return const SizedBox.shrink();
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 6, 20, 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'FREQUENT',
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 36,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: frequent.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final food = frequent[index];
+                    return Material(
+                      color: colors.glassFill,
+                      borderRadius: BorderRadius.circular(18),
+                      child: InkWell(
+                        onTap: () => onQuickAdd(food),
+                        borderRadius: BorderRadius.circular(18),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.bolt,
+                                color: colors.energyStart,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                food.foodName,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                food.calories.toStringAsFixed(0),
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 }

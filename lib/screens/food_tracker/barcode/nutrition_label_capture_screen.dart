@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:senzu_app/models/food_draft.dart';
 import 'package:senzu_app/services/nutrition_facts_extractor.dart';
@@ -45,13 +46,42 @@ class _NutritionLabelCaptureScreenState
     }
     if (file == null) return;
 
-    final bytes = await file.readAsBytes();
+    final XFile? cropped;
+    try {
+      cropped = await _crop(file);
+    } on Object catch (e, stack) {
+      if (!mounted) return;
+      debugPrint('Crop failed:\n$e\n$stack');
+      messenger.showSnackBar(
+        SnackBar(content: Text('Could not crop the photo: $e')),
+      );
+      return;
+    }
+    if (cropped == null) return; // User cancelled the crop.
+
+    final bytes = await cropped.readAsBytes();
     await _extract(
       NutritionFactsImage(
         bytes: bytes,
-        mimeType: _mimeTypeOf(file),
+        mimeType: _mimeTypeOf(cropped),
       ),
     );
+  }
+
+  /// Lets the user crop the photo down to just the nutrition facts panel, so
+  /// unrelated packaging text around it doesn't confuse the AI.
+  Future<XFile?> _crop(XFile file) async {
+    final cropped = await ImageCropper().cropImage(
+      sourcePath: file.path,
+      uiSettings: [
+        AndroidUiSettings(
+          initAspectRatio: CropAspectRatioPreset.original,
+          backgroundColor: Colors.black,
+        ),
+        IOSUiSettings(),
+      ],
+    );
+    return cropped == null ? null : XFile(cropped.path);
   }
 
   Future<void> _extract(NutritionFactsImage image) async {

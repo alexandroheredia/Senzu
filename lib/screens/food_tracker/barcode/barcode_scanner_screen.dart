@@ -8,6 +8,71 @@ import 'package:senzu_app/services/food_lookup_service.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 import 'package:senzu_app/shared/random_id.dart';
 
+/// Pulsating red/white scan line that sweeps across the barcode viewport,
+/// simulating a physical point-of-sale scanner.
+class _ScanLine extends StatefulWidget {
+  const _ScanLine();
+
+  @override
+  State<_ScanLine> createState() => _ScanLineState();
+}
+
+class _ScanLineState extends State<_ScanLine>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    );
+    unawaited(_controller.repeat(reverse: true));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        // Sweeps the line up and down inside the 200px-high band.
+        final position = 20 + _controller.value * 160;
+        // Glow fade in and out with the sweep.
+        final opacity = 0.55 + 0.45 * (_controller.value * 2 - 1).abs();
+        final shadowBlur = 6.0 + 10.0 * (1 - (_controller.value * 2 - 1).abs());
+
+        return Opacity(
+          opacity: opacity,
+          child: Container(
+            height: 3,
+            margin: EdgeInsets.only(top: position),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Colors.redAccent, Colors.white, Colors.redAccent],
+              ),
+              borderRadius: BorderRadius.circular(2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.redAccent.withValues(alpha: 0.8),
+                  blurRadius: shadowBlur,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// Full-screen barcode scanner.
 ///
 /// On a successful scan it resolves the code against the app's catalog and
@@ -116,17 +181,18 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
               );
             },
           ),
-          // Overlay guides.
+          // Overlay: a horizontal band framing the barcode, with a
+          // pulsating red/white scan line sweeping across it.
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 240,
-                  height: 240,
+                  width: 280,
+                  height: 200,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.white70, width: 2),
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: _resolved
                       ? const Center(
@@ -135,7 +201,10 @@ class _BarcodeScannerScreenState extends ConsumerState<BarcodeScannerScreen> {
                             strokeWidth: 3,
                           ),
                         )
-                      : null,
+                      : const Stack(
+                          fit: StackFit.expand,
+                          children: [_ScanLine()],
+                        ),
                 ),
                 const SizedBox(height: 28),
                 Text(
