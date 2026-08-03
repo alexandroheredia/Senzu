@@ -28,6 +28,10 @@
 	<string>Senzu uses the camera to scan food barcodes and read nutrition labels.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Senzu lets you pick a photo of a nutrition facts label to autofill food details.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Senzu imports your weight from Health to power your progress chart.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Senzu may write weight entries you log back to Health.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
