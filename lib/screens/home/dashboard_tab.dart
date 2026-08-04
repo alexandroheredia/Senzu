@@ -13,6 +13,7 @@ import 'package:senzu_app/services/widget_data_service.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/daily_values_constants.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
+import 'package:senzu_app/shared/widgets/dispose_on_unmount.dart';
 import 'package:senzu_app/shared/widgets/glass_card.dart';
 import 'package:senzu_app/shared/widgets/glass_input.dart';
 import 'package:senzu_app/shared/widgets/gradient_button.dart';
@@ -130,59 +131,61 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            20,
-            20,
-            MediaQuery.of(sheetContext).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Log weight',
-                style: Theme.of(sheetContext).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 16),
-              GlassInput(
-                controller: controller,
-                hint: 'kg',
-                label: 'Weight today',
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
+        return DisposeOnUnmount(
+          controllers: [controller],
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              20,
+              20,
+              MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Log weight',
+                  style: Theme.of(sheetContext).textTheme.headlineMedium,
                 ),
-                autofocus: true,
-              ),
-              const SizedBox(height: 16),
-              GradientButton(
-                label: 'Save',
-                icon: Icons.check,
-                onPressed: () {
-                  final value = double.tryParse(controller.text.trim());
-                  if (value == null || value <= 0) return;
-                  Navigator.pop(sheetContext, true);
-                  unawaited(weight.setWeight(todayMidnight(), value));
-                },
-              ),
-              const SizedBox(height: 8),
-              OutlineGlassButton(
-                label: 'Import from Health',
-                icon: Icons.favorite_outline,
-                onPressed: () async {
-                  final imported = await _importFromHealth();
-                  if (imported && sheetContext.mounted) {
+                const SizedBox(height: 16),
+                GlassInput(
+                  controller: controller,
+                  hint: 'kg',
+                  label: 'Weight today',
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  autofocus: true,
+                ),
+                const SizedBox(height: 16),
+                GradientButton(
+                  label: 'Save',
+                  icon: Icons.check,
+                  onPressed: () {
+                    final value = double.tryParse(controller.text.trim());
+                    if (value == null || value <= 0) return;
                     Navigator.pop(sheetContext, true);
-                  }
-                },
-              ),
-            ],
+                    unawaited(weight.setWeight(todayMidnight(), value));
+                  },
+                ),
+                const SizedBox(height: 8),
+                OutlineGlassButton(
+                  label: 'Import from Health',
+                  icon: Icons.favorite_outline,
+                  onPressed: () async {
+                    final imported = await _importFromHealth();
+                    if (imported && sheetContext.mounted) {
+                      Navigator.pop(sheetContext, true);
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
     );
-    controller.dispose();
     if (saved == true && mounted) {
       messenger.showSnackBar(
         const SnackBar(content: Text('Weight logged')),
@@ -293,8 +296,7 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                         children: [
                           MacroRing(
                             color: colors.carbs,
-                            progress:
-                                summary.totalCarbohydrate / carbGoal,
+                            progress: summary.totalCarbohydrate / carbGoal,
                             percentLabel:
                                 '${(summary.totalCarbohydrate / carbGoal * 100).round()}%',
                             label: 'Carbs',
@@ -320,21 +322,15 @@ class _DashboardTabState extends ConsumerState<DashboardTab> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    ref.watch(weightEntriesProvider).maybeWhen(
-                      data: (weights) => _WeightTile(
-                        entries: weights,
-                        onLog: _logWeight,
-                      ),
-                      orElse: () => const SizedBox.shrink(),
-                    ),
-                    const SizedBox(height: 32),
-                    ref.watch(weightEntriesProvider).maybeWhen(
-                      data: (weights) => _WeightTile(
-                        entries: weights,
-                        onLog: _logWeight,
-                      ),
-                      orElse: () => const SizedBox.shrink(),
-                    ),
+                    ref
+                        .watch(weightEntriesProvider)
+                        .maybeWhen(
+                          data: (weights) => _WeightTile(
+                            entries: weights,
+                            onLog: _logWeight,
+                          ),
+                          orElse: () => const SizedBox.shrink(),
+                        ),
                     const SizedBox(height: 32),
                     for (final meal in MealType.values)
                       _MealSection(
@@ -545,7 +541,11 @@ class _WeightTile extends StatelessWidget {
                   _DeltaChip(delta: delta),
                   const SizedBox(width: 8),
                 ],
-                Icon(Icons.chevron_right, color: colors.textSecondary, size: 20),
+                Icon(
+                  Icons.chevron_right,
+                  color: colors.textSecondary,
+                  size: 20,
+                ),
               ],
             ),
           ),
@@ -632,12 +632,14 @@ class _MealSectionState extends State<_MealSection> {
     if (widget.entries.length > oldWidget.entries.length) _expanded = true;
   }
 
-  IconData get _icon => widget.icon ?? switch (widget.mealType) {
-    MealType.breakfast => Icons.free_breakfast_outlined,
-    MealType.lunch => Icons.lunch_dining_outlined,
-    MealType.snacks => Icons.cookie_outlined,
-    MealType.dinner => Icons.dinner_dining_outlined,
-  };
+  IconData get _icon =>
+      widget.icon ??
+      switch (widget.mealType) {
+        MealType.breakfast => Icons.free_breakfast_outlined,
+        MealType.lunch => Icons.lunch_dining_outlined,
+        MealType.snacks => Icons.cookie_outlined,
+        MealType.dinner => Icons.dinner_dining_outlined,
+      };
 
   String get _title => widget.title ?? widget.mealType.label;
 

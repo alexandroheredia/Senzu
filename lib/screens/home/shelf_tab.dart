@@ -14,6 +14,7 @@ import 'package:senzu_app/services/shelf_repository.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
 import 'package:senzu_app/shared/random_id.dart';
+import 'package:senzu_app/shared/widgets/dispose_on_unmount.dart';
 import 'package:senzu_app/shared/widgets/empty_state.dart';
 import 'package:senzu_app/shared/widgets/glass_card.dart';
 import 'package:senzu_app/shared/widgets/glass_input.dart';
@@ -69,53 +70,55 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
-          ),
-          child: GlassCard(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'New meal',
-                  style: Theme.of(sheetContext).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 16),
-                GlassInput(
-                  controller: controller,
-                  hint: 'Meal name',
-                  leadingIcon: Icons.restaurant_outlined,
-                  autofocus: true,
-                ),
-                const SizedBox(height: 16),
-                GradientButton(
-                  label: 'Create meal',
-                  icon: Icons.add,
-                  onPressed: () async {
-                    final name = controller.text.trim();
-                    if (name.isEmpty) return;
-                    await _meals.createMeal(
-                      generateRandomId(),
-                      name,
-                    );
-                    navigator.pop();
-                    messenger.showSnackBar(
-                      SnackBar(content: Text('Created "$name"')),
-                    );
-                  },
-                ),
-              ],
+        return DisposeOnUnmount(
+          controllers: [controller],
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+            ),
+            child: GlassCard(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'New meal',
+                    style: Theme.of(sheetContext).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  GlassInput(
+                    controller: controller,
+                    hint: 'Meal name',
+                    leadingIcon: Icons.restaurant_outlined,
+                    autofocus: true,
+                  ),
+                  const SizedBox(height: 16),
+                  GradientButton(
+                    label: 'Create meal',
+                    icon: Icons.add,
+                    onPressed: () async {
+                      final name = controller.text.trim();
+                      if (name.isEmpty) return;
+                      await _meals.createMeal(
+                        generateRandomId(),
+                        name,
+                      );
+                      navigator.pop();
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('Created "$name"')),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );
       },
     );
-    controller.dispose();
   }
 
   Future<void> _openEditFood(ShelfFood food) async {
@@ -457,9 +460,7 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
                                     recipe.name,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge
+                                    style: Theme.of(context).textTheme.bodyLarge
                                         ?.copyWith(
                                           fontWeight: FontWeight.w600,
                                         ),
@@ -468,7 +469,9 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
                                   Text(
                                     '${recipe.servings} servings · '
                                     '${recipe.caloriesPerServing} kcal/serving',
-                                    style: Theme.of(context).textTheme.labelSmall,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.labelSmall,
                                   ),
                                 ],
                               ),
@@ -489,8 +492,7 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
                     },
                   );
                 },
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (_, _) =>
                     const Center(child: CircularProgressIndicator()),
               ),
@@ -502,7 +504,8 @@ class _ShelfTabState extends ConsumerState<ShelfTab> {
   Widget _topFoodsList() {
     return ref
         .watch(topFoodsStreamProvider)
-        .when(          data: (foods) {
+        .when(
+          data: (foods) {
             if (foods.isEmpty) {
               return const EmptyState(
                 message: 'Foods you log often will show up here.',
@@ -616,7 +619,10 @@ class _FoodRowContent extends StatelessWidget {
           const SizedBox(width: 12),
           Text(trailing!, style: Theme.of(context).textTheme.labelSmall),
         ],
-        if (showChevron) ...[const SizedBox(width: 4), Icon(Icons.chevron_right, color: colors.textSecondary, size: 20)],
+        if (showChevron) ...[
+          const SizedBox(width: 4),
+          Icon(Icons.chevron_right, color: colors.textSecondary, size: 20),
+        ],
       ],
     );
   }

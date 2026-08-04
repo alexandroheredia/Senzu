@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:senzu_app/services/auth_controller.dart';
 import 'package:senzu_app/shared/auth_scope.dart';
 import 'package:senzu_app/shared/design/app_colors.dart';
+import 'package:senzu_app/shared/widgets/dispose_on_unmount.dart';
 import 'package:senzu_app/shared/widgets/glass_card.dart';
 import 'package:senzu_app/shared/widgets/gradient_button.dart';
 
@@ -25,59 +26,60 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     final newPassword = TextEditingController();
     final confirm = TextEditingController();
 
+    var password = '';
     final saved = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            20,
-            20,
-            MediaQuery.of(sheetContext).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Change password',
-                style: Theme.of(sheetContext).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: newPassword,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'New password',
-                  hintText: 'At least 6 characters',
+        return DisposeOnUnmount(
+          controllers: [newPassword, confirm],
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              20,
+              20,
+              MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Change password',
+                  style: Theme.of(sheetContext).textTheme.headlineMedium,
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: confirm,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Confirm'),
-              ),
-              const SizedBox(height: 16),
-              GradientButton(
-                label: 'Update password',
-                icon: Icons.check,
-                onPressed: () {
-                  if (newPassword.text.length < 6) return;
-                  if (newPassword.text != confirm.text) return;
-                  Navigator.pop(sheetContext, true);
-                },
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: newPassword,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'New password',
+                    hintText: 'At least 6 characters',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirm,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Confirm'),
+                ),
+                const SizedBox(height: 16),
+                GradientButton(
+                  label: 'Update password',
+                  icon: Icons.check,
+                  onPressed: () {
+                    if (newPassword.text.length < 6) return;
+                    if (newPassword.text != confirm.text) return;
+                    password = newPassword.text;
+                    Navigator.pop(sheetContext, true);
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
     );
-
-    final password = newPassword.text;
-    newPassword.dispose();
-    confirm.dispose();
     if (saved != true || !mounted) return;
 
     setState(() {
@@ -214,7 +216,11 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.mail_outline, color: colors.textPrimary, size: 20),
+                    Icon(
+                      Icons.mail_outline,
+                      color: colors.textPrimary,
+                      size: 20,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -227,9 +233,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            verified
-                                ? 'Email verified'
-                                : 'Email not verified',
+                            verified ? 'Email verified' : 'Email not verified',
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
                                   color: verified
